@@ -9,6 +9,9 @@ public class BattleScript : MonoBehaviour
     public int attackSpd = 5;
     public int health = 10;
     public int maxHealth = 10;
+    public float elixir = 10f;
+    public float maxElixir = 10f;
+    public float elixirRegen = 0.05f;
     
     private int _currentTickCount;
     private int _attackTick;
@@ -46,6 +49,8 @@ public class BattleScript : MonoBehaviour
         _currentTickCount++;
         _attackTick = attackSpd * 10;
 
+        elixir = Mathf.Min(elixir + elixirRegen, maxElixir);
+
         if (_currentTickCount == _attackTick && _OpponentList.Count > 0)
         {
             Attack();
@@ -73,6 +78,11 @@ public class BattleScript : MonoBehaviour
     private void Disable()
     {
         gameObject.SetActive(false);
+    }
+    
+    void OnDisable()
+    {
+        TimeTickSystem.OnTick -= HandleTick;
     }
 
     private void Attack()
