@@ -12,6 +12,7 @@ public class BattleScript : MonoBehaviour
     public float elixir = 10f;
     public float maxElixir = 10f;
     public float elixirRegen = 0.05f;
+    public int shield = 0;
     
     private int _currentTickCount;
     private int _attackTick;
@@ -89,8 +90,25 @@ public class BattleScript : MonoBehaviour
     {
         GameObject opponent = _OpponentList[0];
         opponentScript = opponent.GetComponent<BattleScript>();
+        if (opponentScript.shield > 0)
+        {
+            if (opponentScript.shield <= attackDmg)
+            {
+                int tempAttack = attackDmg - opponentScript.shield;
+                opponentScript.shield = 0;
+                opponentScript.health -= tempAttack;
+            }
+            else
+            {
+                opponentScript.shield -= attackDmg;
+            }
+        }
+        else
+        {
+            opponentScript.health -= attackDmg;
+        }
 
-        opponentScript.health -= attackDmg;
+        
     }
 
     private int enemyListManager()
