@@ -7,15 +7,24 @@ public class TimeTickSystem : MonoBehaviour
 
     [SerializeField] private float tickRateMax = 0.1f; // 10 Ticks per second
     private float tickTimer;
+    private bool isStarted = false;
+
+    public void StartTimer()
+    {
+        isStarted = true;
+    }
 
     void Update()
     {
-        tickTimer += Time.deltaTime;
-        
-        if (tickTimer >= tickRateMax)
+        if (isStarted)
         {
-            tickTimer -= tickRateMax; // Maintain accurate pacing
-            OnTick?.Invoke();        // Fire the event to all listeners
+            tickTimer += Time.deltaTime;
+
+            if (tickTimer >= tickRateMax)
+            {
+                tickTimer -= tickRateMax; // Maintain accurate pacing
+                OnTick?.Invoke(); // Fire the event to all listeners
+            }
         }
     }
 }
