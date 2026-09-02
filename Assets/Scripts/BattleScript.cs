@@ -20,6 +20,7 @@ public class BattleScript : MonoBehaviour
     List<GameObject> _OpponentList;
     public BattleScript opponentScript;
     private Renderer _renderer;
+    [SerializeField] private AudioSource audioSource;
     
     private Vector3 startPosition;
     
@@ -56,6 +57,7 @@ public class BattleScript : MonoBehaviour
         {
             Attack();
             StartCoroutine(Bounce());
+            audioSource.Play();
             _currentTickCount = 0;
         }
 
@@ -128,7 +130,7 @@ public class BattleScript : MonoBehaviour
     
     IEnumerator Bounce()
     {
-        Vector3 a = transform.position, b = a - transform.forward * 1f;
+        Vector3 a = transform.position, b = a - transform.right * 1f;
         for (float t = 0; t < 1; t += Time.deltaTime * 8) { transform.position = Vector3.Lerp(a, b, t); yield return null; }
         for (float t = 0; t < 1; t += Time.deltaTime * 5) { transform.position = Vector3.Lerp(b, a, t); yield return null; }
         transform.position = a;

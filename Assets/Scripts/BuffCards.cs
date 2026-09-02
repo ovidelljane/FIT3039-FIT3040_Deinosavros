@@ -15,6 +15,7 @@ public class BuffCards : MonoBehaviour, IPointerClickHandler
     BattleScript player;
     public GameObject effectPrefab;
     private GameObject effectSpawn;
+    [SerializeField] private AudioSource audioSource;
 
     void Start()
     {
@@ -47,10 +48,12 @@ public class BuffCards : MonoBehaviour, IPointerClickHandler
                 case StatType.Elixir: player.elixir = Mathf.Min(player.elixir + amount, player.maxElixir); break;
                 
             }
-
+            audioSource.Play();
             Destroy(gameObject);
         }
     }
+    
+    
     
 
 
