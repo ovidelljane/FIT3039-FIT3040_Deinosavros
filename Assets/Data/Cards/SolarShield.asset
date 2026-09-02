@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 063508554f8790442a8283fa3091dbee, type: 3}
+  m_Name: SolarShield
+  m_EditorClassIdentifier: Assembly-CSharp::CardDefinition
+  cardId: solar_shield
+  displayName: Solar Shield
+  combatEffectText: +5 Shield
+  cardType: 2
+  capacityCost: 5
+  combatPrefab: {fileID: 1483386276342972719, guid: 0c184178eacdc23479cf29628174430f, type: 3}
+  mapPrefab: {fileID: 5510309902124097987, guid: 34d036743278bf241b043f9ec62c884f, type: 3}
+  backPrefab: {fileID: 1988278338754953843, guid: 3b10914faf6ed474c8622bf2d64ea079, type: 3}
+  frontArtwork: {fileID: 21300000, guid: 6566706136421c944ae4bf676b61f2f3, type: 3}
+  backArtwork: {fileID: 21300000, guid: d6eb5c48936d55c47830c9a7d0c70eca, type: 3}
+  overworldEffect:
+    effectType: 2
+    magnitude: 5
+    title: Solar Shield
+    description: Player starts with 5 Shield.
+    scopeLabel: NEXT BATTLE - PERMANENT REMOVAL
