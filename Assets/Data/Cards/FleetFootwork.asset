@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 063508554f8790442a8283fa3091dbee, type: 3}
+  m_Name: FleetFootwork
+  m_EditorClassIdentifier: Assembly-CSharp::CardDefinition
+  cardId: fleet_footwork
+  displayName: Fleet Footwork
+  combatEffectText: +1 AttackSpeed
+  cardType: 1
+  capacityCost: 5
+  combatPrefab: {fileID: 3386567266915157623, guid: 93279831875c5d44b8de69b357320d1b, type: 3}
+  mapPrefab: {fileID: 1696409143667802618, guid: ad1a32f89bfbedf47a5635eda42a0c18, type: 3}
+  backPrefab: {fileID: 6584790107418876506, guid: e83f4ef784779264c9317293a4ffc656, type: 3}
+  frontArtwork: {fileID: 21300000, guid: 8301a261a4e11914eb5ca1683b6c439c, type: 3}
+  backArtwork: {fileID: 21300000, guid: b73586b0dc72d774894cffb4d459886d, type: 3}
+  overworldEffect:
+    effectType: 1
+    magnitude: 1
+    title: Fleet Footwork
+    description: Player attack speed is reduced by 1, to a minimum of 1.
+    scopeLabel: NEXT BATTLE - PERMANENT REMOVAL
