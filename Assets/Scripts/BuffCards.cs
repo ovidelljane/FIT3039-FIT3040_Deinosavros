@@ -48,7 +48,7 @@ public class BuffCards : MonoBehaviour, IPointerClickHandler
                 case StatType.Elixir: player.elixir = Mathf.Min(player.elixir + amount, player.maxElixir); break;
                 
             }
-            audioSource.Play();
+            AudioSource.PlayClipAtPoint(audioSource.clip, new Vector3(0f, 0f, 0f));
             Destroy(gameObject);
         }
     }
