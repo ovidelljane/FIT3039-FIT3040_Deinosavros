@@ -7379,6 +7379,10 @@ PrefabInstance:
       propertyPath: m_VerticalAlignment
       value: 256
       objectReference: {fileID: 0}
+    - target: {fileID: 7084826895189563776, guid: e931657de8189624c93c2d4ace302714, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7585893536580287240, guid: e931657de8189624c93c2d4ace302714, type: 3}
       propertyPath: m_Colors.m_PressedColor.b
       value: 0.5756496

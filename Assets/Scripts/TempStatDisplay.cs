@@ -33,6 +33,6 @@ public class TempStatDisplay : MonoBehaviour
 
     void Update()
     {
-        label.text = $"Damage: {player.attackDmg}\nAttackSpd: Attack/{player.attackSpd} Secs\nElixir: {player.elixir:F1}/{player.maxElixir}\nShield: {player.shield}";
+        label.text = $"Health: {player.health}/{player.maxHealth}\nDamage: {player.attackDmg}\nAttackSpd: Attack/{player.attackSpd} Secs\nElixir: {player.elixir:F1}/{player.maxElixir}\nShield: {player.shield}";
     }
 }
