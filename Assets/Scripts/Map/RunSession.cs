@@ -54,6 +54,22 @@ public sealed class RunSession : MonoBehaviour
         return runDeck.Exists(card => card.definition != null && card.definition.cardId == cardId && !card.sacrificed);
     }
 
+    public void AddCard(CardDefinition definition)
+    {
+        if (definition == null) return;
+        runDeck.Add(new RunCardInstance { definition = definition });
+    }
+
+    public List<CardDefinition> GetActiveDeck()
+    {
+        var list = new List<CardDefinition>();
+        foreach (RunCardInstance card in runDeck)
+        {
+            if (!card.sacrificed && card.definition != null) list.Add(card.definition);
+        }
+        return list;
+    }
+
     public bool TryConsumePendingModifier(out PendingEncounterModifier modifier)
     {
         modifier = pendingModifier;

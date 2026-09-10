@@ -22,29 +22,9 @@ public sealed class BattleRunBridge : MonoBehaviour
             return;
         }
 
-        HideSacrificedCard(RunSession.Instance);
         if (RunSession.Instance.TryConsumePendingModifier(out PendingEncounterModifier modifier))
         {
             ApplyModifier(modifier);
-        }
-    }
-
-    private static void HideSacrificedCard(RunSession session)
-    {
-        string[] cardIds = { "tidal_wave", "fleet_footwork", "solar_shield", "uncertain_fates" };
-        string[] battleObjectNames = { "TidalWave", "FleetFootwork", "SolarShield", "UncertainFates" };
-        for (int i = 0; i < cardIds.Length; i++)
-        {
-            if (session.ContainsCard(cardIds[i]))
-            {
-                continue;
-            }
-
-            GameObject cardObject = GameObject.Find(battleObjectNames[i]);
-            if (cardObject != null)
-            {
-                cardObject.SetActive(false);
-            }
         }
     }
 

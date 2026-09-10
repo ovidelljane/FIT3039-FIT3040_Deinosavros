@@ -17,10 +17,19 @@ public class BuffCards : MonoBehaviour, IPointerClickHandler
     private GameObject effectSpawn;
     [SerializeField] private AudioSource audioSource;
 
+    private DeckManager owner;
+    private CardDefinition definition;
+
     void Start()
     {
         player = GameObject.FindWithTag("Player").GetComponent<BattleScript>();
         if (label) label.text = $"+{amount} {stat}";
+    }
+
+    public void Initialize(DeckManager deckManager, CardDefinition cardDefinition)
+    {
+        owner = deckManager;
+        definition = cardDefinition;
     }
 
     public void OnPointerClick(PointerEventData e)
@@ -49,7 +58,9 @@ public class BuffCards : MonoBehaviour, IPointerClickHandler
                 
             }
             AudioSource.PlayClipAtPoint(audioSource.clip, new Vector3(0f, 0f, 0f));
-            Destroy(gameObject);
+
+            if (owner != null) owner.OnCardPlayed(this, definition);
+            else Destroy(gameObject);
         }
     }
     
