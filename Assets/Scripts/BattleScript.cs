@@ -6,7 +6,7 @@ using UnityEngine;
 public class BattleScript : MonoBehaviour
 {
     public int attackDmg = 1;
-    public int attackSpd = 5;
+    public float attackSpd = 5f;
     public int health = 10;
     public int maxHealth = 10;
     public float elixir = 10f;
@@ -15,7 +15,7 @@ public class BattleScript : MonoBehaviour
     public int shield = 0;
     
     private int _currentTickCount;
-    private int _attackTick;
+    private float _attackTick;
     
     List<GameObject> _OpponentList;
     public BattleScript opponentScript;
@@ -49,11 +49,11 @@ public class BattleScript : MonoBehaviour
     private void HandleTick()
     {
         _currentTickCount++;
-        _attackTick = attackSpd * 10;
+        _attackTick = attackSpd * 10f;
 
         elixir = Mathf.Min(elixir + elixirRegen, maxElixir);
 
-        if (_currentTickCount == _attackTick && _OpponentList.Count > 0)
+        if (_currentTickCount % (int)_attackTick == 0 && _OpponentList.Count > 0)
         {
             Attack();
             StartCoroutine(Bounce());

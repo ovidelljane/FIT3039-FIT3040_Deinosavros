@@ -7,7 +7,7 @@ public enum StatType { Damage, AttackSpeed, Heal, Shield, Elixir  }
 public class BuffCards : MonoBehaviour, IPointerClickHandler
 {
     [SerializeField] StatType stat;
-    [SerializeField] int amount = 1;
+    [SerializeField] float amount = 1;
     [SerializeField] int elixirCost = 1;
     [SerializeField] float effectDuration = 3f;
     [SerializeField] TextMeshProUGUI label;
@@ -43,8 +43,8 @@ public class BuffCards : MonoBehaviour, IPointerClickHandler
                 case StatType.Damage:
                 case StatType.AttackSpeed: effectSpawn = Instantiate(effectPrefab);
                     effectSpawn.GetComponent<Effect>().SetValues(stat, player, amount, effectDuration); break;
-                case StatType.Heal: player.health = Mathf.Min(player.health + amount, player.maxHealth); break;
-                case StatType.Shield: player.shield += amount; break;
+                case StatType.Heal: player.health = Mathf.Min(player.health + (int)amount, player.maxHealth); break;
+                case StatType.Shield: player.shield += (int)amount; break;
                 case StatType.Elixir: player.elixir = Mathf.Min(player.elixir + amount, player.maxElixir); break;
                 
             }
