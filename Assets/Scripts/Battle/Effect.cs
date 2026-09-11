@@ -5,7 +5,7 @@ public class Effect : MonoBehaviour
 {
 
     public StatType effectType;
-    public int amount;
+    public float amount;
     public float effectDur;
     public BattleScript target;
     
@@ -25,7 +25,7 @@ public class Effect : MonoBehaviour
         {
             switch (effectType)
             {
-                case StatType.Damage: target.attackDmg += amount; break;
+                case StatType.Damage: target.attackDmg += (int)amount; break;
                 case StatType.AttackSpeed: target.attackSpd -= amount; break;
             }
         }
@@ -34,7 +34,7 @@ public class Effect : MonoBehaviour
         {
             switch (effectType)
             {
-                case StatType.Damage: target.attackDmg -= amount; break;
+                case StatType.Damage: target.attackDmg -= (int)amount; break;
                 case StatType.AttackSpeed: target.attackSpd += amount; break;
             }
             Destroy(this.gameObject);
@@ -45,7 +45,7 @@ public class Effect : MonoBehaviour
     {
         TimeTickSystem.OnTick -= HandleTick;
     }
-    public void SetValues(StatType type, BattleScript targ, int amoun, float duration)
+    public void SetValues(StatType type, BattleScript targ, float amoun, float duration)
     {
         effectType = type;
         target = targ;

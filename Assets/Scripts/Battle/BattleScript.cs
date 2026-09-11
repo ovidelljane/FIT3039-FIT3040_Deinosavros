@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -5,17 +6,20 @@ using UnityEngine;
 
 public class BattleScript : MonoBehaviour
 {
+    public static event Action OnAllEnemiesDefeated;
+
     public int attackDmg = 1;
-    public int attackSpd = 5;
+    public float attackSpd = 5f;
     public int health = 10;
     public int maxHealth = 10;
     public float elixir = 10f;
     public float maxElixir = 10f;
     public float elixirRegen = 0.05f;
     public int shield = 0;
-    
+
     private int _currentTickCount;
-    private int _attackTick;
+    private float _attackTick;
+    private bool _victoryFired;
     
     List<GameObject> _OpponentList;
     public BattleScript opponentScript;
@@ -49,11 +53,11 @@ public class BattleScript : MonoBehaviour
     private void HandleTick()
     {
         _currentTickCount++;
-        _attackTick = attackSpd * 10;
+        _attackTick = attackSpd * 10f;
 
         elixir = Mathf.Min(elixir + elixirRegen, maxElixir);
 
-        if (_currentTickCount == _attackTick && _OpponentList.Count > 0)
+        if (_currentTickCount % (int)_attackTick == 0 && _OpponentList.Count > 0)
         {
             Attack();
             StartCoroutine(Bounce());
@@ -65,6 +69,12 @@ public class BattleScript : MonoBehaviour
         {
             _renderer.material.color = Color.lawnGreen;
             gameObject.GetComponent<BattleScript>().enabled = false;
+
+            if (CompareTag("Player") && !_victoryFired)
+            {
+                _victoryFired = true;
+                OnAllEnemiesDefeated?.Invoke();
+            }
         }
         
         if (health <= 0)

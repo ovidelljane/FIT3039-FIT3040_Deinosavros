@@ -7,7 +7,7 @@ public enum StatType { Damage, AttackSpeed, Heal, Shield, Elixir  }
 public class BuffCards : MonoBehaviour, IPointerClickHandler
 {
     [SerializeField] StatType stat;
-    [SerializeField] int amount = 1;
+    [SerializeField] float amount = 1;
     [SerializeField] int elixirCost = 1;
     [SerializeField] float effectDuration = 3f;
     [SerializeField] TextMeshProUGUI label;
@@ -17,10 +17,19 @@ public class BuffCards : MonoBehaviour, IPointerClickHandler
     private GameObject effectSpawn;
     [SerializeField] private AudioSource audioSource;
 
+    private DeckManager owner;
+    private CardDefinition definition;
+
     void Start()
     {
         player = GameObject.FindWithTag("Player").GetComponent<BattleScript>();
         if (label) label.text = $"+{amount} {stat}";
+    }
+
+    public void Initialize(DeckManager deckManager, CardDefinition cardDefinition)
+    {
+        owner = deckManager;
+        definition = cardDefinition;
     }
 
     public void OnPointerClick(PointerEventData e)
@@ -43,13 +52,15 @@ public class BuffCards : MonoBehaviour, IPointerClickHandler
                 case StatType.Damage:
                 case StatType.AttackSpeed: effectSpawn = Instantiate(effectPrefab);
                     effectSpawn.GetComponent<Effect>().SetValues(stat, player, amount, effectDuration); break;
-                case StatType.Heal: player.health = Mathf.Min(player.health + amount, player.maxHealth); break;
-                case StatType.Shield: player.shield += amount; break;
+                case StatType.Heal: player.health = Mathf.Min(player.health + (int)amount, player.maxHealth); break;
+                case StatType.Shield: player.shield += (int)amount; break;
                 case StatType.Elixir: player.elixir = Mathf.Min(player.elixir + amount, player.maxElixir); break;
                 
             }
             AudioSource.PlayClipAtPoint(audioSource.clip, new Vector3(0f, 0f, 0f));
-            Destroy(gameObject);
+
+            if (owner != null) owner.OnCardPlayed(this, definition);
+            else Destroy(gameObject);
         }
     }
     
