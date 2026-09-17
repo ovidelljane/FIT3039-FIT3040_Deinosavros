@@ -1,5 +1,9 @@
 fileFormatVersion: 2
+<<<<<<< Updated upstream:Assets/Meshes/Pillar.fbx.meta
 guid: 386cc43490ab28b40b068c8fc37e401d
+=======
+guid: f5dce4fd9452a3d4fb08fe8169b690a2
+>>>>>>> Stashed changes:Assets/Meshes/Circle.fbx.meta
 ModelImporter:
   serializedVersion: 24200
   internalIDToNameTable: []
@@ -41,7 +45,11 @@ ModelImporter:
     importPhysicalCameras: 1
     importVisibility: 0
     importBlendShapes: 1
+<<<<<<< Updated upstream:Assets/Meshes/Pillar.fbx.meta
     importCameras: 0
+=======
+    importCameras: 1
+>>>>>>> Stashed changes:Assets/Meshes/Circle.fbx.meta
     importLights: 1
     nodeNameCollisionStrategy: 1
     fileIdsGeneration: 2
@@ -68,7 +76,7 @@ ModelImporter:
     secondaryUVMinLightmapResolution: 40
     secondaryUVMinObjectScale: 1
     secondaryUVPackMargin: 4
-    useFileScale: 0
+    useFileScale: 1
     strictVertexDataChecks: 0
   tangentSpace:
     normalSmoothAngle: 60
