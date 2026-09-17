@@ -4,6 +4,7 @@ using UnityEngine.SceneManagement;
 public sealed class BattleRunBridge : MonoBehaviour
 {
     [SerializeField] private string battleSceneName = "Deinosavros";
+    private BattleScript trackedPlayer;
 
     private void OnEnable()
     {
@@ -12,20 +13,41 @@ public sealed class BattleRunBridge : MonoBehaviour
 
     private void OnDisable()
     {
+        if (RunSession.Instance != null && trackedPlayer != null)
+        {
+            RunSession.Instance.CapturePlayerStats(trackedPlayer);
+        }
         SceneManager.sceneLoaded -= HandleSceneLoaded;
+    }
+
+    private void Update()
+    {
+        if (trackedPlayer != null && RunSession.Instance != null)
+        {
+            RunSession.Instance.CapturePlayerStats(trackedPlayer);
+        }
     }
 
     private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         if (scene.name != battleSceneName || RunSession.Instance == null)
         {
+            trackedPlayer = null;
             return;
         }
 
+<<<<<<< Updated upstream
+=======
+        HideSacrificedCard(RunSession.Instance);
+        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
+        trackedPlayer = playerObject != null ? playerObject.GetComponent<BattleScript>() : null;
+        RunSession.Instance.ApplyPlayerStats(trackedPlayer);
+>>>>>>> Stashed changes
         if (RunSession.Instance.TryConsumePendingModifier(out PendingEncounterModifier modifier))
         {
             ApplyModifier(modifier);
         }
+        RunSession.Instance.CapturePlayerStats(trackedPlayer);
     }
 
     private static void ApplyModifier(PendingEncounterModifier modifier)

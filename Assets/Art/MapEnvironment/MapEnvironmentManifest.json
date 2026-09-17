@@ -1,0 +1,748 @@
+{
+  "sourceBlend": "D:\\Maya\u5efa\u6a21\\Blender\\MapScene.blend",
+  "fbx": "D:\\FIT3040\\Deinosavros\\FIT3039-FIT3040_Deinosavros\\Assets\\Art\\MapEnvironment\\MapEnvironment.fbx",
+  "objectCountBeforeJoin": 608,
+  "bounds": {
+    "minimum": [
+      -150.0,
+      -150.0,
+      -9.199999809265137
+    ],
+    "maximum": [
+      150.0,
+      150.0,
+      53.81240463256836
+    ]
+  },
+  "anchors": {
+    "Node_L01_01": [
+      -13.045832633972168,
+      -0.01596391201019287,
+      0.4399999976158142
+    ],
+    "Node_L02_01": [
+      -8.04091739654541,
+      5.8237624168396,
+      0.4399999976158142
+    ],
+    "Node_L02_02": [
+      -7.956441402435303,
+      -5.832022666931152,
+      0.4399999976158142
+    ],
+    "Node_L03_01": [
+      -2.4303929805755615,
+      5.7547101974487305,
+      0.4399999976158142
+    ],
+    "Node_L03_02": [
+      -2.3500068187713623,
+      0.011173605918884277,
+      0.4399999976158142
+    ],
+    "Node_L03_03": [
+      -2.416314125061035,
+      -5.846189498901367,
+      0.4399999976158142
+    ],
+    "Node_L04_01": [
+      3.8575491905212402,
+      5.789921760559082,
+      0.4399999976158142
+    ],
+    "Node_L04_02": [
+      3.7474124431610107,
+      -5.805350303649902,
+      0.4399999976158142
+    ],
+    "Node_L05_01": [
+      8.950234413146973,
+      5.861780166625977,
+      0.4399999976158142
+    ],
+    "Node_L05_02": [
+      8.952009201049805,
+      -5.773126602172852,
+      0.4399999976158142
+    ],
+    "Node_L06_01": [
+      14.0,
+      0.0,
+      1.25
+    ]
+  },
+  "materials": [
+    {
+      "name": "Finish_Bark",
+      "baseColor": [
+        0.800000011920929,
+        0.800000011920929,
+        0.800000011920929,
+        1.0
+      ],
+      "roughness": 0.8199999928474426,
+      "metallic": 0.0,
+      "emission": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "emissionStrength": 0.0,
+      "alpha": 1.0,
+      "transparent": false,
+      "textureId": ""
+    },
+    {
+      "name": "Finish_ChasmBackdrop",
+      "baseColor": [
+        0.03999999910593033,
+        0.06300000101327896,
+        0.07500000298023224,
+        1.0
+      ],
+      "roughness": 0.9300000071525574,
+      "metallic": 0.0,
+      "emission": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "emissionStrength": 0.0,
+      "alpha": 1.0,
+      "transparent": false,
+      "textureId": ""
+    },
+    {
+      "name": "Finish_CushionMoss",
+      "baseColor": [
+        0.800000011920929,
+        0.800000011920929,
+        0.800000011920929,
+        1.0
+      ],
+      "roughness": 0.9100000262260437,
+      "metallic": 0.0,
+      "emission": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "emissionStrength": 0.0,
+      "alpha": 1.0,
+      "transparent": false,
+      "textureId": ""
+    },
+    {
+      "name": "Finish_FernLeaf",
+      "baseColor": [
+        0.800000011920929,
+        0.800000011920929,
+        0.800000011920929,
+        1.0
+      ],
+      "roughness": 0.8199999928474426,
+      "metallic": 0.0,
+      "emission": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "emissionStrength": 0.0,
+      "alpha": 1.0,
+      "transparent": false,
+      "textureId": ""
+    },
+    {
+      "name": "Finish_LeafTips",
+      "baseColor": [
+        0.800000011920929,
+        0.800000011920929,
+        0.800000011920929,
+        1.0
+      ],
+      "roughness": 0.800000011920929,
+      "metallic": 0.0,
+      "emission": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "emissionStrength": 0.0,
+      "alpha": 1.0,
+      "transparent": false,
+      "textureId": ""
+    },
+    {
+      "name": "Finish_ValleyMist",
+      "baseColor": [
+        0.800000011920929,
+        0.800000011920929,
+        0.800000011920929,
+        1.0
+      ],
+      "roughness": 0.4000000059604645,
+      "metallic": 0.0,
+      "emission": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "emissionStrength": 0.0,
+      "alpha": 1.0,
+      "transparent": true,
+      "textureId": ""
+    },
+    {
+      "name": "Overhaul Basalt",
+      "baseColor": [
+        0.800000011920929,
+        0.800000011920929,
+        0.800000011920929,
+        1.0
+      ],
+      "roughness": 0.5,
+      "metallic": 0.0,
+      "emission": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "emissionStrength": 0.0,
+      "alpha": 1.0,
+      "transparent": false,
+      "textureId": ""
+    },
+    {
+      "name": "Overhaul Basalt Highlight",
+      "baseColor": [
+        0.800000011920929,
+        0.800000011920929,
+        0.800000011920929,
+        1.0
+      ],
+      "roughness": 0.5,
+      "metallic": 0.0,
+      "emission": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "emissionStrength": 0.0,
+      "alpha": 1.0,
+      "transparent": false,
+      "textureId": ""
+    },
+    {
+      "name": "Overhaul Blade Steel",
+      "baseColor": [
+        0.800000011920929,
+        0.800000011920929,
+        0.800000011920929,
+        1.0
+      ],
+      "roughness": 0.5,
+      "metallic": 0.9599999785423279,
+      "emission": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "emissionStrength": 0.0,
+      "alpha": 1.0,
+      "transparent": false,
+      "textureId": ""
+    },
+    {
+      "name": "Overhaul Broad Leaf",
+      "baseColor": [
+        0.800000011920929,
+        0.800000011920929,
+        0.800000011920929,
+        1.0
+      ],
+      "roughness": 0.5,
+      "metallic": 0.0,
+      "emission": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "emissionStrength": 0.0,
+      "alpha": 1.0,
+      "transparent": false,
+      "textureId": ""
+    },
+    {
+      "name": "Overhaul Broad Leaf Light",
+      "baseColor": [
+        0.800000011920929,
+        0.800000011920929,
+        0.800000011920929,
+        1.0
+      ],
+      "roughness": 0.5,
+      "metallic": 0.0,
+      "emission": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "emissionStrength": 0.0,
+      "alpha": 1.0,
+      "transparent": false,
+      "textureId": ""
+    },
+    {
+      "name": "Overhaul Chest Wood",
+      "baseColor": [
+        0.800000011920929,
+        0.800000011920929,
+        0.800000011920929,
+        1.0
+      ],
+      "roughness": 0.5,
+      "metallic": 0.0,
+      "emission": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "emissionStrength": 0.0,
+      "alpha": 1.0,
+      "transparent": false,
+      "textureId": "generated_dark_wood"
+    },
+    {
+      "name": "Overhaul Damp Ground",
+      "baseColor": [
+        0.800000011920929,
+        0.800000011920929,
+        0.800000011920929,
+        1.0
+      ],
+      "roughness": 0.5,
+      "metallic": 0.0,
+      "emission": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "emissionStrength": 0.0,
+      "alpha": 1.0,
+      "transparent": false,
+      "textureId": ""
+    },
+    {
+      "name": "Overhaul Dark Iron",
+      "baseColor": [
+        0.800000011920929,
+        0.800000011920929,
+        0.800000011920929,
+        1.0
+      ],
+      "roughness": 0.5,
+      "metallic": 0.9200000166893005,
+      "emission": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "emissionStrength": 0.0,
+      "alpha": 1.0,
+      "transparent": false,
+      "textureId": ""
+    },
+    {
+      "name": "Overhaul Flame",
+      "baseColor": [
+        1.0,
+        0.08500000089406967,
+        0.004999999888241291,
+        1.0
+      ],
+      "roughness": 0.2800000011920929,
+      "metallic": 0.0,
+      "emission": [
+        1.0,
+        0.08500000089406967,
+        0.004999999888241291,
+        1.0
+      ],
+      "emissionStrength": 1.5499999523162842,
+      "alpha": 1.0,
+      "transparent": false,
+      "textureId": ""
+    },
+    {
+      "name": "Overhaul Fossil Bone",
+      "baseColor": [
+        0.800000011920929,
+        0.800000011920929,
+        0.800000011920929,
+        1.0
+      ],
+      "roughness": 0.5,
+      "metallic": 0.0,
+      "emission": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "emissionStrength": 0.0,
+      "alpha": 1.0,
+      "transparent": false,
+      "textureId": ""
+    },
+    {
+      "name": "Overhaul Moss",
+      "baseColor": [
+        0.800000011920929,
+        0.800000011920929,
+        0.800000011920929,
+        1.0
+      ],
+      "roughness": 0.5,
+      "metallic": 0.0,
+      "emission": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "emissionStrength": 0.0,
+      "alpha": 1.0,
+      "transparent": false,
+      "textureId": ""
+    },
+    {
+      "name": "Overhaul Parchment",
+      "baseColor": [
+        0.800000011920929,
+        0.800000011920929,
+        0.800000011920929,
+        1.0
+      ],
+      "roughness": 0.5,
+      "metallic": 0.0,
+      "emission": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "emissionStrength": 0.0,
+      "alpha": 1.0,
+      "transparent": false,
+      "textureId": ""
+    },
+    {
+      "name": "Overhaul Path Stone",
+      "baseColor": [
+        0.800000011920929,
+        0.800000011920929,
+        0.800000011920929,
+        1.0
+      ],
+      "roughness": 0.5,
+      "metallic": 0.0,
+      "emission": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "emissionStrength": 0.0,
+      "alpha": 1.0,
+      "transparent": false,
+      "textureId": "generated_flagstone"
+    },
+    {
+      "name": "Overhaul Portal Crevice",
+      "baseColor": [
+        0.800000011920929,
+        0.800000011920929,
+        0.800000011920929,
+        1.0
+      ],
+      "roughness": 0.5,
+      "metallic": 0.0,
+      "emission": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "emissionStrength": 0.0,
+      "alpha": 1.0,
+      "transparent": false,
+      "textureId": ""
+    },
+    {
+      "name": "Overhaul Portal Glow",
+      "baseColor": [
+        1.0,
+        0.05999999865889549,
+        0.004000000189989805,
+        1.0
+      ],
+      "roughness": 0.2800000011920929,
+      "metallic": 0.0,
+      "emission": [
+        1.0,
+        0.05999999865889549,
+        0.004000000189989805,
+        1.0
+      ],
+      "emissionStrength": 1.4500000476837158,
+      "alpha": 1.0,
+      "transparent": false,
+      "textureId": ""
+    },
+    {
+      "name": "Overhaul Portal Membrane",
+      "baseColor": [
+        0.2199999988079071,
+        0.004000000189989805,
+        0.0020000000949949026,
+        1.0
+      ],
+      "roughness": 0.2800000011920929,
+      "metallic": 0.0,
+      "emission": [
+        0.2199999988079071,
+        0.004000000189989805,
+        0.0020000000949949026,
+        1.0
+      ],
+      "emissionStrength": 0.75,
+      "alpha": 0.23999999463558197,
+      "transparent": true,
+      "textureId": ""
+    },
+    {
+      "name": "Overhaul Portal Volcanic Stone",
+      "baseColor": [
+        0.800000011920929,
+        0.800000011920929,
+        0.800000011920929,
+        1.0
+      ],
+      "roughness": 0.5,
+      "metallic": 0.0,
+      "emission": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "emissionStrength": 0.0,
+      "alpha": 1.0,
+      "transparent": false,
+      "textureId": "generated_weathered_rock"
+    },
+    {
+      "name": "Overhaul Ruin Banner",
+      "baseColor": [
+        0.800000011920929,
+        0.800000011920929,
+        0.800000011920929,
+        1.0
+      ],
+      "roughness": 0.5,
+      "metallic": 0.0,
+      "emission": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "emissionStrength": 0.0,
+      "alpha": 1.0,
+      "transparent": false,
+      "textureId": ""
+    },
+    {
+      "name": "Overhaul Tarnished Bronze",
+      "baseColor": [
+        0.800000011920929,
+        0.800000011920929,
+        0.800000011920929,
+        1.0
+      ],
+      "roughness": 0.5,
+      "metallic": 0.8199999928474426,
+      "emission": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "emissionStrength": 0.0,
+      "alpha": 1.0,
+      "transparent": false,
+      "textureId": ""
+    },
+    {
+      "name": "Overhaul Weathered Stone",
+      "baseColor": [
+        0.800000011920929,
+        0.800000011920929,
+        0.800000011920929,
+        1.0
+      ],
+      "roughness": 0.5,
+      "metallic": 0.0,
+      "emission": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "emissionStrength": 0.0,
+      "alpha": 1.0,
+      "transparent": false,
+      "textureId": "generated_weathered_rock"
+    },
+    {
+      "name": "Overhaul Worn Stone Edge",
+      "baseColor": [
+        0.800000011920929,
+        0.800000011920929,
+        0.800000011920929,
+        1.0
+      ],
+      "roughness": 0.5,
+      "metallic": 0.0,
+      "emission": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "emissionStrength": 0.0,
+      "alpha": 1.0,
+      "transparent": false,
+      "textureId": "generated_weathered_rock"
+    },
+    {
+      "name": "Production Palm Bark",
+      "baseColor": [
+        0.800000011920929,
+        0.800000011920929,
+        0.800000011920929,
+        1.0
+      ],
+      "roughness": 0.7799999713897705,
+      "metallic": 0.0,
+      "emission": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "emissionStrength": 0.0,
+      "alpha": 1.0,
+      "transparent": false,
+      "textureId": "generated_palm_bark"
+    },
+    {
+      "name": "Production Shrub Branch",
+      "baseColor": [
+        0.10499999672174454,
+        0.03500000014901161,
+        0.012000000104308128,
+        1.0
+      ],
+      "roughness": 0.8199999928474426,
+      "metallic": 0.0,
+      "emission": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "emissionStrength": 0.0,
+      "alpha": 1.0,
+      "transparent": false,
+      "textureId": ""
+    },
+    {
+      "name": "Production Shrub Leaf Dark",
+      "baseColor": [
+        0.017999999225139618,
+        0.11500000208616257,
+        0.02800000086426735,
+        1.0
+      ],
+      "roughness": 0.6399999856948853,
+      "metallic": 0.0,
+      "emission": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "emissionStrength": 0.0,
+      "alpha": 1.0,
+      "transparent": false,
+      "textureId": ""
+    },
+    {
+      "name": "Production Shrub Leaf Light",
+      "baseColor": [
+        0.07000000029802322,
+        0.30000001192092896,
+        0.07500000298023224,
+        1.0
+      ],
+      "roughness": 0.5699999928474426,
+      "metallic": 0.0,
+      "emission": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "emissionStrength": 0.0,
+      "alpha": 1.0,
+      "transparent": false,
+      "textureId": ""
+    },
+    {
+      "name": "Production Shrub Leaf Mid",
+      "baseColor": [
+        0.03500000014901161,
+        0.20499999821186066,
+        0.052000001072883606,
+        1.0
+      ],
+      "roughness": 0.6000000238418579,
+      "metallic": 0.0,
+      "emission": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ],
+      "emissionStrength": 0.0,
+      "alpha": 1.0,
+      "transparent": false,
+      "textureId": ""
+    }
+  ]
+}

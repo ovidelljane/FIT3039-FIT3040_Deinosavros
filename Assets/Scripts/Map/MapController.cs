@@ -28,6 +28,7 @@ public sealed class MapController : MonoBehaviour
     private MapEncounterNode selectedNode;
     private MapCardView pendingSacrificeView;
     private MapCardView detailedCardView;
+    private MapPlayerStatusPanel playerStatusPanel;
     private bool loading;
 
     private void Start()
@@ -36,6 +37,7 @@ public sealed class MapController : MonoBehaviour
         {
             runSession = RunSession.Instance;
         }
+        CreatePlayerStatusPanel();
         BuildDeckView();
         enterBattleButton.interactable = false;
         confirmationModal.SetActive(false);
@@ -44,6 +46,38 @@ public sealed class MapController : MonoBehaviour
         cancelSacrificeButton.onClick.AddListener(CancelSacrifice);
         enterBattleButton.onClick.AddListener(EnterBattle);
         RefreshHud();
+    }
+
+    private void CreatePlayerStatusPanel()
+    {
+        if (deckContainer == null || runSession == null)
+        {
+            return;
+        }
+
+        RectTransform deckRect = deckContainer as RectTransform;
+        Transform panelParent = deckContainer.parent;
+        if (deckRect == null || panelParent == null)
+        {
+            return;
+        }
+
+        playerStatusPanel = panelParent.GetComponentInChildren<MapPlayerStatusPanel>(true);
+        if (playerStatusPanel == null)
+        {
+            playerStatusPanel = MapPlayerStatusPanel.Create(panelParent);
+        }
+        playerStatusPanel.Initialize(runSession);
+
+        Vector2 offsetMin = deckRect.offsetMin;
+        offsetMin.x = Mathf.Max(offsetMin.x, 245f);
+        deckRect.offsetMin = offsetMin;
+
+        HorizontalLayoutGroup deckLayout = deckContainer.GetComponent<HorizontalLayoutGroup>();
+        if (deckLayout != null)
+        {
+            deckLayout.childAlignment = TextAnchor.MiddleLeft;
+        }
     }
 
     public void SetCardDetail(MapCardView cardView, bool visible)
