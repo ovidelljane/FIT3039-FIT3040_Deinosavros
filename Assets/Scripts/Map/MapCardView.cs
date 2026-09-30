@@ -108,9 +108,14 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
     {
         EnsureVisualTransform();
         controller = owner;
-        if (cardDefinition != null)
+        if (cardDefinition != null && cardDefinition != definition)
         {
             definition = cardDefinition;
+            // Views cloned from another card still hold that card's art, so rebuild it.
+            if (combatFrontInstance != null) Destroy(combatFrontInstance);
+            if (backInstance != null) Destroy(backInstance);
+            combatFrontInstance = null;
+            backInstance = null;
         }
         initialized = true;
         pointerHovered = false;
@@ -222,19 +227,21 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
         }
         target.SetActive(true);
 
+        foreach (TMP_Text combatLabel in target.GetComponentsInChildren<TMP_Text>(true))
+        {
+            combatLabel.text = definition.combatEffectText;
+        }
+
+        // After the labels above, so the card's cost number isn't overwritten with effect text.
         foreach (BuffCards combatCard in target.GetComponentsInChildren<BuffCards>(true))
         {
             combatCard.enabled = false;
+            combatCard.ApplyArt(definition);
         }
 
         foreach (Graphic graphic in target.GetComponentsInChildren<Graphic>(true))
         {
             graphic.raycastTarget = false;
-        }
-
-        foreach (TMP_Text combatLabel in target.GetComponentsInChildren<TMP_Text>(true))
-        {
-            combatLabel.text = definition.combatEffectText;
         }
 
         RectTransform combatRect = target.GetComponent<RectTransform>();

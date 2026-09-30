@@ -16,6 +16,7 @@ public class BattleScript : MonoBehaviour
     public float maxElixir = 10f;
     public float elixirRegen = 0.05f;
     public int shield = 0;
+    public int hitsPerAttack = 1;
 
     private int _currentTickCount;
     private float _attackTick;
@@ -37,23 +38,35 @@ public class BattleScript : MonoBehaviour
         
         if (gameObject.CompareTag("Player"))
         {
-            _OpponentList.AddRange(GameObject.FindGameObjectsWithTag("Enemy"));
+            _OpponentList.AddRange(FindFighters("Enemy").Select(fighter => fighter.gameObject));
             Debug.unityLogger.Log("Player Opponent List", _OpponentList);
         }
         else
         {
-            _OpponentList.AddRange(GameObject.FindGameObjectsWithTag("Player"));
+            _OpponentList.AddRange(FindFighters("Player").Select(fighter => fighter.gameObject));
             Debug.unityLogger.Log("Enemy Opponent List", _OpponentList);
         }
 
         TimeTickSystem.OnTick += HandleTick;
-        
+
+    }
+
+    // Shadow copies share the Player/Enemy tag but have their BattleScript disabled, so skip them.
+    public static List<BattleScript> FindFighters(string tag)
+    {
+        var fighters = new List<BattleScript>();
+        foreach (GameObject candidate in GameObject.FindGameObjectsWithTag(tag))
+        {
+            BattleScript fighter = candidate.GetComponent<BattleScript>();
+            if (fighter != null && fighter.enabled) fighters.Add(fighter);
+        }
+        return fighters;
     }
     
     private void HandleTick()
     {
         _currentTickCount++;
-        _attackTick = attackSpd * 10f;
+        _attackTick = Mathf.Max(1f, attackSpd * 10f);
 
         elixir = Mathf.Min(elixir + elixirRegen, maxElixir);
 
@@ -61,7 +74,7 @@ public class BattleScript : MonoBehaviour
         {
             Attack();
             StartCoroutine(Bounce());
-            audioSource.Play();
+            if (audioSource != null) audioSource.Play();
             _currentTickCount = 0;
         }
 
@@ -102,25 +115,31 @@ public class BattleScript : MonoBehaviour
     {
         GameObject opponent = _OpponentList[0];
         opponentScript = opponent.GetComponent<BattleScript>();
-        if (opponentScript.shield > 0)
+        for (int i = 0; i < Mathf.Max(1, hitsPerAttack); i++)
         {
-            if (opponentScript.shield <= attackDmg)
+            opponentScript.TakeDamage(attackDmg);
+        }
+    }
+
+    public void TakeDamage(int damage)
+    {
+        if (shield > 0)
+        {
+            if (shield <= damage)
             {
-                int tempAttack = attackDmg - opponentScript.shield;
-                opponentScript.shield = 0;
-                opponentScript.health -= tempAttack;
+                int tempAttack = damage - shield;
+                shield = 0;
+                health -= tempAttack;
             }
             else
             {
-                opponentScript.shield -= attackDmg;
+                shield -= damage;
             }
         }
         else
         {
-            opponentScript.health -= attackDmg;
+            health -= damage;
         }
-
-        
     }
 
     private int enemyListManager()
