@@ -19,7 +19,7 @@ public sealed class MapPlayerStatusPanel : MonoBehaviour
     private int displayedHealth = int.MinValue;
     private int displayedMaxHealth = int.MinValue;
     private int displayedDamage = int.MinValue;
-    private int displayedAttackSpeed = int.MinValue;
+    private float displayedAttackSpeed = float.NaN;
     private int displayedShield = int.MinValue;
     private float displayedElixir = float.NaN;
     private float displayedMaxElixir = float.NaN;
@@ -140,7 +140,7 @@ public sealed class MapPlayerStatusPanel : MonoBehaviour
         if (force || displayedAttackSpeed != runSession.PlayerAttackSpeed)
         {
             displayedAttackSpeed = runSession.PlayerAttackSpeed;
-            attackSpeedValue.text = $"{displayedAttackSpeed}s";
+            attackSpeedValue.text = $"{displayedAttackSpeed:0.##}s";
         }
         if (force || displayedShield != runSession.PlayerShield)
         {

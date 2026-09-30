@@ -33,6 +33,7 @@ public sealed class CardDefinition : ScriptableObject
 [Serializable]
 public sealed class RunCardInstance
 {
+    public string instanceId = Guid.NewGuid().ToString("N");
     public CardDefinition definition;
     public bool sacrificed;
 }

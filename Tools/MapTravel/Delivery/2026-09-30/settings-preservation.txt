@@ -1,0 +1,6 @@
+PASS: the final serialized contents of the four settings files match their captured pre-build contents, including existing user changes.
+ProjectSettings/ProjectSettings.asset
+ProjectSettings/GraphicsSettings.asset
+ProjectSettings/UnityConnectSettings.asset
+Assets/Settings/UniversalRenderPipelineGlobalSettings.asset
+Unity build-generated batching, shader build settings, cloud-enabled flag, preloaded-asset entry and runtime graphics-list changes were reverted to that snapshot, not to Git HEAD.

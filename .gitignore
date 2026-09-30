@@ -6,6 +6,20 @@
 # See: https://github.com/github/gitignore/tree/main/Global
 #
 .utmp/
+
+# Generated map captures, diagnostics and frame recordings. Keep concise test reports.
+/Tools/MapReview/Delivery/**/*.png
+/Tools/MapReview/Delivery/**/*.jpg
+/Tools/MapReview/Delivery/**/*.mp4
+/Tools/MapReview/Delivery/**/*.json
+/Tools/MapReview/Delivery/**/*.csv
+/Tools/MapReview/Delivery/**/Clip/
+/Tools/MapTravel/Delivery/**/*.png
+/Tools/MapTravel/Delivery/**/*.jpg
+/Tools/MapTravel/Delivery/**/*.mp4
+/Tools/MapTravel/Delivery/**/*.json
+/Tools/MapTravel/Delivery/**/*.csv
+/Tools/MapTravel/Delivery/**/Clip/
 /[Ll]ibrary/
 /[Tt]emp/
 /[Oo]bj/

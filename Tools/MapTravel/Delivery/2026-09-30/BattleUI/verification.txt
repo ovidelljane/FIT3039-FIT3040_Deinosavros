@@ -1,0 +1,219 @@
+PASS: Formal Map uses its production controller and Travel view
+GPU: NVIDIA GeForce RTX 5060 Laptop GPU; CPU: AMD Ryzen 9 8945HX with Radeon Graphics 
+Development standalone player; uncapped; process-only synthetic input, no OS pointer operations.
+PASS: Formal Map contains fourteen nodes and nineteen authored roads
+PASS: Review UI does not replace the formal card layout
+PASS: Only the start node is initially available
+PASS: The isolated pointer event stream delivers its click position
+PASS: Battle waits for both the active player and its complete HUD
+PASS: HP, damage, fractional attack interval, shield and Elixir are applied before play
+Captured: battle-initial-frame (1920x1080)
+PASS: The HUD is owned by the battle scene and stays active after transition
+PASS: The hand contains the expected active run cards
+PASS: Repeated hand initialization cannot duplicate cards
+PASS: Each live card is visible in the combat canvas and bound to the real player
+PASS: Each live card belongs to the unsacrificed deck
+PASS: A card click target is inside the game view
+PASS: Each live card is visible in the combat canvas and bound to the real player
+PASS: Each live card belongs to the unsacrificed deck
+PASS: A card click target is inside the game view
+PASS: Each live card is visible in the combat canvas and bound to the real player
+PASS: Each live card belongs to the unsacrificed deck
+PASS: A card click target is inside the game view
+PASS: Each live card is visible in the combat canvas and bound to the real player
+PASS: Each live card belongs to the unsacrificed deck
+PASS: A card click target is inside the game view
+PASS: Player and all three active enemies have health displays
+PASS: A health label is on the battle canvas, not the fading curtain: Player
+PASS: The status label contains rendered glyphs
+PASS: A health label is on the battle canvas, not the fading curtain: Enemy (1)
+PASS: The status label contains rendered glyphs
+PASS: A health label is on the battle canvas, not the fading curtain: Enemy (2)
+PASS: The status label contains rendered glyphs
+PASS: A health label is on the battle canvas, not the fading curtain: Enemy
+PASS: The status label contains rendered glyphs
+PASS: The player attribute block has an explicit battle canvas
+PASS: The status label contains rendered glyphs
+PASS: The hidden transition layer owns no combat text
+PASS: There is exactly one battle deck manager
+PASS: The visible statistics show transferred data rather than battle prefab defaults
+PASS: The HUD is owned by the battle scene and stays active after transition
+PASS: The hand contains the expected active run cards
+PASS: Repeated hand initialization cannot duplicate cards
+PASS: Each live card is visible in the combat canvas and bound to the real player
+PASS: Each live card belongs to the unsacrificed deck
+PASS: A card click target is inside the game view
+PASS: Each live card is visible in the combat canvas and bound to the real player
+PASS: Each live card belongs to the unsacrificed deck
+PASS: A card click target is inside the game view
+PASS: Each live card is visible in the combat canvas and bound to the real player
+PASS: Each live card belongs to the unsacrificed deck
+PASS: A card click target is inside the game view
+PASS: Each live card is visible in the combat canvas and bound to the real player
+PASS: Each live card belongs to the unsacrificed deck
+PASS: A card click target is inside the game view
+PASS: Player and all three active enemies have health displays
+PASS: A health label is on the battle canvas, not the fading curtain: Player
+PASS: The status label contains rendered glyphs
+PASS: A health label is on the battle canvas, not the fading curtain: Enemy (1)
+PASS: The status label contains rendered glyphs
+PASS: A health label is on the battle canvas, not the fading curtain: Enemy (2)
+PASS: The status label contains rendered glyphs
+PASS: A health label is on the battle canvas, not the fading curtain: Enemy
+PASS: The status label contains rendered glyphs
+PASS: The player attribute block has an explicit battle canvas
+PASS: The status label contains rendered glyphs
+PASS: The hidden transition layer owns no combat text
+PASS: There is exactly one battle deck manager
+Captured: battle-1920x1080-ready (1920x1080)
+PASS: The HUD is owned by the battle scene and stays active after transition
+PASS: The hand contains the expected active run cards
+PASS: Repeated hand initialization cannot duplicate cards
+PASS: Each live card is visible in the combat canvas and bound to the real player
+PASS: Each live card belongs to the unsacrificed deck
+PASS: A card click target is inside the game view
+PASS: Each live card is visible in the combat canvas and bound to the real player
+PASS: Each live card belongs to the unsacrificed deck
+PASS: A card click target is inside the game view
+PASS: Each live card is visible in the combat canvas and bound to the real player
+PASS: Each live card belongs to the unsacrificed deck
+PASS: A card click target is inside the game view
+PASS: Each live card is visible in the combat canvas and bound to the real player
+PASS: Each live card belongs to the unsacrificed deck
+PASS: A card click target is inside the game view
+PASS: Player and all three active enemies have health displays
+PASS: A health label is on the battle canvas, not the fading curtain: Player
+PASS: The status label contains rendered glyphs
+PASS: A health label is on the battle canvas, not the fading curtain: Enemy (1)
+PASS: The status label contains rendered glyphs
+PASS: A health label is on the battle canvas, not the fading curtain: Enemy (2)
+PASS: The status label contains rendered glyphs
+PASS: A health label is on the battle canvas, not the fading curtain: Enemy
+PASS: The status label contains rendered glyphs
+PASS: The player attribute block has an explicit battle canvas
+PASS: The status label contains rendered glyphs
+PASS: The hidden transition layer owns no combat text
+PASS: There is exactly one battle deck manager
+Captured: battle-2560x1440-ready (2560x1440)
+PASS: The HUD is owned by the battle scene and stays active after transition
+PASS: The hand contains the expected active run cards
+PASS: Repeated hand initialization cannot duplicate cards
+PASS: Each live card is visible in the combat canvas and bound to the real player
+PASS: Each live card belongs to the unsacrificed deck
+PASS: A card click target is inside the game view
+PASS: Each live card is visible in the combat canvas and bound to the real player
+PASS: Each live card belongs to the unsacrificed deck
+PASS: A card click target is inside the game view
+PASS: Each live card is visible in the combat canvas and bound to the real player
+PASS: Each live card belongs to the unsacrificed deck
+PASS: A card click target is inside the game view
+PASS: Each live card is visible in the combat canvas and bound to the real player
+PASS: Each live card belongs to the unsacrificed deck
+PASS: A card click target is inside the game view
+PASS: Player and all three active enemies have health displays
+PASS: A health label is on the battle canvas, not the fading curtain: Player
+PASS: The status label contains rendered glyphs
+PASS: A health label is on the battle canvas, not the fading curtain: Enemy (1)
+PASS: The status label contains rendered glyphs
+PASS: A health label is on the battle canvas, not the fading curtain: Enemy (2)
+PASS: The status label contains rendered glyphs
+PASS: A health label is on the battle canvas, not the fading curtain: Enemy
+PASS: The status label contains rendered glyphs
+PASS: The player attribute block has an explicit battle canvas
+PASS: The status label contains rendered glyphs
+PASS: The hidden transition layer owns no combat text
+PASS: There is exactly one battle deck manager
+Captured: battle-1920x1200-ready (1920x1200)
+PASS: The isolated pointer event stream delivers its click position
+PASS: A real hand click applies shield, pays its existing cost and removes only the played view
+Captured: battle-shield-played (1920x1080)
+PASS: The isolated pointer event stream delivers its click position
+PASS: Timed front-card effects target the active player, never the disabled shadow
+PASS: The isolated pointer event stream delivers its click position
+PASS: The existing timed attack-speed effect still uses the unchanged combat formula
+PASS: The existing timed effect expires normally
+PASS: Attack interval returns to its fractional value after the timed effect
+PASS: Played cards redraw on the existing tick delay without deleting the adventure deck
+Captured: battle-cards-redrawn (1920x1080)
+PASS: The real encounter contains enemies
+PASS: The existing victory event completes exactly one encounter
+PASS: Repeated victory return cannot advance twice
+No reward receiver is attached in the current battle scene; the map-side result bridge owns the return without creating rewards.
+PASS: The victory return loads Map without bypassing an existing reward receiver
+PASS: Victory return restores the exact completed node
+PASS: Only the completed node's explicit next layer opens
+PASS: The fire seed reappears at the completed platform
+PASS: Scene changes retain one session and one travel coordinator
+PASS: Map return preserves the actual fractional attack interval instead of writing one
+PASS: The unchanged Map status panel displays fractional seconds correctly
+PASS: One explicit offering is staged before the next battle
+PASS: The isolated pointer event stream delivers its click position
+PASS: The next level initializes a fresh hand and state HUD
+PASS: The HUD is owned by the battle scene and stays active after transition
+PASS: The hand contains the expected active run cards
+PASS: Repeated hand initialization cannot duplicate cards
+PASS: Each live card is visible in the combat canvas and bound to the real player
+PASS: Each live card belongs to the unsacrificed deck
+PASS: A card click target is inside the game view
+PASS: Each live card is visible in the combat canvas and bound to the real player
+PASS: Each live card belongs to the unsacrificed deck
+PASS: A card click target is inside the game view
+PASS: Each live card is visible in the combat canvas and bound to the real player
+PASS: Each live card belongs to the unsacrificed deck
+PASS: A card click target is inside the game view
+PASS: Player and all three active enemies have health displays
+PASS: A health label is on the battle canvas, not the fading curtain: Enemy (1)
+PASS: The status label contains rendered glyphs
+PASS: A health label is on the battle canvas, not the fading curtain: Player
+PASS: The status label contains rendered glyphs
+PASS: A health label is on the battle canvas, not the fading curtain: Enemy (2)
+PASS: The status label contains rendered glyphs
+PASS: A health label is on the battle canvas, not the fading curtain: Enemy
+PASS: The status label contains rendered glyphs
+PASS: The player attribute block has an explicit battle canvas
+PASS: The status label contains rendered glyphs
+PASS: The hidden transition layer owns no combat text
+PASS: There is exactly one battle deck manager
+PASS: The next encounter inherits all returned player values exactly
+PASS: Only the sacrificed definition is absent from the next battle hand
+PASS: The existing enemy-health offering is applied after readiness: Enemy (1)
+PASS: The existing enemy-health offering is applied after readiness: Enemy (2)
+PASS: The existing enemy-health offering is applied after readiness: Enemy
+PASS: Duplicate readiness cannot reset HP or apply the offering twice
+Captured: battle-next-level-offering (1920x1080)
+PASS: The real encounter contains enemies
+PASS: The existing victory event completes exactly one encounter
+PASS: Repeated victory return cannot advance twice
+No reward receiver is attached in the current battle scene; the map-side result bridge owns the return without creating rewards.
+PASS: The victory return loads Map without bypassing an existing reward receiver
+PASS: Victory return restores the exact completed node
+PASS: Only the completed node's explicit next layer opens
+PASS: The fire seed reappears at the completed platform
+PASS: Scene changes retain one session and one travel coordinator
+Captured: 05-victory-return (1920x1080)
+PASS: An offering can be staged before a failed departure
+PASS: Missing encounter scene fails before departure
+PASS: Missing-scene failure preserves origin and the offering
+PASS: Timeout test reaches the hidden receiver
+PASS: Five-second unready receiver recovers to Map
+PASS: Readiness failure neither commits movement nor consumes the staged offering
+PASS: Failed-entry return restores card and map interaction
+Captured: 06-ready-timeout-recovered (1920x1080)
+PASS: Delayed receiver scene activates
+PASS: sceneLoaded does not commit or spend effects before receiver initialization
+PASS: Delayed valid receiver acknowledges after initialization
+PASS: The staged offering is consumed once after readiness
+PASS: Duplicate receiver initialization cannot repeat an offering effect
+Existing offering formula retained: ImprovePlayerAttackSpeed, magnitude 1.
+PASS: The real encounter contains enemies
+PASS: The existing victory event completes exactly one encounter
+PASS: Repeated victory return cannot advance twice
+No reward receiver is attached in the current battle scene; the map-side result bridge owns the return without creating rewards.
+PASS: The victory return loads Map without bypassing an existing reward receiver
+PASS: Victory return restores the exact completed node
+PASS: Only the completed node's explicit next layer opens
+PASS: The fire seed reappears at the completed platform
+PASS: Scene changes retain one session and one travel coordinator
+PASS: A normal victory restores one offering allowance
+Captured: battle-ui-final-return (1920x1080)
+Runtime errors: 0

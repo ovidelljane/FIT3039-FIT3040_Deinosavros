@@ -44,7 +44,9 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
     private bool targetBack;
     private bool initialized;
     private bool pointerHovered;
+    private bool interactionLocked;
     public CardDefinition Definition => definition;
+    public string InstanceId { get; private set; }
 
     private void Awake()
     {
@@ -104,15 +106,17 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
         visualTransform.localScale = Vector3.Lerp(visualTransform.localScale, targetScale, scaleBlend);
     }
 
-    public void Initialize(MapController owner, CardDefinition cardDefinition)
+    public void Initialize(MapController owner, CardDefinition cardDefinition, string instanceId = null)
     {
         EnsureVisualTransform();
         controller = owner;
+        InstanceId = instanceId;
         if (cardDefinition != null)
         {
             definition = cardDefinition;
         }
         initialized = true;
+        interactionLocked = false;
         pointerHovered = false;
         targetBack = false;
         showingBack = false;
@@ -135,6 +139,7 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
         backFace.SetActive(false);
         selectionGlow.SetActive(false);
         sacrificedOverlay.SetActive(false);
+        sacrificeButton.interactable = true;
         sacrificeButton.onClick.RemoveAllListeners();
         sacrificeButton.onClick.AddListener(() => controller.RequestSacrifice(this));
     }
@@ -252,6 +257,7 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
 
     public void OnPointerEnter(PointerEventData eventData)
     {
+        if (interactionLocked || controller == null || !controller.CanInteract) return;
         if (!initialized) return;
         pointerHovered = true;
         targetBack = true;
@@ -265,6 +271,7 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
 
     public void OnPointerMove(PointerEventData eventData)
     {
+        if (interactionLocked || controller == null || !controller.CanInteract) return;
         if (!initialized || !pointerHovered)
         {
             return;
@@ -292,6 +299,14 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
     {
         sacrificedOverlay.SetActive(true);
         sacrificeButton.interactable = false;
+    }
+    public void SetInteractionLocked(bool value)
+    {
+        interactionLocked = value;
+        sacrificeButton.interactable = !value && !sacrificedOverlay.activeSelf;
+        if (!value) return;
+        pointerHovered = false; targetBack = false; targetTilt = Vector2.zero; targetRoll = 0;
+        StopDetailHoverCountdown(); selectionGlow.SetActive(false); sacrificeButton.interactable = false;
     }
 
     private void SetFace(bool backVisible)

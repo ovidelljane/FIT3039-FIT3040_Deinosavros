@@ -286,6 +286,7 @@ MonoBehaviour:
   yOffset: 2
   fontSize: 36
   displayName: Enemy
+  battleCanvas: {fileID: 1785733530}
 --- !u!114 &274178450
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -948,6 +949,7 @@ MonoBehaviour:
   yOffset: 2
   fontSize: 36
   displayName: Enemy
+  battleCanvas: {fileID: 1785733530}
 --- !u!114 &541914417
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1258,13 +1260,14 @@ GameObject:
   m_Component:
   - component: {fileID: 668654554}
   - component: {fileID: 668654555}
+  - component: {fileID: 668654556}
   m_Layer: 5
   m_Name: CardHolder
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &668654554
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1315,6 +1318,28 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
+--- !u!114 &668654556
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 668654553}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 209abd20365b232bd0531033969e0411, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DeckManager
+  maxHandSize: 5
+  drawDelayTicks: 20
+  handContainer: {fileID: 668654554}
+  fallbackCardPrefab: {fileID: 0}
+  legacyCards:
+  - {fileID: 1943938398}
+  - {fileID: 2097884703}
+  - {fileID: 1530160058}
+  - {fileID: 108555341}
+  - {fileID: 1005885224}
 --- !u!1 &681383772
 GameObject:
   m_ObjectHideFlags: 19
@@ -1514,6 +1539,7 @@ MonoBehaviour:
   yOffset: 2
   fontSize: 36
   displayName: Enemy
+  battleCanvas: {fileID: 1785733530}
 --- !u!82 &685612096
 AudioSource:
   m_ObjectHideFlags: 0
@@ -1648,6 +1674,7 @@ MonoBehaviour:
   yOffset: 2
   fontSize: 36
   displayName: Enemy
+  battleCanvas: {fileID: 1785733530}
 --- !u!114 &737925851
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2016,6 +2043,7 @@ MonoBehaviour:
   yOffset: 8
   fontSize: 36
   displayName: Chris Pratt
+  battleCanvas: {fileID: 1785733530}
 --- !u!114 &780853732
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2030,6 +2058,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TempStatDisplay
   xOffset: 8
   fontSize: 36
+  battleCanvas: {fileID: 1785733530}
 --- !u!82 &780853733
 AudioSource:
   m_ObjectHideFlags: 0
@@ -2461,6 +2490,7 @@ MonoBehaviour:
   yOffset: 2
   fontSize: 36
   displayName: Enemy
+  battleCanvas: {fileID: 1785733530}
 --- !u!114 &1079615868
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3435,6 +3465,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TempStatDisplay
   xOffset: 8
   fontSize: 36
+  battleCanvas: {fileID: 1785733530}
 --- !u!114 &1571391264
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3450,6 +3481,7 @@ MonoBehaviour:
   yOffset: 8
   fontSize: 36
   displayName: Chris Pratt
+  battleCanvas: {fileID: 1785733530}
 --- !u!114 &1571391265
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3563,6 +3595,7 @@ GameObject:
   - component: {fileID: 1785733530}
   - component: {fileID: 1785733529}
   - component: {fileID: 1785733528}
+  - component: {fileID: 1785733532}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -3654,6 +3687,26 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!114 &1785733532
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1785733527}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4b9565ff92de1fb4ab5800c37e914b53, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BattleHud
+  targetCanvas: {fileID: 1785733530}
+  deck: {fileID: 668654556}
+  healthLabels:
+  - {fileID: 685612095}
+  - {fileID: 274178449}
+  - {fileID: 1079615867}
+  - {fileID: 780853731}
+  playerStats: {fileID: 780853732}
 --- !u!1 &1900195296
 GameObject:
   m_ObjectHideFlags: 0
@@ -4293,6 +4346,7 @@ MonoBehaviour:
   yOffset: 2
   fontSize: 36
   displayName: Enemy
+  battleCanvas: {fileID: 1785733530}
 --- !u!114 &2051857146
 MonoBehaviour:
   m_ObjectHideFlags: 0

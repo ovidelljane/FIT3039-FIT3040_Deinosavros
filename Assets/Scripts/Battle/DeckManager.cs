@@ -7,11 +7,16 @@ public sealed class DeckManager : MonoBehaviour
     [SerializeField] private int drawDelayTicks = 20;
     [SerializeField] private Transform handContainer;
     [SerializeField] private GameObject fallbackCardPrefab;
+    [SerializeField] private GameObject[] legacyCards;
 
     private readonly List<CardDefinition> drawPile = new();
     private readonly List<CardDefinition> discardPile = new();
     private readonly List<BuffCards> hand = new();
     private readonly List<int> pendingDrawTicksRemaining = new();
+    private RunSession initializedSession;
+    public BattleScript Player { get; private set; }
+    public bool IsReady { get; private set; }
+    public IReadOnlyList<BuffCards> Hand => hand;
 
     private void OnEnable()
     {
@@ -25,11 +30,29 @@ public sealed class DeckManager : MonoBehaviour
 
     private void Start()
     {
-        drawPile.AddRange(Shuffle(RunSession.Instance.GetActiveDeck()));
+        if (RunSession.Instance != null) TryInitialize(RunSession.Instance, BattleHud.FindPlayer(gameObject.scene));
+    }
+
+    public bool TryInitialize(RunSession session, BattleScript player)
+    {
+        if (IsReady) return initializedSession == session && Player == player;
+        if (session == null || player == null || !player.isActiveAndEnabled || handContainer == null ||
+            !handContainer.gameObject.activeInHierarchy || player.gameObject.scene != gameObject.scene) return false;
+        var definitions = session.GetActiveDeck();
+        foreach (var definition in definitions)
+        {
+            var prefab = definition.combatPrefab != null ? definition.combatPrefab : fallbackCardPrefab;
+            if (prefab == null || prefab.GetComponent<BuffCards>() == null) return false;
+        }
+        initializedSession = session; Player = player;
+        foreach (var legacy in legacyCards ?? System.Array.Empty<GameObject>()) if (legacy != null) legacy.SetActive(false);
+        drawPile.AddRange(Shuffle(definitions));
         for (int i = 0; i < maxHandSize; i++)
         {
             DrawOneCard();
         }
+        IsReady = hand.Count == Mathf.Min(maxHandSize, definitions.Count);
+        return IsReady;
     }
 
     private void HandleTick()
@@ -47,6 +70,7 @@ public sealed class DeckManager : MonoBehaviour
 
     public void OnCardPlayed(BuffCards playedView, CardDefinition definition)
     {
+        if (!hand.Contains(playedView)) return;
         if (definition != null) discardPile.Add(definition);
         hand.Remove(playedView);
         Destroy(playedView.gameObject);

@@ -43,7 +43,12 @@ public sealed class RewardScreenController : MonoBehaviour
 
     private void ChooseCard(CardDefinition definition)
     {
-        RunSession.Instance.AddCard(definition);
+        if (!RunSession.Instance.TryAddCard(definition, out _))
+        {
+            var text = skipButton != null ? skipButton.GetComponentInChildren<TMPro.TMP_Text>() : null;
+            if (text != null) text.text = "Capacity full - Skip reward";
+            return;
+        }
         ReturnToMap();
     }
 

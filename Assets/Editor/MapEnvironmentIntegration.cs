@@ -13,7 +13,7 @@ using Object = UnityEngine.Object;
 [InitializeOnLoad]
 public static class MapEnvironmentIntegration
 {
-    private const int IntegrationRevision = 19;
+    private const int IntegrationRevision = 20;
     private const string ScenePath = "Assets/Scenes/Map.unity";
     private const string AssetRoot = "Assets/Art/MapEnvironment";
     private const string ModelPath = AssetRoot + "/MapEnvironment.fbx";
@@ -29,10 +29,10 @@ public static class MapEnvironmentIntegration
 
     private static readonly Dictionary<string, string> TexturePaths = new()
     {
-        { "generated_dark_wood", AssetRoot + "/Textures/generated_dark_wood_albedo.png" },
-        { "generated_flagstone", AssetRoot + "/Textures/generated_flagstone_albedo.png" },
-        { "generated_palm_bark", AssetRoot + "/Textures/generated_palm_bark_albedo.png" },
-        { "generated_weathered_rock", AssetRoot + "/Textures/generated_weathered_rock_albedo.png" }
+        { "generated_dark_wood", AssetRoot + "/Textures/dark_wood_albedo.png" },
+        { "generated_flagstone", AssetRoot + "/Textures/flagstone_albedo.png" },
+        { "generated_palm_bark", AssetRoot + "/Textures/palm_bark_albedo.png" },
+        { "generated_weathered_rock", AssetRoot + "/Textures/weathered_rock_albedo.png" }
     };
 
     static MapEnvironmentIntegration()
@@ -44,6 +44,12 @@ public static class MapEnvironmentIntegration
     public static void IntegrateFromMenu()
     {
         Integrate();
+    }
+
+    [MenuItem("Tools/Map/Apply Visual Upgrade Only")]
+    public static void ApplyVisualsOnly()
+    {
+        MapVisualUpgrade.Upgrade();
     }
 
     private static void TryRunPendingIntegration()
@@ -95,6 +101,8 @@ public static class MapEnvironmentIntegration
             ConfigureLighting(environment.transform);
             Camera camera = ConfigureCamera(environment.transform);
             ConfigurePostProcessing(environment.transform, camera);
+            MapSurfaceTextureGenerator.Generate();
+            MapVisualUpgrade.Apply(MapVisualUpgrade.LoadProfile());
 
             EditorSceneManager.MarkSceneDirty(scene);
             EditorSceneManager.SaveScene(scene, ScenePath);
@@ -196,7 +204,8 @@ public static class MapEnvironmentIntegration
             }
             else
             {
-                material.shader = shader;
+                materials[record.name] = material;
+                continue;
             }
 
             Color baseColor = ResolveBaseColor(record);
@@ -770,10 +779,16 @@ public static class MapEnvironmentIntegration
 
     private static T GetOrAddVolumeComponent<T>(VolumeProfile profile) where T : VolumeComponent
     {
+        profile.components.RemoveAll(value => value == null);
         if (!profile.TryGet(out T component))
         {
             component = profile.Add<T>(true);
         }
+        if (!AssetDatabase.Contains(component))
+        {
+            AssetDatabase.AddObjectToAsset(component, profile);
+        }
+        EditorUtility.SetDirty(component);
         component.active = true;
         return component;
     }

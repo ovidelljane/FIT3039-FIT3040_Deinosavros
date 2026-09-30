@@ -1,0 +1,15 @@
+Rigid horizontal alignment derived from original anchors. Scale 1.00000012; yaw -180; position (4.490002, 0.000000, 5.330002). All 14 XZ centers align within 1 mm. Existing interaction heights are intentionally preserved.
+level_01_01: preserved vertical interaction offset -0.209999815
+level_02_01: preserved vertical interaction offset -2.38418579E-07
+level_02_02: preserved vertical interaction offset 7.15255737E-07
+level_03_01: preserved vertical interaction offset -2.38418579E-07
+level_03_02: preserved vertical interaction offset 1.49011612E-07
+level_03_03: preserved vertical interaction offset 7.15255737E-07
+level_04_01: preserved vertical interaction offset -2.38418579E-07
+level_04_02: preserved vertical interaction offset 7.15255737E-07
+level_05_01: preserved vertical interaction offset -2.38418579E-07
+level_05_02: preserved vertical interaction offset 7.15255737E-07
+level_06_01: preserved vertical interaction offset 0
+level_02_03: preserved vertical interaction offset 0
+level_04_03: preserved vertical interaction offset 0
+level_05_03: preserved vertical interaction offset 0

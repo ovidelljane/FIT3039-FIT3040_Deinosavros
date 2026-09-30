@@ -19,10 +19,12 @@ public class BuffCards : MonoBehaviour, IPointerClickHandler
 
     private DeckManager owner;
     private CardDefinition definition;
+    public CardDefinition Definition => definition;
+    public BattleScript Target => player;
 
     void Start()
     {
-        player = GameObject.FindWithTag("Player").GetComponent<BattleScript>();
+        if (player == null) player = owner != null ? owner.Player : BattleHud.FindPlayer(gameObject.scene);
         if (label) label.text = $"+{amount} {stat}";
     }
 
@@ -30,10 +32,13 @@ public class BuffCards : MonoBehaviour, IPointerClickHandler
     {
         owner = deckManager;
         definition = cardDefinition;
+        player = deckManager != null ? deckManager.Player : BattleHud.FindPlayer(gameObject.scene);
     }
 
     public void OnPointerClick(PointerEventData e)
     {
+        if (player == null || !player.isActiveAndEnabled || player.health <= 0 ||
+            (RunSession.Instance?.Progress != null && RunSession.Instance.Progress.Phase != MapProgressPhase.InEncounter)) return;
         if (player.elixir >= elixirCost)
         {
             if (stat != StatType.Elixir)
@@ -57,7 +62,8 @@ public class BuffCards : MonoBehaviour, IPointerClickHandler
                 case StatType.Elixir: player.elixir = Mathf.Min(player.elixir + amount, player.maxElixir); break;
                 
             }
-            AudioSource.PlayClipAtPoint(audioSource.clip, new Vector3(0f, 0f, 0f));
+            if (audioSource != null && audioSource.clip != null)
+                AudioSource.PlayClipAtPoint(audioSource.clip, new Vector3(0f, 0f, 0f));
 
             if (owner != null) owner.OnCardPlayed(this, definition);
             else Destroy(gameObject);

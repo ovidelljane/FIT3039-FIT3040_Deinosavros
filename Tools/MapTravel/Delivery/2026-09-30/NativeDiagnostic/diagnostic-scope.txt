@@ -1,0 +1,3 @@
+This run enabled native allocation call stacks and the capture-only flag. It captured and visually traversed R01-R18, then exited; it is not acceptance evidence for R19 or battle lifecycle behavior.
+The generic traversal-summary line in verification.txt is not used to claim full coverage for this diagnostic subset. Full nineteen-route and battle acceptance is recorded separately in Runtime03/verification.txt.
+Native shutdown call stacks reproduce GPUResidentDrawer/InstanceCullingBatcher allocation warnings already present in pre-travel-renderer-player.log.

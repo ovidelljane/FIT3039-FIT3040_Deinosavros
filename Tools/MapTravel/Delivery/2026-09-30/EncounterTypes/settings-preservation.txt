@@ -1,0 +1,8 @@
+PASS: The following files match their exact captured contents at the beginning of this task, including existing user changes:
+ProjectSettings/ProjectSettings.asset
+ProjectSettings/GraphicsSettings.asset
+ProjectSettings/UnityConnectSettings.asset
+Assets/Settings/UniversalRenderPipelineGlobalSettings.asset
+
+Intentional change: EditorBuildSettings appends MapOpportunity and MapRecovery after the original SampleScene, Map and Deinosavros entries. Original order and enabled states remain intact.
+Formal Map differs from its start-of-task backup only by the encounterRouting reference. The battle scene is byte-identical to its start-of-task backup.

@@ -5,9 +5,13 @@ public sealed class BattleRunBridge : MonoBehaviour
 {
     [SerializeField] private string battleSceneName = "Deinosavros";
     private BattleScript trackedPlayer;
+    private string initializedEncounterId;
 
     private void OnEnable()
     {
+        var owner = GetComponent<RunSession>();
+        if (owner != null && RunSession.Instance != null && RunSession.Instance != owner)
+        { enabled = false; return; }
         SceneManager.sceneLoaded += HandleSceneLoaded;
     }
 
@@ -35,25 +39,32 @@ public sealed class BattleRunBridge : MonoBehaviour
             trackedPlayer = null;
             return;
         }
+        // The travel coordinator confirms readiness after Start, before consuming an offering.
+        if (RunSession.Instance.Progress != null) { trackedPlayer = null; return; }
 
-<<<<<<< Updated upstream
-=======
-        HideSacrificedCard(RunSession.Instance);
-        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
-        trackedPlayer = playerObject != null ? playerObject.GetComponent<BattleScript>() : null;
+        trackedPlayer = BattleHud.FindPlayer(scene);
         RunSession.Instance.ApplyPlayerStats(trackedPlayer);
->>>>>>> Stashed changes
         if (RunSession.Instance.TryConsumePendingModifier(out PendingEncounterModifier modifier))
         {
             ApplyModifier(modifier);
         }
         RunSession.Instance.CapturePlayerStats(trackedPlayer);
     }
-
-    private static void ApplyModifier(PendingEncounterModifier modifier)
+    public bool InitializeConfirmedEncounter(string id, BattleScript player)
     {
-        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
-        BattleScript player = playerObject != null ? playerObject.GetComponent<BattleScript>() : null;
+        var session = RunSession.Instance;
+        if (session?.Progress?.Phase != MapProgressPhase.InEncounter || session.Progress.CurrentEncounter?.EncounterId != id ||
+            !session.Progress.CurrentEncounter.IsCombat || initializedEncounterId == id || player == null) return false;
+        initializedEncounterId = id; trackedPlayer = player;
+        session.ApplyPlayerStats(player);
+        if (session.TryConsumePendingModifier(out PendingEncounterModifier modifier)) ApplyModifier(modifier, player);
+        session.CapturePlayerStats(trackedPlayer); return true;
+    }
+
+    private static void ApplyModifier(PendingEncounterModifier modifier, BattleScript confirmedPlayer = null)
+    {
+        BattleScript player = confirmedPlayer;
+        if (player == null) player = MapTravelCoordinator.FindReadyPlayer(SceneManager.GetActiveScene().name);
 
         switch (modifier.effectType)
         {

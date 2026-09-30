@@ -1,0 +1,752 @@
+PASS: Formal Map uses its production controller and Travel view
+GPU: NVIDIA GeForce RTX 5060 Laptop GPU; CPU: AMD Ryzen 9 8945HX with Radeon Graphics 
+Development standalone player; uncapped; process-only synthetic input, no OS pointer operations.
+PASS: Formal Map contains fourteen nodes and nineteen authored roads
+PASS: Review UI does not replace the formal card layout
+PASS: Only the start node is initially available
+PASS: Production distribution is 7 battle, 3 opportunity, 3 recovery and 1 Boss
+PASS: Complete route contains two to four normal battles and six total visits
+PASS: Typed route is reachable: level_01_01
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Typed route is reachable: level_02_01
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Typed route is reachable: level_03_01
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Typed route is reachable: level_04_01
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Typed route is reachable: level_05_01
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Typed route is reachable: level_06_01
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Every typed route ends at Boss victory
+PASS: Complete route contains two to four normal battles and six total visits
+PASS: Typed route is reachable: level_01_01
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Typed route is reachable: level_02_01
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Typed route is reachable: level_03_01
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Typed route is reachable: level_04_03
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Typed route is reachable: level_05_03
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Typed route is reachable: level_06_01
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Every typed route ends at Boss victory
+PASS: Complete route contains two to four normal battles and six total visits
+PASS: Typed route is reachable: level_01_01
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Typed route is reachable: level_02_03
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Typed route is reachable: level_03_01
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Typed route is reachable: level_04_01
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Typed route is reachable: level_05_01
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Typed route is reachable: level_06_01
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Every typed route ends at Boss victory
+PASS: Complete route contains two to four normal battles and six total visits
+PASS: Typed route is reachable: level_01_01
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Typed route is reachable: level_02_03
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Typed route is reachable: level_03_01
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Typed route is reachable: level_04_03
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Typed route is reachable: level_05_03
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Typed route is reachable: level_06_01
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Every typed route ends at Boss victory
+PASS: Complete route contains two to four normal battles and six total visits
+PASS: Typed route is reachable: level_01_01
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Typed route is reachable: level_02_03
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Typed route is reachable: level_03_02
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Typed route is reachable: level_04_03
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Typed route is reachable: level_05_03
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Typed route is reachable: level_06_01
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Every typed route ends at Boss victory
+PASS: Complete route contains two to four normal battles and six total visits
+PASS: Typed route is reachable: level_01_01
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Typed route is reachable: level_02_03
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Typed route is reachable: level_03_02
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Typed route is reachable: level_04_02
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Typed route is reachable: level_05_02
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Typed route is reachable: level_06_01
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Every typed route ends at Boss victory
+PASS: Complete route contains two to four normal battles and six total visits
+PASS: Typed route is reachable: level_01_01
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Typed route is reachable: level_02_02
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Typed route is reachable: level_03_02
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Typed route is reachable: level_04_03
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Typed route is reachable: level_05_03
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Typed route is reachable: level_06_01
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Every typed route ends at Boss victory
+PASS: Complete route contains two to four normal battles and six total visits
+PASS: Typed route is reachable: level_01_01
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Typed route is reachable: level_02_02
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Typed route is reachable: level_03_02
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Typed route is reachable: level_04_02
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Typed route is reachable: level_05_02
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Typed route is reachable: level_06_01
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Every typed route ends at Boss victory
+PASS: Complete route contains two to four normal battles and six total visits
+PASS: Typed route is reachable: level_01_01
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Typed route is reachable: level_02_02
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Typed route is reachable: level_03_03
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Typed route is reachable: level_04_02
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Typed route is reachable: level_05_02
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Typed route is reachable: level_06_01
+PASS: Ticket kind matches its icon/catalog and graph Boss flag
+PASS: Typed route completes one destination
+PASS: A duplicate result cannot advance the typed route
+PASS: Every typed route ends at Boss victory
+PASS: All nine complete routes cover all nineteen connections
+PASS: Fixture target is reachable: level_01_01
+PASS: Fixture advances through explicit edges: level_01_01
+PASS: An offering is staged before recovery
+PASS: Fixture starts only an explicit available destination: level_02_02
+PASS: Recovery cannot consume a pending battle offering
+PASS: Noncombat cannot use the combat result API
+PASS: Recovery clamps and rounds correctly: 50/100 becomes 65
+PASS: Repeated recovery returns the same immutable result values without another heal
+PASS: An expired recovery identifier cannot heal
+PASS: Recovery completes once
+PASS: Recovery completion preserves the offering and its used allowance
+PASS: New run discards prior recovery and offering records
+PASS: Fixture target is reachable: level_01_01
+PASS: Fixture advances through explicit edges: level_01_01
+PASS: An offering is staged before recovery
+PASS: Fixture starts only an explicit available destination: level_02_02
+PASS: Recovery cannot consume a pending battle offering
+PASS: Noncombat cannot use the combat result API
+PASS: Recovery clamps and rounds correctly: 99/100 becomes 100
+PASS: Repeated recovery returns the same immutable result values without another heal
+PASS: An expired recovery identifier cannot heal
+PASS: Recovery completes once
+PASS: Recovery completion preserves the offering and its used allowance
+PASS: New run discards prior recovery and offering records
+PASS: Fixture target is reachable: level_01_01
+PASS: Fixture advances through explicit edges: level_01_01
+PASS: An offering is staged before recovery
+PASS: Fixture starts only an explicit available destination: level_02_02
+PASS: Recovery cannot consume a pending battle offering
+PASS: Noncombat cannot use the combat result API
+PASS: Recovery clamps and rounds correctly: 100/100 becomes 100
+PASS: Repeated recovery returns the same immutable result values without another heal
+PASS: An expired recovery identifier cannot heal
+PASS: Recovery completes once
+PASS: Recovery completion preserves the offering and its used allowance
+PASS: New run discards prior recovery and offering records
+PASS: Fixture target is reachable: level_01_01
+PASS: Fixture advances through explicit edges: level_01_01
+PASS: An offering is staged before recovery
+PASS: Fixture starts only an explicit available destination: level_02_02
+PASS: Recovery cannot consume a pending battle offering
+PASS: Noncombat cannot use the combat result API
+PASS: Recovery clamps and rounds correctly: 30/101 becomes 46
+PASS: Repeated recovery returns the same immutable result values without another heal
+PASS: An expired recovery identifier cannot heal
+PASS: Recovery completes once
+PASS: Recovery completion preserves the offering and its used allowance
+PASS: New run discards prior recovery and offering records
+PASS: Fixture target is reachable: level_01_01
+PASS: Fixture advances through explicit edges: level_01_01
+PASS: An offering is staged before recovery
+PASS: Fixture starts only an explicit available destination: level_02_02
+PASS: Recovery cannot consume a pending battle offering
+PASS: Noncombat cannot use the combat result API
+PASS: Recovery clamps and rounds correctly: 1/1 becomes 1
+PASS: Repeated recovery returns the same immutable result values without another heal
+PASS: An expired recovery identifier cannot heal
+PASS: Recovery completes once
+PASS: Recovery completion preserves the offering and its used allowance
+PASS: New run discards prior recovery and offering records
+PASS: Fixture target is reachable: level_01_01
+PASS: Fixture advances through explicit edges: level_01_01
+PASS: Fixture starts only an explicit available destination: level_02_02
+PASS: Recovery cannot resurrect a zero-health player
+PASS: A full starting deck rejects extra capacity
+PASS: Negative capacity definitions are rejected
+PASS: A freed slot accepts a distinct same-definition instance up to exactly twenty
+PASS: Fixture starts only an explicit available destination: level_01_01
+PASS: Only combat victory restores the offering allowance
+PASS: Sacrificing the duplicate instance leaves the original identical card intact
+PASS: Fixture target is reachable: level_01_01
+PASS: Fixture advances through explicit edges: level_01_01
+PASS: Opportunity fixture frees capacity through an offering
+PASS: Fixture starts only an explicit available destination: level_02_01
+PASS: Fixed test provider supplies an existing pool card
+PASS: Generic insertion cannot bypass the active opportunity claim gate
+PASS: A pool card not in this visit's offers is rejected
+PASS: Opportunity claim adds exactly one instance within capacity
+PASS: Repeated claim is rejected even for the same card
+PASS: Claim and completion do not consume or refresh the battle offering
+PASS: Completed opportunity cannot grant again
+PASS: Prior-adventure opportunity cannot grant cards
+PASS: Fixture target is reachable: level_01_01
+PASS: Fixture advances through explicit edges: level_01_01
+PASS: Fixture starts only an explicit available destination: level_02_01
+PASS: A capacity-denied claim leaves the deck unchanged and explains why
+PASS: A full deck may leave without a card
+PASS: Resolution 1920x1080 is active
+PASS: Fire pawn scales with UI reference height and preserves its tall silhouette
+PASS: Player silhouette is substantially larger than the previous twenty-pixel token
+PASS: All fourteen nodes have explicit editable encounter information
+PASS: The normal map has no second departure confirmation button
+PASS: Every node remains inside the existing UI-safe composition: level_01_01
+PASS: Every node remains inside the existing UI-safe composition: level_02_01
+PASS: Every node remains inside the existing UI-safe composition: level_02_03
+PASS: Every node remains inside the existing UI-safe composition: level_02_02
+PASS: Every node remains inside the existing UI-safe composition: level_03_01
+PASS: Every node remains inside the existing UI-safe composition: level_03_02
+PASS: Every node remains inside the existing UI-safe composition: level_03_03
+PASS: Every node remains inside the existing UI-safe composition: level_04_01
+PASS: Every node remains inside the existing UI-safe composition: level_04_03
+PASS: Every node remains inside the existing UI-safe composition: level_04_02
+PASS: Every node remains inside the existing UI-safe composition: level_05_01
+PASS: Every node remains inside the existing UI-safe composition: level_05_03
+PASS: Every node remains inside the existing UI-safe composition: level_05_02
+PASS: Every node remains inside the existing UI-safe composition: level_06_01
+PASS: Travel effects do not change camera subject framing
+Captured: map-types-1920x1080 (1920x1080)
+PASS: Resolution 2560x1440 is active
+PASS: Fire pawn scales with UI reference height and preserves its tall silhouette
+PASS: Player silhouette is substantially larger than the previous twenty-pixel token
+PASS: All fourteen nodes have explicit editable encounter information
+PASS: The normal map has no second departure confirmation button
+PASS: Every node remains inside the existing UI-safe composition: level_01_01
+PASS: Every node remains inside the existing UI-safe composition: level_02_01
+PASS: Every node remains inside the existing UI-safe composition: level_02_03
+PASS: Every node remains inside the existing UI-safe composition: level_02_02
+PASS: Every node remains inside the existing UI-safe composition: level_03_01
+PASS: Every node remains inside the existing UI-safe composition: level_03_02
+PASS: Every node remains inside the existing UI-safe composition: level_03_03
+PASS: Every node remains inside the existing UI-safe composition: level_04_01
+PASS: Every node remains inside the existing UI-safe composition: level_04_03
+PASS: Every node remains inside the existing UI-safe composition: level_04_02
+PASS: Every node remains inside the existing UI-safe composition: level_05_01
+PASS: Every node remains inside the existing UI-safe composition: level_05_03
+PASS: Every node remains inside the existing UI-safe composition: level_05_02
+PASS: Every node remains inside the existing UI-safe composition: level_06_01
+PASS: Travel effects do not change camera subject framing
+Captured: map-types-2560x1440 (2560x1440)
+PASS: Resolution 1920x1200 is active
+PASS: Fire pawn scales with UI reference height and preserves its tall silhouette
+PASS: Player silhouette is substantially larger than the previous twenty-pixel token
+PASS: All fourteen nodes have explicit editable encounter information
+PASS: The normal map has no second departure confirmation button
+PASS: Every node remains inside the existing UI-safe composition: level_01_01
+PASS: Every node remains inside the existing UI-safe composition: level_02_01
+PASS: Every node remains inside the existing UI-safe composition: level_02_03
+PASS: Every node remains inside the existing UI-safe composition: level_02_02
+PASS: Every node remains inside the existing UI-safe composition: level_03_01
+PASS: Every node remains inside the existing UI-safe composition: level_03_02
+PASS: Every node remains inside the existing UI-safe composition: level_03_03
+PASS: Every node remains inside the existing UI-safe composition: level_04_01
+PASS: Every node remains inside the existing UI-safe composition: level_04_03
+PASS: Every node remains inside the existing UI-safe composition: level_04_02
+PASS: Every node remains inside the existing UI-safe composition: level_05_01
+PASS: Every node remains inside the existing UI-safe composition: level_05_03
+PASS: Every node remains inside the existing UI-safe composition: level_05_02
+PASS: Every node remains inside the existing UI-safe composition: level_06_01
+PASS: Travel effects do not change camera subject framing
+Captured: map-types-1920x1200 (1920x1200)
+PASS: The isolated pointer event stream delivers its click position
+PASS: Battle type still enters the ready real combat scene
+PASS: The HUD is owned by the battle scene and stays active after transition
+PASS: The hand contains the expected active run cards
+PASS: Repeated hand initialization cannot duplicate cards
+PASS: Each live card is visible in the combat canvas and bound to the real player
+PASS: Each live card belongs to the unsacrificed deck
+PASS: A card click target is inside the game view
+PASS: Each live card is visible in the combat canvas and bound to the real player
+PASS: Each live card belongs to the unsacrificed deck
+PASS: A card click target is inside the game view
+PASS: Each live card is visible in the combat canvas and bound to the real player
+PASS: Each live card belongs to the unsacrificed deck
+PASS: A card click target is inside the game view
+PASS: Each live card is visible in the combat canvas and bound to the real player
+PASS: Each live card belongs to the unsacrificed deck
+PASS: A card click target is inside the game view
+PASS: Player and all three active enemies have health displays
+PASS: A health label is on the battle canvas, not the fading curtain: Enemy (2)
+PASS: The status label contains rendered glyphs
+PASS: A health label is on the battle canvas, not the fading curtain: Player
+PASS: The status label contains rendered glyphs
+PASS: A health label is on the battle canvas, not the fading curtain: Enemy (1)
+PASS: The status label contains rendered glyphs
+PASS: A health label is on the battle canvas, not the fading curtain: Enemy
+PASS: The status label contains rendered glyphs
+PASS: The player attribute block has an explicit battle canvas
+PASS: The status label contains rendered glyphs
+PASS: The hidden transition layer owns no combat text
+PASS: There is exactly one battle deck manager
+Captured: battle-regression (1920x1080)
+PASS: The real encounter contains enemies
+PASS: The existing victory event completes exactly one encounter
+PASS: Repeated victory return cannot advance twice
+No reward receiver is attached in the current battle scene; the map-side result bridge owns the return without creating rewards.
+PASS: The victory return loads Map without bypassing an existing reward receiver
+PASS: Victory return restores the exact completed node
+PASS: Only the completed node's explicit next layer opens
+PASS: The fire seed reappears at the completed platform
+PASS: Scene changes retain one session and one travel coordinator
+PASS: Failure test stages an offering before noncombat entry
+PASS: Missing noncombat scene preserves location, cards and offering
+PASS: Unready opportunity test activates its scene
+PASS: Noncombat readiness timeout rolls back to Map
+PASS: Failed noncombat entry preserves its offering and original choice
+PASS: Delayed opportunity scene activates
+PASS: Scene activation alone does not commit a noncombat visit
+PASS: Delayed noncombat receiver can become ready before timeout
+PASS: Delayed placeholder starts without consuming the offering
+PASS: The isolated pointer event stream delivers its click position
+PASS: Noncombat returns to the ready Map
+PASS: Return keeps the completed node and restores map/card interaction
+PASS: Fire seed remains at the completed platform and only its outgoing choices open
+PASS: Fixture target is reachable: level_01_01
+PASS: Fixture advances through explicit edges: level_01_01
+PASS: Development provider test frees a real deck slot
+PASS: Hover explains the actual receiver kind: Opportunity
+Captured: hover-Opportunity (1920x1080)
+PASS: The isolated pointer event stream delivers its click position
+PASS: Movement enters the independent Opportunity interface
+PASS: Receiver, ticket and committed node agree
+PASS: Settlement enables Continue
+PASS: Noncombat scene contains no copied battle HUD or battle hand
+Captured: opportunity-development-provider (1920x1080)
+PASS: The isolated pointer event stream delivers its click position
+PASS: Actual candidate click grants one card and removes the choices
+PASS: The isolated pointer event stream delivers its click position
+PASS: Noncombat returns to the ready Map
+PASS: Return keeps the completed node and restores map/card interaction
+PASS: Fire seed remains at the completed platform and only its outgoing choices open
+PASS: Both same-name instances appear independently in the existing map card layout
+PASS: A capacity-valid reward still displays exactly four cards
+Captured: map-same-name-reward (1920x1080)
+PASS: Fixture target is reachable: level_03_01
+PASS: Fixture advances through explicit edges: level_01_01
+PASS: Fixture advances through explicit edges: level_02_01
+PASS: Fixture advances through explicit edges: level_03_01
+PASS: Offering staged before opportunity then recovery then battle
+PASS: Hover explains the actual receiver kind: Opportunity
+Captured: hover-Opportunity (1920x1080)
+PASS: The isolated pointer event stream delivers its click position
+PASS: Movement enters the independent Opportunity interface
+PASS: Receiver, ticket and committed node agree
+PASS: Settlement enables Continue
+PASS: Noncombat scene contains no copied battle HUD or battle hand
+PASS: Production opportunity has no candidates, no grant and no resource changes
+PASS: Independent interface stays inside the window at (1920, 1080)
+PASS: The status label contains rendered glyphs
+PASS: The status label contains rendered glyphs
+PASS: The status label contains rendered glyphs
+PASS: The status label contains rendered glyphs
+PASS: The status label contains rendered glyphs
+PASS: The status label contains rendered glyphs
+PASS: The status label contains rendered glyphs
+PASS: The status label contains rendered glyphs
+Captured: opportunity-1920x1080 (1920x1080)
+PASS: Independent interface stays inside the window at (2560, 1440)
+PASS: The status label contains rendered glyphs
+PASS: The status label contains rendered glyphs
+PASS: The status label contains rendered glyphs
+PASS: The status label contains rendered glyphs
+PASS: The status label contains rendered glyphs
+PASS: The status label contains rendered glyphs
+PASS: The status label contains rendered glyphs
+PASS: The status label contains rendered glyphs
+Captured: opportunity-2560x1440 (2560x1440)
+PASS: Independent interface stays inside the window at (1920, 1200)
+PASS: The status label contains rendered glyphs
+PASS: The status label contains rendered glyphs
+PASS: The status label contains rendered glyphs
+PASS: The status label contains rendered glyphs
+PASS: The status label contains rendered glyphs
+PASS: The status label contains rendered glyphs
+PASS: The status label contains rendered glyphs
+PASS: The status label contains rendered glyphs
+Captured: opportunity-1920x1200 (1920x1200)
+PASS: The isolated pointer event stream delivers its click position
+PASS: Noncombat returns to the ready Map
+PASS: Return keeps the completed node and restores map/card interaction
+PASS: Fire seed remains at the completed platform and only its outgoing choices open
+PASS: Opportunity return preserves cards and offering
+PASS: Hover explains the actual receiver kind: Recovery
+Captured: hover-Recovery (1920x1080)
+PASS: The isolated pointer event stream delivers its click position
+PASS: Movement enters the independent Recovery interface
+PASS: Receiver, ticket and committed node agree
+PASS: Settlement enables Continue
+PASS: Noncombat scene contains no copied battle HUD or battle hand
+PASS: Recovery grants sixteen of maximum101 once and retains the pending offering
+PASS: Independent interface stays inside the window at (1920, 1080)
+PASS: The status label contains rendered glyphs
+PASS: The status label contains rendered glyphs
+PASS: The status label contains rendered glyphs
+PASS: The status label contains rendered glyphs
+PASS: The status label contains rendered glyphs
+PASS: The status label contains rendered glyphs
+PASS: The status label contains rendered glyphs
+PASS: The status label contains rendered glyphs
+PASS: The visible recovery bar matches the recorded health fraction
+Captured: recovery-1920x1080 (1920x1080)
+PASS: Independent interface stays inside the window at (2560, 1440)
+PASS: The status label contains rendered glyphs
+PASS: The status label contains rendered glyphs
+PASS: The status label contains rendered glyphs
+PASS: The status label contains rendered glyphs
+PASS: The status label contains rendered glyphs
+PASS: The status label contains rendered glyphs
+PASS: The status label contains rendered glyphs
+PASS: The status label contains rendered glyphs
+PASS: The visible recovery bar matches the recorded health fraction
+Captured: recovery-2560x1440 (2560x1440)
+PASS: Independent interface stays inside the window at (1920, 1200)
+PASS: The status label contains rendered glyphs
+PASS: The status label contains rendered glyphs
+PASS: The status label contains rendered glyphs
+PASS: The status label contains rendered glyphs
+PASS: The status label contains rendered glyphs
+PASS: The status label contains rendered glyphs
+PASS: The status label contains rendered glyphs
+PASS: The status label contains rendered glyphs
+PASS: The visible recovery bar matches the recorded health fraction
+Captured: recovery-1920x1200 (1920x1200)
+PASS: Reloaded recovery interface reuses its receipt instead of healing twice
+PASS: The isolated pointer event stream delivers its click position
+PASS: Failed return exposes a retry without losing settlement
+PASS: Return failure preserves the completed recovery position and result
+Captured: recovery-return-retry (1920x1080)
+PASS: The isolated pointer event stream delivers its click position
+PASS: Noncombat returns to the ready Map
+PASS: Return keeps the completed node and restores map/card interaction
+PASS: Fire seed remains at the completed platform and only its outgoing choices open
+PASS: The isolated pointer event stream delivers its click position
+PASS: Boss receives the pending offering after two noncombat visits
+PASS: Only confirmed battle consumes the offering and restores recovered health
+PASS: The HUD is owned by the battle scene and stays active after transition
+PASS: The hand contains the expected active run cards
+PASS: Repeated hand initialization cannot duplicate cards
+PASS: Each live card is visible in the combat canvas and bound to the real player
+PASS: Each live card belongs to the unsacrificed deck
+PASS: A card click target is inside the game view
+PASS: Each live card is visible in the combat canvas and bound to the real player
+PASS: Each live card belongs to the unsacrificed deck
+PASS: A card click target is inside the game view
+PASS: Each live card is visible in the combat canvas and bound to the real player
+PASS: Each live card belongs to the unsacrificed deck
+PASS: A card click target is inside the game view
+PASS: Player and all three active enemies have health displays
+PASS: A health label is on the battle canvas, not the fading curtain: Enemy (2)
+PASS: The status label contains rendered glyphs
+PASS: A health label is on the battle canvas, not the fading curtain: Player
+PASS: The status label contains rendered glyphs
+PASS: A health label is on the battle canvas, not the fading curtain: Enemy (1)
+PASS: The status label contains rendered glyphs
+PASS: A health label is on the battle canvas, not the fading curtain: Enemy
+PASS: The status label contains rendered glyphs
+PASS: The player attribute block has an explicit battle canvas
+PASS: The status label contains rendered glyphs
+PASS: The hidden transition layer owns no combat text
+PASS: There is exactly one battle deck manager
+Captured: boss-after-recovery (1920x1080)
+PASS: The real encounter contains enemies
+PASS: The existing victory event completes exactly one encounter
+PASS: Repeated victory return cannot advance twice
+No reward receiver is attached in the current battle scene; the map-side result bridge owns the return without creating rewards.
+PASS: The victory return loads Map without bypassing an existing reward receiver
+PASS: Victory return restores the exact completed node
+PASS: Only the completed node's explicit next layer opens
+PASS: The fire seed reappears at the completed platform
+PASS: Scene changes retain one session and one travel coordinator
+PASS: Boss victory still completes the run
+PASS: New run resets recovery, cards and offering
+PASS: Fixture target is reachable: level_01_01
+PASS: Fixture advances through explicit edges: level_01_01
+Captured: R01-before (1920x1080)
+PASS: An authored edge starts: R01
+Captured: R01-moving (1920x1080)
+Captured: R01-arrival (1920x1080)
+PASS: Route reaches its saved floor landing: R01
+PASS: Visual sample cancels without committing a gameplay location
+PASS: Fixture target is reachable: level_01_01
+PASS: Fixture advances through explicit edges: level_01_01
+PASS: An authored edge starts: R02
+PASS: Route reaches its saved floor landing: R02
+PASS: Visual sample cancels without committing a gameplay location
+PASS: Fixture target is reachable: level_01_01
+PASS: Fixture advances through explicit edges: level_01_01
+PASS: An authored edge starts: R03
+PASS: Route reaches its saved floor landing: R03
+PASS: Visual sample cancels without committing a gameplay location
+PASS: Fixture target is reachable: level_02_01
+PASS: Fixture advances through explicit edges: level_01_01
+PASS: Fixture advances through explicit edges: level_02_01
+PASS: An authored edge starts: R04
+PASS: Route reaches its saved floor landing: R04
+PASS: Visual sample cancels without committing a gameplay location
+PASS: Fixture target is reachable: level_02_03
+PASS: Fixture advances through explicit edges: level_01_01
+PASS: Fixture advances through explicit edges: level_02_03
+PASS: An authored edge starts: R05
+PASS: Route reaches its saved floor landing: R05
+PASS: Visual sample cancels without committing a gameplay location
+PASS: Fixture target is reachable: level_02_02
+PASS: Fixture advances through explicit edges: level_01_01
+PASS: Fixture advances through explicit edges: level_02_02
+PASS: An authored edge starts: R06
+PASS: Route reaches its saved floor landing: R06
+PASS: Visual sample cancels without committing a gameplay location
+PASS: Fixture target is reachable: level_02_03
+PASS: Fixture advances through explicit edges: level_01_01
+PASS: Fixture advances through explicit edges: level_02_03
+PASS: An authored edge starts: R07
+PASS: Route reaches its saved floor landing: R07
+PASS: Visual sample cancels without committing a gameplay location
+PASS: Fixture target is reachable: level_02_02
+PASS: Fixture advances through explicit edges: level_01_01
+PASS: Fixture advances through explicit edges: level_02_02
+PASS: An authored edge starts: R08
+PASS: Route reaches its saved floor landing: R08
+PASS: Visual sample cancels without committing a gameplay location
+PASS: Fixture target is reachable: level_03_01
+PASS: Fixture advances through explicit edges: level_01_01
+PASS: Fixture advances through explicit edges: level_02_01
+PASS: Fixture advances through explicit edges: level_03_01
+PASS: An authored edge starts: R09
+PASS: Route reaches its saved floor landing: R09
+PASS: Visual sample cancels without committing a gameplay location
+PASS: Fixture target is reachable: level_03_02
+PASS: Fixture advances through explicit edges: level_01_01
+PASS: Fixture advances through explicit edges: level_02_03
+PASS: Fixture advances through explicit edges: level_03_02
+PASS: An authored edge starts: R10
+PASS: Route reaches its saved floor landing: R10
+PASS: Visual sample cancels without committing a gameplay location
+PASS: Fixture target is reachable: level_03_03
+PASS: Fixture advances through explicit edges: level_01_01
+PASS: Fixture advances through explicit edges: level_02_02
+PASS: Fixture advances through explicit edges: level_03_03
+PASS: An authored edge starts: R11
+PASS: Route reaches its saved floor landing: R11
+PASS: Visual sample cancels without committing a gameplay location
+PASS: Fixture target is reachable: level_03_01
+PASS: Fixture advances through explicit edges: level_01_01
+PASS: Fixture advances through explicit edges: level_02_01
+PASS: Fixture advances through explicit edges: level_03_01
+PASS: An authored edge starts: R12
+PASS: Route reaches its saved floor landing: R12
+PASS: Visual sample cancels without committing a gameplay location
+PASS: Fixture target is reachable: level_03_02
+PASS: Fixture advances through explicit edges: level_01_01
+PASS: Fixture advances through explicit edges: level_02_03
+PASS: Fixture advances through explicit edges: level_03_02
+PASS: An authored edge starts: R13
+PASS: Route reaches its saved floor landing: R13
+PASS: Visual sample cancels without committing a gameplay location
+PASS: Fixture target is reachable: level_04_01
+PASS: Fixture advances through explicit edges: level_01_01
+PASS: Fixture advances through explicit edges: level_02_01
+PASS: Fixture advances through explicit edges: level_03_01
+PASS: Fixture advances through explicit edges: level_04_01
+PASS: An authored edge starts: R14
+PASS: Route reaches its saved floor landing: R14
+PASS: Visual sample cancels without committing a gameplay location
+PASS: Fixture target is reachable: level_04_03
+PASS: Fixture advances through explicit edges: level_01_01
+PASS: Fixture advances through explicit edges: level_02_01
+PASS: Fixture advances through explicit edges: level_03_01
+PASS: Fixture advances through explicit edges: level_04_03
+PASS: An authored edge starts: R15
+PASS: Route reaches its saved floor landing: R15
+PASS: Visual sample cancels without committing a gameplay location
+PASS: Fixture target is reachable: level_04_02
+PASS: Fixture advances through explicit edges: level_01_01
+PASS: Fixture advances through explicit edges: level_02_03
+PASS: Fixture advances through explicit edges: level_03_02
+PASS: Fixture advances through explicit edges: level_04_02
+PASS: An authored edge starts: R16
+PASS: Route reaches its saved floor landing: R16
+PASS: Visual sample cancels without committing a gameplay location
+PASS: Fixture target is reachable: level_05_01
+PASS: Fixture advances through explicit edges: level_01_01
+PASS: Fixture advances through explicit edges: level_02_01
+PASS: Fixture advances through explicit edges: level_03_01
+PASS: Fixture advances through explicit edges: level_04_01
+PASS: Fixture advances through explicit edges: level_05_01
+PASS: An authored edge starts: R17
+Captured: R17-arrival (1920x1080)
+PASS: Route reaches its saved floor landing: R17
+PASS: Boss route ends at the portal center: R17
+PASS: Visual sample cancels without committing a gameplay location
+PASS: Fixture target is reachable: level_05_03
+PASS: Fixture advances through explicit edges: level_01_01
+PASS: Fixture advances through explicit edges: level_02_01
+PASS: Fixture advances through explicit edges: level_03_01
+PASS: Fixture advances through explicit edges: level_04_03
+PASS: Fixture advances through explicit edges: level_05_03
+Captured: R18-before (1920x1080)
+PASS: An authored edge starts: R18
+Captured: R18-moving (1920x1080)
+Captured: R18-arrival (1920x1080)
+Captured: R18-portal-absorb (1920x1080)
+PASS: Route reaches its saved floor landing: R18
+PASS: Boss route ends at the portal center: R18
+PASS: Visual sample cancels without committing a gameplay location
+PASS: Fixture target is reachable: level_05_02
+PASS: Fixture advances through explicit edges: level_01_01
+PASS: Fixture advances through explicit edges: level_02_03
+PASS: Fixture advances through explicit edges: level_03_02
+PASS: Fixture advances through explicit edges: level_04_02
+PASS: Fixture advances through explicit edges: level_05_02
+PASS: An authored edge starts: R19
+Captured: R19-arrival (1920x1080)
+PASS: Route reaches its saved floor landing: R19
+PASS: Boss route ends at the portal center: R19
+PASS: Visual sample cancels without committing a gameplay location
+Visual traversal covered the saved road samples, including all three Boss stair routes.
+PASS: The isolated pointer event stream delivers its click position
+PASS: Defeat regression enters a real battle
+PASS: Defeat still ends the adventure and returns to Map
+Captured: final-types-map (1920x1080)
+Runtime errors: 0

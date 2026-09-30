@@ -28,6 +28,24 @@ public sealed class MapCameraCloudOverlay : MonoBehaviour
     private Mesh overlayMesh;
     private Material overlayMaterial;
     private bool missingShaderReported;
+    private readonly Vector3[] frustumCorners = new Vector3[4];
+
+    public void Configure(float alpha, float clarity, Vector2 speed)
+    {
+        opacity = alpha;
+        centerClarity = clarity;
+        primarySpeed = speed;
+        detailSpeed = new Vector2(-0.008f, 0.003f);
+        cloudColor = new Color(0.82f, 0.82f, 0.79f, 1);
+        shadowColor = new Color(0.30f, 0.34f, 0.38f, 1);
+        Refresh();
+    }
+
+    public void Refresh()
+    {
+        if (!isActiveAndEnabled) return;
+        EnsureResources();
+    }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     private static void InstallForMapScene()
@@ -76,8 +94,6 @@ public sealed class MapCameraCloudOverlay : MonoBehaviour
     private void LateUpdate()
     {
         EnsureResources();
-        ApplyMaterialSettings();
-        UpdateOverlayTransform();
     }
 
     private void OnDisable()
@@ -199,19 +215,11 @@ public sealed class MapCameraCloudOverlay : MonoBehaviour
         }
 
         float distance = Mathf.Max(targetCamera.nearClipPlane + 0.05f, 0.15f);
-        float height;
-        if (targetCamera.orthographic)
-        {
-            height = targetCamera.orthographicSize * 2.0f;
-        }
-        else
-        {
-            height = 2.0f * Mathf.Tan(targetCamera.fieldOfView * 0.5f * Mathf.Deg2Rad) * distance;
-        }
-
-        float width = height * targetCamera.aspect;
+        targetCamera.CalculateFrustumCorners(new Rect(0, 0, 1, 1), distance, Camera.MonoOrStereoscopicEye.Mono, frustumCorners);
+        float width = frustumCorners[3].x - frustumCorners[0].x;
+        float height = frustumCorners[1].y - frustumCorners[0].y;
         Transform overlayTransform = overlayObject.transform;
-        overlayTransform.localPosition = new Vector3(0.0f, 0.0f, distance);
+        overlayTransform.localPosition = (frustumCorners[0] + frustumCorners[2]) * 0.5f;
         overlayTransform.localRotation = Quaternion.identity;
         overlayTransform.localScale = new Vector3(width * 1.04f, height * 1.04f, 1.0f);
     }

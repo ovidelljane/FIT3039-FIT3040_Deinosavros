@@ -9,6 +9,10 @@ Shader "Deinosavros/Map Mist Surface"
         _NoiseScale("Noise Scale", Range(0.001, 0.25)) = 0.035
         _EdgeSoftness("Edge Softness", Range(0.01, 0.5)) = 0.2
         _SoftDepth("Soft Depth", Range(0.05, 10)) = 2.5
+        _Ceiling("World Height Ceiling", Float) = 1000
+        _HeightFade("Height Fade", Float) = 2
+        _BaseHeight("Base Fade Height", Float) = -10000
+        _BaseFadeDistance("Base Fade Distance", Float) = 1
         _FlowA("Flow A", Vector) = (0.006, 0.002, 0, 0)
         _FlowB("Flow B", Vector) = (-0.003, 0.005, 0, 0)
     }
@@ -47,6 +51,10 @@ Shader "Deinosavros/Map Mist Surface"
                 float _NoiseScale;
                 float _EdgeSoftness;
                 float _SoftDepth;
+                float _Ceiling;
+                float _HeightFade;
+                float _BaseHeight;
+                float _BaseFadeDistance;
                 float4 _FlowA;
                 float4 _FlowB;
             CBUFFER_END
@@ -114,10 +122,12 @@ Shader "Deinosavros/Map Mist Surface"
                 float2 screenUv = input.positionCS.xy / _ScaledScreenParams.xy;
                 float sceneRawDepth = SampleSceneDepth(screenUv);
                 float sceneEyeDepth = LinearEyeDepth(sceneRawDepth, _ZBufferParams);
-                float surfaceEyeDepth = input.positionCS.w;
+                float surfaceEyeDepth = -TransformWorldToView(input.positionWS).z;
                 float depthFade = saturate((sceneEyeDepth - surfaceEyeDepth) / max(_SoftDepth, 0.001));
 
-                float alpha = coverage * _Density * _BaseColor.a * depthFade;
+                float heightFade = saturate((_Ceiling - input.positionWS.y) / max(_HeightFade, 0.01));
+                float baseFade = saturate((input.positionWS.y - _BaseHeight) / max(_BaseFadeDistance, 0.01));
+                float alpha = coverage * _Density * _BaseColor.a * depthFade * heightFade * baseFade;
                 float3 color = lerp(_BaseColor.rgb, _HighlightColor.rgb, saturate(combinedNoise * 1.2));
                 color = MixFog(color, input.fogFactor);
                 return half4(color, alpha);
