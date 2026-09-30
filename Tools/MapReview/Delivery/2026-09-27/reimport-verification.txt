@@ -1,1 +1,0 @@
-PASS: two imports have 395 transforms and 312 independent mesh objects; identical mesh identities; original transforms and colliders unchanged; saved and reopened.

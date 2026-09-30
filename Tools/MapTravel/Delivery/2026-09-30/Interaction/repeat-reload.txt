@@ -1,3 +1,0 @@
-PASS: two consecutive installations and a saved scene reload preserve all node/collider payloads, UI rectangles, environment transforms, short hierarchy names, nineteen local paths, asset GUIDs and the two Boss road vertex/index streams. Fourteen nodes, nineteen routes and one Travel root remain. No missing script components or material references.
-Scene: Assets/Scenes/Map.unity
-Snapshot SHA256: 7CKIAR+dsCpXJuDiIMOnogTGopxaIfnbgOjrtYZ2v3g=

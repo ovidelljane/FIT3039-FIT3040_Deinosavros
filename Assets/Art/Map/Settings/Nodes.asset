@@ -1,0 +1,99 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f8dcfd3b240a47f4ba1584f6f3954717, type: 3}
+  m_Name: Nodes
+  m_EditorClassIdentifier: Assembly-CSharp::MapNodeCatalog
+  nodes:
+  - nodeId: level_01_01
+    kind: 0
+    title: The Entrance
+    summary: Defeat the enemies to complete this battle and open its connected paths.
+    enemies: 
+    rewards: 
+  - nodeId: level_02_01
+    kind: 2
+    title: Opportunity
+    summary: No cards available yet.
+    enemies: 
+    rewards: 
+  - nodeId: level_02_03
+    kind: 0
+    title: An Ancient Trial
+    summary: Defeat the enemies to complete this battle and open its connected paths.
+    enemies: 
+    rewards: 
+  - nodeId: level_02_02
+    kind: 3
+    title: Recovery
+    summary: Restore 15% of max HP.
+    enemies: 
+    rewards: 
+  - nodeId: level_03_01
+    kind: 0
+    title: An Ancient Trial
+    summary: Defeat the enemies to complete this battle and open its connected paths.
+    enemies: 
+    rewards: 
+  - nodeId: level_03_02
+    kind: 0
+    title: An Ancient Trial
+    summary: Defeat the enemies to complete this battle and open its connected paths.
+    enemies: 
+    rewards: 
+  - nodeId: level_03_03
+    kind: 0
+    title: An Ancient Trial
+    summary: Defeat the enemies to complete this battle and open its connected paths.
+    enemies: 
+    rewards: 
+  - nodeId: level_04_01
+    kind: 3
+    title: Recovery
+    summary: Restore 15% of max HP.
+    enemies: 
+    rewards: 
+  - nodeId: level_04_03
+    kind: 2
+    title: Opportunity
+    summary: No cards available yet.
+    enemies: 
+    rewards: 
+  - nodeId: level_04_02
+    kind: 0
+    title: An Ancient Trial
+    summary: Defeat the enemies to complete this battle and open its connected paths.
+    enemies: 
+    rewards: 
+  - nodeId: level_05_01
+    kind: 0
+    title: An Ancient Trial
+    summary: Defeat the enemies to complete this battle and open its connected paths.
+    enemies: 
+    rewards: 
+  - nodeId: level_05_03
+    kind: 3
+    title: Recovery
+    summary: Restore 15% of max HP.
+    enemies: 
+    rewards: 
+  - nodeId: level_05_02
+    kind: 2
+    title: Opportunity
+    summary: No cards available yet.
+    enemies: 
+    rewards: 
+  - nodeId: level_06_01
+    kind: 1
+    title: The Sanctuary
+    summary: Enter the portal to face the final battle. Victory completes this adventure.
+    enemies: 
+    rewards: 

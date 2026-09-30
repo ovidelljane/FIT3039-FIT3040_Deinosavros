@@ -1,7 +1,0 @@
-PASS: These files match their exact captured contents before this repair, including existing user changes:
-ProjectSettings/ProjectSettings.asset
-ProjectSettings/GraphicsSettings.asset
-ProjectSettings/UnityConnectSettings.asset
-Assets/Settings/UniversalRenderPipelineGlobalSettings.asset
-
-Build-generated changes were restored; production preloaded assets and prior dirty settings were preserved.

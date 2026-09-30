@@ -1,1 +1,0 @@
-PASS: 14 nodes, 19 authored routes; preserved 14 node transforms, 15 colliders, 100 UI transforms and 279 independent environment meshes. Only the two approved Boss approach mesh references changed. Backup: Library/MapReviewEvidence/2026-09-30/Travel/Map-before-install-20260930-052527-317.unity

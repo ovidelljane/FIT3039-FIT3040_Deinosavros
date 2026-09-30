@@ -1,1 +1,0 @@
-PASS: two applications and saved reopen; four scenes, catalog, routing, atlas and build list byte-identical. Fourteen nodes, nineteen roads and receiver references retained.

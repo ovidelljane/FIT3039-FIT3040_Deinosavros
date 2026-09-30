@@ -1,5 +1,0 @@
-PASS: Build-generated changes in the following four shared settings assets were restored to their captured pre-revision text, including existing user modifications. No Git checkout/reset was used.
-ProjectSettings/ProjectSettings.asset
-ProjectSettings/GraphicsSettings.asset
-ProjectSettings/UnityConnectSettings.asset
-Assets/Settings/UniversalRenderPipelineGlobalSettings.asset

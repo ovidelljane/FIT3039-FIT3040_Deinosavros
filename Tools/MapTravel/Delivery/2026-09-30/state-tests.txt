@@ -1,1 +1,0 @@
-PASS: 1678 assertions; 9 complete paths; 19 edges; duplicate input, cancellation, delayed start, stale results, defeat and reset.

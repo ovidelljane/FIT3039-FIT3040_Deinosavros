@@ -8,25 +8,36 @@ public sealed class MapTravelPath : MonoBehaviour
     public Mesh sourceRoadMesh, overrideRoadMesh;
     public bool manualControlPoints;
     public Vector3[] points = System.Array.Empty<Vector3>();
+    public MapTravelCurveData presentationCurve;
+    private Vector3[] SourcePoints => presentationCurve != null && presentationCurve.points != null && presentationCurve.points.Length > 1
+        ? presentationCurve.points : points;
     private Vector3[] worldPoints;
     private float[] distances;
     public float Length { get; private set; }
     public string EdgeKey { get; private set; }
+    // Presentation tangent only; the authored path and progression graph are unchanged.
+    public Vector3 Tangent(float progress)
+    {
+        if (worldPoints == null) Prepare();
+        float span = Mathf.Min(.08f, .22f / Mathf.Max(.1f, Length));
+        return (Sample(Mathf.Min(1, progress + span)) - Sample(Mathf.Max(0, progress - span))).normalized;
+    }
 
     public void Prepare()
     {
         EdgeKey = fromNodeId + ">" + toNodeId;
-        worldPoints = new Vector3[points.Length]; distances = new float[points.Length]; Length = 0;
-        for (int i = 0; i < points.Length; i++)
+        var source=SourcePoints;
+        worldPoints = new Vector3[source.Length]; distances = new float[source.Length]; Length = 0;
+        for (int i = 0; i < source.Length; i++)
         {
-            worldPoints[i] = space != null ? space.TransformPoint(points[i]) : points[i];
+            worldPoints[i] = space != null ? space.TransformPoint(source[i]) : source[i];
             if (i > 0) Length += Vector3.Distance(worldPoints[i - 1], worldPoints[i]);
             distances[i] = Length;
         }
     }
     public Vector3 Sample(float progress)
     {
-        if (worldPoints == null || worldPoints.Length != points.Length) Prepare();
+        if (worldPoints == null || worldPoints.Length != SourcePoints.Length) Prepare();
         if (worldPoints.Length == 0) return transform.position;
         if (worldPoints.Length == 1) return worldPoints[0];
         if (progress <= 0) return worldPoints[0];

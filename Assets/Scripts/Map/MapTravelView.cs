@@ -31,6 +31,9 @@ public sealed class MapTravelView : MonoBehaviour
     private string selected;
     private float previewBlend, gather, arrival, appear = 1, lastParticle, head, dockBlend = 1;
     private bool moving, bossGather, portalChanged;
+    // Offline review frames use Unity's capture clock; normal play remains unscaled.
+    private static float VisualDelta => Time.captureDeltaTime > 0 ? Time.captureDeltaTime : Time.unscaledDeltaTime;
+    private static float VisualTime => Time.captureDeltaTime > 0 ? Time.time : Time.unscaledTime;
     private Mesh particleMesh;
     private Particle[] particles;
     private Vector3[] vertices;
@@ -41,6 +44,7 @@ public sealed class MapTravelView : MonoBehaviour
         Emission = Shader.PropertyToID("_Emission"), Tint = Shader.PropertyToID("_Tint"), Mode = Shader.PropertyToID("_Mode"),
         Head = Shader.PropertyToID("_Head"), Repeats = Shader.PropertyToID("_Repeats"), Soft = Shader.PropertyToID("_SoftDepth");
     private static readonly int CreamTint = Shader.PropertyToID("_CreamTint");
+    private static readonly int FlameMotion = Shader.PropertyToID("_FlameMotion"), FlameTime = Shader.PropertyToID("_FlameTime");
     public Vector3 FloorPosition => floor;
     public Vector3 CorePosition => floatingPoint;
     public bool IsMoving => moving;
@@ -101,23 +105,23 @@ public sealed class MapTravelView : MonoBehaviour
         if (!ticket.IsInitial && activePath == null) throw new InvalidOperationException("No authored travel route.");
         moving = true; head = 0; selected = ticket.NodeId;
         CollectMotes();
-        for (float t = 0; t < profile.gatherTime; t += Time.unscaledDeltaTime)
+        for (float t = 0; t < profile.gatherTime; t += VisualDelta)
         { gather = Mathf.Clamp01(t / profile.gatherTime); dockBlend = 1 - Mathf.SmoothStep(0, 1, gather); yield return null; }
         gather = 1; dockBlend = 0;
         if (ticket.IsInitial)
         {
-            for (float t = 0; t < .7f; t += Time.unscaledDeltaTime) { arrival = t / .7f; yield return null; }
+            for (float t = 0; t < .7f; t += VisualDelta) { arrival = t / .7f; yield return null; }
         }
         else
         {
             float duration = Mathf.Clamp(activePath.Length / profile.moveSpeed, profile.minimumMoveTime, profile.maximumMoveTime);
-            for (float t = 0; t < duration; t += Time.unscaledDeltaTime)
+            for (float t = 0; t < duration; t += VisualDelta)
             {
                 head = MapTravelPath.EaseDistance(t / duration); floor = activePath.Sample(head); yield return null;
             }
             head = 1; floor = activePath.Sample(1); EmitBurst(32);
             bool recalled = false;
-            for (float t = 0; t < profile.arrivalTime; t += Time.unscaledDeltaTime)
+            for (float t = 0; t < profile.arrivalTime; t += VisualDelta)
             {
                 arrival = t / profile.arrivalTime;
                 dockBlend = ticket.IsBoss ? 0 : Mathf.SmoothStep(0, 1, arrival);
@@ -130,7 +134,7 @@ public sealed class MapTravelView : MonoBehaviour
             bossGather = true; Vector3 start = floor + Vector3.up * profile.hoverHeight;
             Vector3 target = environment.TransformPoint(portalFocus);
             if (portalRenderer != null) { portalRenderer.GetPropertyBlock(portalBefore); portalChanged = true; }
-            for (float t = 0; t < profile.bossGatherTime; t += Time.unscaledDeltaTime)
+            for (float t = 0; t < profile.bossGatherTime; t += VisualDelta)
             {
                 float u = Mathf.SmoothStep(0, 1, t / profile.bossGatherTime);
                 floatingPoint = Vector3.Lerp(start, target, u); gather = 1 - u;
@@ -146,7 +150,7 @@ public sealed class MapTravelView : MonoBehaviour
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
         long allocationStart = MeasureUpdateAllocations ? GC.GetAllocatedBytesForCurrentThread() : 0;
 #endif
-        float dt = Time.unscaledDeltaTime;
+        float dt = VisualDelta;
         appear = Mathf.MoveTowards(appear, 1, dt / .5f);
         previewBlend = Mathf.MoveTowards(previewBlend, 1, dt / profile.previewFade);
         PositionCore(); PositionIcons(); UpdateRoutes(); UpdateParticles(dt);
@@ -165,13 +169,13 @@ public sealed class MapTravelView : MonoBehaviour
     {
         if (!bossGather)
         {
-            floatingPoint = floor + Vector3.up * (profile.hoverHeight + Mathf.Sin(Time.unscaledTime * 2.2f) * profile.bobAmplitude);
+            floatingPoint = floor + Vector3.up * (profile.hoverHeight + Mathf.Sin(VisualTime * 2.2f) * profile.bobAmplitude);
             float units = ReferencePixelSize(floatingPoint);
             floatingPoint += (view.transform.right * profile.dockPixels.x + view.transform.up * profile.dockPixels.y) * (units * dockBlend);
         }
         float depth = Mathf.Max(1, Vector3.Dot(floatingPoint - view.transform.position, view.transform.forward));
         float pixelSize = 2 * depth * Mathf.Tan(view.fieldOfView * Mathf.Deg2Rad * .5f) / 1080f;
-        float breath = 1 + Mathf.Sin(Time.unscaledTime * 2.2f) * .035f;
+        float breath = 1 + Mathf.Sin(VisualTime * 2.2f) * .035f;
         float size = profile.corePixels * pixelSize * (bossGather ? Mathf.Max(.04f, gather) : 1 - gather * .06f);
         SetPose(core.transform, floatingPoint, view.transform.rotation, size);
         core.transform.localScale = new Vector3(size, size * profile.coreHeightPixels / profile.corePixels, 1);
@@ -241,6 +245,11 @@ public sealed class MapTravelView : MonoBehaviour
         properties.SetColor(CreamTint, tint * PaletteRatio(profile.cream, new Color(1, .902f, .682f)));
         properties.SetFloat(Opacity, alpha); properties.SetFloat(Emission, emission);
         properties.SetFloat(Soft, renderer == core || renderer == halo ? .06f : 0);
+        if (renderer == core)
+        {
+            properties.SetFloat(FlameMotion, 1);
+            properties.SetFloat(FlameTime, VisualTime);
+        }
         renderer.SetPropertyBlock(properties);
     }
     private static Color PaletteRatio(Color value, Color basis)

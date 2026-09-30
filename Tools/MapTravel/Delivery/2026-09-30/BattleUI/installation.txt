@@ -1,1 +1,0 @@
-PASS: active hand container; one deck manager; explicit scene-owned canvas references. 367 transforms, 11 colliders and 8 combat components unchanged. Legacy cards retained for direct-scene preview. Backup: Library/MapReviewEvidence/2026-09-30/BattleUI/Deinosavros-before-20260930-064712-467.unity

@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1233e434df0cdaf428db34f43a9be135, type: 3}
+  m_Name: Visual
+  m_EditorClassIdentifier: Assembly-CSharp::MapVisualProfile
+  sandstone: {r: 0.78, g: 0.765, b: 0.70, a: 1}
+  soil: {r: 0.48, g: 0.46, b: 0.36, a: 1}
+  moss: {r: 0.31, g: 0.43, b: 0.23, a: 1}
+  rock: {r: 0.52, g: 0.5, b: 0.44, a: 1}
+  leafDark: {r: 0.17, g: 0.31, b: 0.14, a: 1}
+  leafLight: {r: 0.40, g: 0.56, b: 0.28, a: 1}
+  stoneSmoothness: 0.18
+  groundSmoothness: 0.1
+  stoneTileMeters: 3.2
+  groundTileMeters: 5
+  rockTileMeters: 4
+  detailStrength: 0.32
+  fieldOfView: 35
+  pitch: 50
+  frameFill: 0.9
+  uiMarginPixels: 24
+  sunlight: {r: 1, g: 0.894, b: 0.729, a: 1}
+  sunlightIntensity: 1.8
+  shadowStrength: 0.75
+  ambientSky: {r: 0.58, g: 0.65, b: 0.7, a: 1}
+  ambientEquator: {r: 0.47, g: 0.46, b: 0.4, a: 1}
+  ambientGround: {r: 0.28, g: 0.27, b: 0.22, a: 1}
+  skyTop: {r: 0.27, g: 0.43, b: 0.56, a: 1}
+  skyHorizon: {r: 0.65, g: 0.68, b: 0.64, a: 1}
+  skyBottom: {r: 0.3, g: 0.4, b: 0.44, a: 1}
+  cloudOpacity: 0.12
+  cloudCenterClarity: 0.8
+  cloudSpeed: {x: 0.016, y: 0.0015}
+  fogDepth: 70
+  exposure: 0.2
+  contrast: 6
+  saturation: 5
+  temperature: 6
+  bloom: 0.18
+  vignette: 0.08
