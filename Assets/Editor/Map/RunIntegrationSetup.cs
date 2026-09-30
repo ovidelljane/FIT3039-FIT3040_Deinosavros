@@ -56,6 +56,7 @@ public static class RunIntegrationSetup
             else if (action == "card-artwork") MapCardArtworkVerification.StartBatch();
             else if (action == "author-encounters") MapEncounterSceneAuthoring.Apply();
             else if (action == "opportunity-ui") RunIntegrationPlayVerification.RunOpportunityPages();
+            else if (action == "author-combat-status") CombatStatusSceneAuthoring.Apply();
             else throw new ArgumentException("Unknown integration action.");
             File.WriteAllText(ResultDirectory + "/action-result.txt", "PASS: " + action + "\n");
         }

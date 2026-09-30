@@ -6,12 +6,16 @@ using UnityEngine.UI;
 public sealed class PlayerStatusView : MonoBehaviour
 {
     public static readonly Color Ink=new(.095f,.071f,.052f,.97f), Gold=new(.72f,.53f,.29f), Cream=new(1,.91f,.74f);
-    public ResourceBarView Health { get; private set; }
-    public ResourceBarView Elixir { get; private set; }
+    [Header("Scene References")]
+    [SerializeField] private ResourceBarView health, elixir;
+    [SerializeField] private TMP_Text shield, speed, damage;
+    public ResourceBarView Health { get => health; private set => health = value; }
+    public ResourceBarView Elixir { get => elixir; private set => elixir = value; }
+    public bool IsReady => Health != null && Health.IsReady && Elixir != null && Elixir.IsReady &&
+        shield != null && speed != null && damage != null;
     public BuffCards PreviewCard { get; private set; }
     private BattleScript player;
     private RunSession session;
-    private TMP_Text shield,speed,damage;
     private int oldShield=int.MinValue,oldDamage=int.MinValue;
     private float oldInterval=float.NaN;
 
@@ -53,7 +57,7 @@ public sealed class PlayerStatusView : MonoBehaviour
     private void OnDisable() { PreviewCard=null; }
     private void Refresh()
     {
-        if (player==null && session==null) return;
+        if (!IsReady || (player==null && session==null)) return;
         bool combat=player!=null;
         float hp=combat?player.health:session.PlayerHealth, maxHp=combat?player.maxHealth:session.PlayerMaxHealth;
         float energy=combat?player.elixir:session.PlayerElixir, maxEnergy=combat?player.maxElixir:session.PlayerMaxElixir;

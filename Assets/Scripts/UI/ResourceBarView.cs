@@ -4,15 +4,22 @@ using UnityEngine.UI;
 
 public sealed class ResourceBarView : MonoBehaviour
 {
-    public Image Fill { get; private set; }
-    public Image Preview { get; private set; }
-    public TMP_Text Hint { get; private set; }
-    private TMP_Text number;
-    private Image marker;
+    [Header("Scene References")]
+    [SerializeField] private Image fill, preview, marker;
+    [SerializeField] private TMP_Text hint, number;
+    [SerializeField] private string resource;
+    [Header("Cost Preview")]
+    [SerializeField] private Color affordableColor = new Color(1f, .91f, .74f);
+    [SerializeField] private Color unaffordableColor = new Color(1f, .27f, .21f);
+    [SerializeField] private Color normalHintColor = new Color(1f, .91f, .74f);
+    [SerializeField] private Color warningHintColor = new Color(1f, .47f, .35f);
+    public Image Fill { get => fill; private set => fill = value; }
+    public Image Preview { get => preview; private set => preview = value; }
+    public TMP_Text Hint { get => hint; private set => hint = value; }
+    public bool IsReady => Fill != null && Preview != null && Hint != null && number != null && marker != null;
     private float previousValue = float.NaN, previousMaximum;
     private int previousCost = -1;
     private bool previousAffordable, previousActive;
-    private string resource;
 
     public static ResourceBarView Create(Transform parent,string resource,StatusSymbol symbol,Color tint,bool compact)
     {
@@ -50,6 +57,7 @@ public sealed class ResourceBarView : MonoBehaviour
     }
     public void SetValue(float current,float maximum,int cost=0,bool preview=false,bool affordable=true)
     {
+        if (!IsReady) return;
         current = Mathf.Clamp(current,0,Mathf.Max(0,maximum));
         float end = maximum > 0 ? current/maximum : 0;
         Stretch(Fill.rectTransform,0,end);
@@ -61,14 +69,14 @@ public sealed class ResourceBarView : MonoBehaviour
             Stretch(Preview.rectTransform,start,end);
             marker.rectTransform.anchorMin = marker.rectTransform.anchorMax = new Vector2(start,.5f);
             marker.rectTransform.anchoredPosition = Vector2.zero;
-            Color tint = affordable ? PlayerStatusView.Cream : new Color(1,.27f,.21f);
+            Color tint = affordable ? affordableColor : unaffordableColor;
             tint.a = .5f + .2f*Mathf.Sin(Time.unscaledTime*4f); Preview.color = tint;
         }
         if (current == previousValue && maximum == previousMaximum && cost == previousCost &&
             preview == previousActive && affordable == previousAffordable) return;
         previousValue=current; previousMaximum=maximum; previousCost=cost; previousActive=preview; previousAffordable=affordable;
         number.text = resource == "Health" ? $"{current:0} / {maximum:0}" : $"{current:0.0} / {maximum:0}";
-        Hint.color = affordable ? PlayerStatusView.Cream : new Color(1,.47f,.35f);
+        Hint.color = affordable ? normalHintColor : warningHintColor;
         Hint.text = !preview ? "" : cost == 0 ? "No cost" : !affordable && current < cost
             ? $"Need {cost}  |  Short {cost-current:0.0}"
             : $"-{cost} {resource}  |  {Mathf.Max(0,current-cost):0.#} remaining";

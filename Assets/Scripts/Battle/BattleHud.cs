@@ -9,30 +9,39 @@ public sealed class BattleHud : MonoBehaviour
     [SerializeField] private HealthLabel[] healthLabels;
     [SerializeField] private BattleCountdown countdown;
     [SerializeField] private TimeTickSystem clock;
+    [Header("Scene Status")]
+    [SerializeField] private RectTransform statusRoot;
+    [SerializeField] private PlayerStatusView status;
     public Canvas Canvas => targetCanvas;
     public DeckManager Deck => deck;
     public bool CountdownArmed { get; private set; }
-    public PlayerStatusView Status { get; private set; }
+    public PlayerStatusView Status => status;
+    public RectTransform StatusRoot => statusRoot;
+    private BattleScript boundPlayer;
+
+    private void Start()
+    {
+        if (Status == null || !Status.IsReady)
+            Debug.LogError("Assign the scene-owned player status references on BattleHud.", this);
+    }
 
     private void LateUpdate()
     {
-        if (Status == null && deck != null && deck.Player != null) EnsureStatus(deck.Player);
+        if (deck != null && deck.Player != null && boundPlayer != deck.Player) EnsureStatus(deck.Player);
     }
     private void EnsureStatus(BattleScript player)
     {
-        if (Status != null || targetCanvas == null) return;
-        var rect = PlayerStatusView.Rect("PlayerStatus", targetCanvas.transform);
-        PlayerStatusView.Place(rect, new Vector2(0,1), new Vector2(32,-32), new Vector2(380,250), new Vector2(0,1));
-        rect.SetAsFirstSibling();
-        Status = PlayerStatusView.Create(rect, false);
+        if (Status == null || !Status.IsReady || boundPlayer == player) return;
         Status.Bind(player);
+        boundPlayer = player;
     }
 
     public bool TryPrepare(RunSession session, BattleScript player)
     {
         if (targetCanvas == null || !targetCanvas.isActiveAndEnabled || player == null ||
             player.gameObject.scene != gameObject.scene || !player.isActiveAndEnabled ||
-            deck == null || clock == null || countdown == null) return false;
+            deck == null || clock == null || countdown == null || Status == null || !Status.IsReady ||
+            !Status.isActiveAndEnabled || Status.gameObject.scene != gameObject.scene) return false;
         if (!deck.TryInitialize(session, player)) return false;
         EnsureStatus(player);
         if (healthLabels == null || healthLabels.Length == 0) return false;

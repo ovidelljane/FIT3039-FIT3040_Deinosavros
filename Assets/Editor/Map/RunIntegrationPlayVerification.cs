@@ -615,6 +615,7 @@ public static class RunIntegrationPlayVerification
         yield return PreparedBattle();
         yield return Until(() => !MapTravelCoordinator.Ensure(RunSession.Instance).IsBusy, "Battle fade completed");
         var hud = BattleHud.Find(SceneManager.GetActiveScene());
+        yield return AuthoredCombatStatus(hud);
         var card = hud.Deck.Hand.Last();
         var root = (RectTransform)card.transform;
         var visual = (RectTransform)root.Find("CardVisual");
@@ -716,6 +717,50 @@ public static class RunIntegrationPlayVerification
         Check(mapStatus.Health != null && mapStatus.Elixir != null && mapStatus.GetComponentsInChildren<StatusIcon>().Length == 5,
             "Map shares the health and Elixir bars and three attribute icons.");
         MapOpportunityVerification.CaptureCanvas(mapStatus.GetComponentInParent<Canvas>(), Camera.main, "map-status", (RectTransform)mapStatus.transform);
+    }
+
+    private static IEnumerator AuthoredCombatStatus(BattleHud hud)
+    {
+        CombatStatusSceneAuthoring.Validate(hud.gameObject.scene);
+        var panel = (RectTransform)hud.Status.transform;
+        var title = panel.Find("Title").GetComponent<TMPro.TMP_Text>();
+        var enemy = BattleScript.FindFighters("Enemy")[0].GetComponent<HealthLabel>();
+        var enemyPanel = Field<RectTransform>(enemy, "enemyPanel");
+        var attack = Field<TMPro.TMP_Text>(enemy, "attackText");
+        var savedPosition = panel.anchoredPosition;
+        var enemyPosition = enemyPanel.anchoredPosition;
+        var enemySize = enemyPanel.sizeDelta;
+        var savedColor = hud.Status.Health.Fill.color;
+        float titleSize = title.fontSize, attackSize = attack.fontSize;
+        var titleFont = title.font;
+        int childCount = hud.StatusRoot.GetComponentsInChildren<RectTransform>(true).Length;
+        float previousTimeScale = Time.timeScale;
+        Time.timeScale = 0;
+        try
+        {
+            panel.anchoredPosition += new Vector2(9, -5);
+            enemyPanel.anchoredPosition = new Vector2(6, 9);
+            enemyPanel.sizeDelta += new Vector2(8, 4);
+            title.fontSize += 3; attack.fontSize += 2; hud.Status.Health.Fill.color = Color.cyan;
+            yield return null; yield return null;
+            Check(panel.anchoredPosition == savedPosition + new Vector2(9, -5) && title.fontSize == titleSize + 3 &&
+                title.font == titleFont && hud.Status.Health.Fill.color == Color.cyan,
+                "Player status data updates preserve authored position, size, color and font settings.");
+            Check(enemyPanel.anchoredPosition == new Vector2(6, 9) && enemyPanel.sizeDelta == enemySize + new Vector2(8, 4) &&
+                attack.fontSize == attackSize + 2,
+                "World following preserves the enemy panel's editable offset, size and typography.");
+            enemy.enabled = false; yield return null;
+            Check(!enemyPanel.gameObject.activeSelf, "Disabling an actor hides, but does not delete, its authored status.");
+            enemy.enabled = true; yield return null;
+            Check(enemyPanel.gameObject.activeSelf && hud.StatusRoot.GetComponentsInChildren<RectTransform>(true).Length == childCount,
+                "Re-enabling an actor reuses its scene UI without creating duplicates.");
+        }
+        finally
+        {
+            panel.anchoredPosition = savedPosition; enemyPanel.anchoredPosition = enemyPosition; enemyPanel.sizeDelta = enemySize;
+            title.fontSize = titleSize; attack.fontSize = attackSize; hud.Status.Health.Fill.color = savedColor;
+            enemy.enabled = true; Time.timeScale = previousTimeScale;
+        }
     }
 
     private static IEnumerator EnemyStatusPresentation(BattleHud hud)

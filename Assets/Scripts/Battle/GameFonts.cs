@@ -44,10 +44,11 @@ public static class GameFonts
         text.fontStyle = FontStyles.Normal;
         text.characterSpacing = role == GameFontRole.Heading ? 1.2f : 0f;
     }
-    public static void ApplyHierarchy(Transform root)
+    public static void ApplyHierarchy(Transform root, Transform preserveRoot = null)
     {
         foreach (var text in root.GetComponentsInChildren<TMP_Text>(true))
         {
+            if (preserveRoot != null && text.transform.IsChildOf(preserveRoot)) continue;
             string label = text.name.ToLowerInvariant();
             var role = label.Contains("title") || label.Contains("name") || text.GetComponentInParent<Button>() != null
                 ? GameFontRole.Heading : GameFontRole.Body;
@@ -66,6 +67,7 @@ public static class GameFonts
     {
         // Encounter pages keep their scene-authored font and typography settings.
         if (scene.name != "MainMenu" && scene.name != "Map" && scene.name != "Deinosavros") return;
-        foreach (var root in scene.GetRootGameObjects()) ApplyHierarchy(root.transform);
+        Transform preserveRoot = scene.name == "Deinosavros" ? BattleHud.Find(scene)?.StatusRoot : null;
+        foreach (var root in scene.GetRootGameObjects()) ApplyHierarchy(root.transform, preserveRoot);
     }
 }
