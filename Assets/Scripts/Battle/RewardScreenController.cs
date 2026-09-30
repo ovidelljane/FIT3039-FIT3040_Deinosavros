@@ -43,7 +43,7 @@ public sealed class RewardScreenController : MonoBehaviour
 
     private void ChooseCard(CardDefinition definition)
     {
-        RunSession.Instance.AddCard(definition);
+        if (RunSession.Instance != null) RunSession.Instance.AddCard(definition);
         ReturnToMap();
     }
 

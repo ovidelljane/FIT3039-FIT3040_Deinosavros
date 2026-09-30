@@ -20,7 +20,8 @@ MonoBehaviour:
   combatPrefab: {fileID: 2767860603540826675, guid: e9e731ab3db966442a97a52210ed65da, type: 3}
   mapPrefab: {fileID: 6014379585585150052, guid: 61f0d142ab23632408acd1017e93ded9, type: 3}
   backPrefab: {fileID: 5198928162026508945, guid: 7dfe928d286b1bc4590689a81c985cbe, type: 3}
-  frontArtwork: {fileID: 21300000, guid: def956a756ade1848bdaf3569b2b0ae9, type: 3}
+  frontArtwork: {fileID: 0}
+  frontBorder: {fileID: 21300000, guid: def956a756ade1848bdaf3569b2b0ae9, type: 3}
   backArtwork: {fileID: 21300000, guid: 2e1a05b3b65acae499cad2d809ceeb57, type: 3}
   overworldEffect:
     effectType: 3

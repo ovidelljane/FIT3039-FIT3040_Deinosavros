@@ -27,6 +27,9 @@ public class Effect : MonoBehaviour
             {
                 case StatType.Damage: target.attackDmg += (int)amount; break;
                 case StatType.AttackSpeed: target.attackSpd -= amount; break;
+                case StatType.ExtraHits: target.hitsPerAttack += (int)amount; break;
+                case StatType.EnemySlow: target.attackSpd += amount; break;
+                case StatType.ElixirRegen: target.elixirRegen += amount; break;
             }
         }
         _currentTickCount++;
@@ -36,6 +39,9 @@ public class Effect : MonoBehaviour
             {
                 case StatType.Damage: target.attackDmg -= (int)amount; break;
                 case StatType.AttackSpeed: target.attackSpd += amount; break;
+                case StatType.ExtraHits: target.hitsPerAttack -= (int)amount; break;
+                case StatType.EnemySlow: target.attackSpd -= amount; break;
+                case StatType.ElixirRegen: target.elixirRegen -= amount; break;
             }
             Destroy(this.gameObject);
         }

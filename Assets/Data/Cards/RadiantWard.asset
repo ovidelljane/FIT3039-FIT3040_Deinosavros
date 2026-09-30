@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 063508554f8790442a8283fa3091dbee, type: 3}
+  m_Name: RadiantWard
+  m_EditorClassIdentifier: Assembly-CSharp::CardDefinition
+  cardId: radiant_ward
+  displayName: Radiant Ward
+  combatEffectText: +6 Shield
+  cardType: 2
+  capacityCost: 5
+  combatPrefab: {fileID: 3386567266915157623, guid: f499e4b10a5f4c57978eb4db0bed7d37, type: 3}
+  mapPrefab: {fileID: 0}
+  backPrefab: {fileID: 0}
+  frontArtwork: {fileID: 21300000, guid: d409e9a2711ad094d8c8d91f23af29e9, type: 3}
+  frontBorder: {fileID: 21300000, guid: 6566706136421c944ae4bf676b61f2f3, type: 3}
+  backArtwork: {fileID: 21300000, guid: d6eb5c48936d55c47830c9a7d0c70eca, type: 3}
+  overworldEffect:
+    effectType: 2
+    magnitude: 8
+    title: Radiant Ward
+    description: Player starts with 8 Shield.
+    scopeLabel: NEXT BATTLE - PERMANENT REMOVAL

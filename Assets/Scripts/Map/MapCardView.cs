@@ -150,6 +150,7 @@ public sealed class MapCardView : MonoBehaviour, IPointerClickHandler, IPointerE
         foreach (BuffCards combatCard in target.GetComponentsInChildren<BuffCards>(true))
         {
             combatCard.enabled = false;
+            combatCard.ApplyArt(definition);
         }
 
         foreach (Graphic graphic in target.GetComponentsInChildren<Graphic>(true))

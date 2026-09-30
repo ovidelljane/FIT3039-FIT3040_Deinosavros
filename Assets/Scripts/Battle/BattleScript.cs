@@ -16,6 +16,7 @@ public class BattleScript : MonoBehaviour
     public float maxElixir = 10f;
     public float elixirRegen = 0.05f;
     public int shield = 0;
+    public int hitsPerAttack = 1;
 
     private int _currentTickCount;
     private float _attackTick;
@@ -53,7 +54,7 @@ public class BattleScript : MonoBehaviour
     private void HandleTick()
     {
         _currentTickCount++;
-        _attackTick = attackSpd * 10f;
+        _attackTick = Mathf.Max(1f, attackSpd * 10f);
 
         elixir = Mathf.Min(elixir + elixirRegen, maxElixir);
 
@@ -61,7 +62,7 @@ public class BattleScript : MonoBehaviour
         {
             Attack();
             StartCoroutine(Bounce());
-            audioSource.Play();
+            if (audioSource != null) audioSource.Play();
             _currentTickCount = 0;
         }
 
@@ -102,25 +103,31 @@ public class BattleScript : MonoBehaviour
     {
         GameObject opponent = _OpponentList[0];
         opponentScript = opponent.GetComponent<BattleScript>();
-        if (opponentScript.shield > 0)
+        for (int i = 0; i < Mathf.Max(1, hitsPerAttack); i++)
         {
-            if (opponentScript.shield <= attackDmg)
+            opponentScript.TakeDamage(attackDmg);
+        }
+    }
+
+    public void TakeDamage(int damage)
+    {
+        if (shield > 0)
+        {
+            if (shield <= damage)
             {
-                int tempAttack = attackDmg - opponentScript.shield;
-                opponentScript.shield = 0;
-                opponentScript.health -= tempAttack;
+                int tempAttack = damage - shield;
+                shield = 0;
+                health -= tempAttack;
             }
             else
             {
-                opponentScript.shield -= attackDmg;
+                shield -= damage;
             }
         }
         else
         {
-            opponentScript.health -= attackDmg;
+            health -= damage;
         }
-
-        
     }
 
     private int enemyListManager()
