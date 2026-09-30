@@ -24,6 +24,7 @@ public class BuffCards : MonoBehaviour, IPointerClickHandler, IPointerEnterHandl
 
     private DeckManager owner;
     private CardDefinition definition;
+    private TextMeshProUGUI costText;
 
     void Start()
     {
@@ -70,7 +71,31 @@ public class BuffCards : MonoBehaviour, IPointerClickHandler, IPointerEnterHandl
         {
             borderImage.sprite = cardDefinition.frontBorder;
             borderImage.enabled = cardDefinition.frontBorder != null;
+            ShowCost();
         }
+    }
+
+    private void ShowCost()
+    {
+        if (costText == null)
+        {
+            var costObject = new GameObject("CostText", typeof(RectTransform));
+            costObject.transform.SetParent(borderImage.transform, false);
+            RectTransform rect = (RectTransform)costObject.transform;
+            // Centre of the small circle in the top-left corner of every border sprite.
+            rect.anchorMin = rect.anchorMax = new Vector2(0.209f, 0.855f);
+            rect.sizeDelta = new Vector2(26f, 26f);
+
+            costText = costObject.AddComponent<TextMeshProUGUI>();
+            GameFonts.Apply(costText);
+            costText.alignment = TextAlignmentOptions.Center;
+            costText.enableAutoSizing = true;
+            costText.fontSizeMin = 8f;
+            costText.fontSizeMax = 22f;
+            costText.color = Color.white;
+            costText.raycastTarget = false;
+        }
+        costText.text = elixirCost.ToString();
     }
 
     public void OnPointerClick(PointerEventData e)

@@ -13,6 +13,8 @@ public sealed class DeckManager : MonoBehaviour
     private readonly List<CardDefinition> discardPile = new();
     private readonly List<BuffCards> hand = new();
     private readonly List<int> pendingDrawTicksRemaining = new();
+    private CardPileDisplay drawPileDisplay;
+    private CardPileDisplay discardPileDisplay;
 
     private void OnEnable()
     {
@@ -30,10 +32,23 @@ public sealed class DeckManager : MonoBehaviour
             ? RunSession.Instance.GetActiveDeck()
             : new List<CardDefinition>(testDeck);
         drawPile.AddRange(Shuffle(activeDeck));
+
+        // Piles sit just before the hand so the hand and reward screen draw on top of them.
+        int pileIndex = handContainer.GetSiblingIndex();
+        drawPileDisplay = CardPileDisplay.Create(handContainer.parent, pileIndex, "Draw", true);
+        discardPileDisplay = CardPileDisplay.Create(handContainer.parent, pileIndex, "Discard", false);
+
         for (int i = 0; i < maxHandSize; i++)
         {
             DrawOneCard();
         }
+        RefreshPileCounts();
+    }
+
+    private void RefreshPileCounts()
+    {
+        if (drawPileDisplay != null) drawPileDisplay.SetCount(drawPile.Count);
+        if (discardPileDisplay != null) discardPileDisplay.SetCount(discardPile.Count);
     }
 
     private void HandleTick()
@@ -59,6 +74,7 @@ public sealed class DeckManager : MonoBehaviour
         {
             pendingDrawTicksRemaining.Add(drawDelayTicks);
         }
+        RefreshPileCounts();
     }
 
     private void DrawOneCard()
@@ -73,6 +89,7 @@ public sealed class DeckManager : MonoBehaviour
         int lastIndex = drawPile.Count - 1;
         CardDefinition definition = drawPile[lastIndex];
         drawPile.RemoveAt(lastIndex);
+        RefreshPileCounts();
 
         GameObject prefab = definition.combatPrefab != null ? definition.combatPrefab : fallbackCardPrefab;
         if (prefab == null) return;

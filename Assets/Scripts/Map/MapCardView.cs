@@ -152,6 +152,12 @@ public sealed class MapCardView : MonoBehaviour, IPointerClickHandler, IPointerE
         }
         target.SetActive(true);
 
+        foreach (TMP_Text combatLabel in target.GetComponentsInChildren<TMP_Text>(true))
+        {
+            combatLabel.text = definition.combatEffectText;
+        }
+
+        // After the labels above, so the card's cost number isn't overwritten with effect text.
         foreach (BuffCards combatCard in target.GetComponentsInChildren<BuffCards>(true))
         {
             combatCard.enabled = false;
@@ -161,11 +167,6 @@ public sealed class MapCardView : MonoBehaviour, IPointerClickHandler, IPointerE
         foreach (Graphic graphic in target.GetComponentsInChildren<Graphic>(true))
         {
             graphic.raycastTarget = false;
-        }
-
-        foreach (TMP_Text combatLabel in target.GetComponentsInChildren<TMP_Text>(true))
-        {
-            combatLabel.text = definition.combatEffectText;
         }
 
         RectTransform combatRect = target.GetComponent<RectTransform>();
