@@ -10,22 +10,22 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 063508554f8790442a8283fa3091dbee, type: 3}
-  m_Name: FleetFootwork
+  m_Name: Battleborn
   m_EditorClassIdentifier: Assembly-CSharp::CardDefinition
-  cardId: fleet_footwork
-  displayName: Fleet Footwork
-  combatEffectText: +1 AttackSpeed
+  cardId: battleborn
+  displayName: Battleborn
+  combatEffectText: +2 Hits per attack
   cardType: 1
   capacityCost: 5
-  combatPrefab: {fileID: 3386567266915157623, guid: 93279831875c5d44b8de69b357320d1b, type: 3}
-  mapPrefab: {fileID: 1696409143667802618, guid: ad1a32f89bfbedf47a5635eda42a0c18, type: 3}
-  backPrefab: {fileID: 6584790107418876506, guid: e83f4ef784779264c9317293a4ffc656, type: 3}
-  frontArtwork: {fileID: 21300000, guid: 7ab11ac0c0879fc40945a3dbb0ba6c6b, type: 3}
+  combatPrefab: {fileID: 3386567266915157623, guid: 7459f84827e340adab6c5ae549ab2481, type: 3}
+  mapPrefab: {fileID: 0}
+  backPrefab: {fileID: 0}
+  frontArtwork: {fileID: 21300000, guid: 88a221a9a3a0bb645b43f7501f136814, type: 3}
   frontBorder: {fileID: 21300000, guid: 8301a261a4e11914eb5ca1683b6c439c, type: 3}
   backArtwork: {fileID: 21300000, guid: b73586b0dc72d774894cffb4d459886d, type: 3}
   overworldEffect:
     effectType: 1
     magnitude: 1
-    title: Fleet Footwork
+    title: Battleborn
     description: Player attack speed is reduced by 1, to a minimum of 1.
     scopeLabel: NEXT BATTLE - PERMANENT REMOVAL

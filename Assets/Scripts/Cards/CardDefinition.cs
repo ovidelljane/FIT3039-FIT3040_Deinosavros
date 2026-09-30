@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-public enum MapCardType { Attack, Buff, Defense, Elixir }
+public enum MapCardType { Attack, Buff, Defense, Elixir, Debuff }
 public enum OverworldEffectType { ReduceEnemyStartingHealth, ImprovePlayerAttackSpeed, GrantStartingShield, IncreaseStartingElixir }
 
 [Serializable]
@@ -26,6 +26,7 @@ public sealed class CardDefinition : ScriptableObject
     public GameObject mapPrefab;
     public GameObject backPrefab;
     public Sprite frontArtwork;
+    public Sprite frontBorder;
     public Sprite backArtwork;
     public OverworldEffectDefinition overworldEffect;
 }

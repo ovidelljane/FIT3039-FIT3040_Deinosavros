@@ -10,22 +10,22 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 063508554f8790442a8283fa3091dbee, type: 3}
-  m_Name: TidalWave
+  m_Name: Thunderbolt
   m_EditorClassIdentifier: Assembly-CSharp::CardDefinition
-  cardId: tidal_wave
-  displayName: Tidal Wave
-  combatEffectText: +3 Damage
+  cardId: thunderbolt
+  displayName: Thunderbolt
+  combatEffectText: 4 Damage to all enemies
   cardType: 0
   capacityCost: 5
-  combatPrefab: {fileID: 212488345310556246, guid: 249903f874521da40903a704b4aa2c68, type: 3}
-  mapPrefab: {fileID: 5534891382752679352, guid: e931657de8189624c93c2d4ace302714, type: 3}
-  backPrefab: {fileID: 3595972134266836904, guid: dec456011f0bb5c418eb663f62d74a9d, type: 3}
-  frontArtwork: {fileID: 21300000, guid: 0d656ea3ba686e04f8c0fb17abd09aea, type: 3}
+  combatPrefab: {fileID: 3386567266915157623, guid: 219f7ce827e74f88bef3148b5a90745b, type: 3}
+  mapPrefab: {fileID: 0}
+  backPrefab: {fileID: 0}
+  frontArtwork: {fileID: 21300000, guid: 191675d5d3de4b343ae2bacbb80ba481, type: 3}
   frontBorder: {fileID: 21300000, guid: 17beddcd011e00e4e88513b50b0b188e, type: 3}
   backArtwork: {fileID: 21300000, guid: a01861b4cd9e850469d6289ac770f583, type: 3}
   overworldEffect:
     effectType: 0
-    magnitude: 75
-    title: Tidal Wave
-    description: All enemies enter at 75% of their current health.
+    magnitude: 80
+    title: Thunderbolt
+    description: All enemies enter at 80% of their current health.
     scopeLabel: NEXT BATTLE - PERMANENT REMOVAL

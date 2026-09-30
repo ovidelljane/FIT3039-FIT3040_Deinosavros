@@ -7,6 +7,7 @@ public sealed class DeckManager : MonoBehaviour
     [SerializeField] private int drawDelayTicks = 20;
     [SerializeField] private Transform handContainer;
     [SerializeField] private GameObject fallbackCardPrefab;
+    [SerializeField] private CardDefinition[] testDeck;
 
     private readonly List<CardDefinition> drawPile = new();
     private readonly List<CardDefinition> discardPile = new();
@@ -25,7 +26,10 @@ public sealed class DeckManager : MonoBehaviour
 
     private void Start()
     {
-        drawPile.AddRange(Shuffle(RunSession.Instance.GetActiveDeck()));
+        List<CardDefinition> activeDeck = RunSession.Instance != null
+            ? RunSession.Instance.GetActiveDeck()
+            : new List<CardDefinition>(testDeck);
+        drawPile.AddRange(Shuffle(activeDeck));
         for (int i = 0; i < maxHandSize; i++)
         {
             DrawOneCard();
