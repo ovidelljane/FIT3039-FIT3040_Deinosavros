@@ -44,7 +44,9 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
     private bool targetBack;
     private bool initialized;
     private bool pointerHovered;
+    private bool interactionLocked;
     public CardDefinition Definition => definition;
+    public string InstanceId { get; private set; }
 
     private void Awake()
     {
@@ -104,10 +106,12 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
         visualTransform.localScale = Vector3.Lerp(visualTransform.localScale, targetScale, scaleBlend);
     }
 
-    public void Initialize(MapController owner, CardDefinition cardDefinition)
+    public void Initialize(MapController owner, CardDefinition cardDefinition, string instanceId = null)
     {
         EnsureVisualTransform();
         controller = owner;
+        InstanceId = instanceId;
+        interactionLocked = false;
         if (cardDefinition != null && cardDefinition != definition)
         {
             definition = cardDefinition;
@@ -130,9 +134,10 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
         visualTransform.localScale = visualBaseScale;
         if (combatFrontInstance == null) BuildCombatFront();
         else ConfigureCombatFront(combatFrontInstance);
-        if (backInstance == null) BuildBack();
-        else ConfigureBack(backInstance);
+        BuildBack();
         titleText.text = definition.displayName;
+        GameFonts.Apply(titleText, GameFontRole.Heading);
+        GameFonts.Apply(scopeText, GameFontRole.Body);
         effectText.text = string.Empty;
         effectText.gameObject.SetActive(false);
         scopeText.text = definition.overworldEffect.scopeLabel;
@@ -141,61 +146,81 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
         selectionGlow.SetActive(false);
         sacrificedOverlay.SetActive(false);
         sacrificeButton.onClick.RemoveAllListeners();
+        sacrificeButton.interactable = true;
         sacrificeButton.onClick.AddListener(() => controller.RequestSacrifice(this));
     }
 
     private void BuildBack()
     {
+        var faceRect = (RectTransform)backFace.transform;
+        faceRect.anchorMin = Vector2.zero;
+        faceRect.anchorMax = Vector2.one;
+        faceRect.pivot = new Vector2(.5f, .5f);
+        faceRect.anchoredPosition3D = Vector3.zero;
+        faceRect.sizeDelta = Vector2.zero;
+        faceRect.localScale = Vector3.one;
+        faceRect.localRotation = Quaternion.identity;
         if (backInstance != null)
         {
+            backInstance.SetActive(false);
             Destroy(backInstance);
+            backInstance = null;
         }
-
-        if (definition.backPrefab == null)
+        // One rendering path for authored and dynamically cloned cards. These are the
+        // same padded frame dimensions as the combat face, not the narrower layout cell.
+        backArtwork.gameObject.SetActive(true);
+        backArtwork.sprite = definition.backArtwork;
+        backArtwork.enabled = definition.backArtwork != null;
+        backArtwork.color = Color.white;
+        backArtwork.preserveAspect = true;
+        backArtwork.raycastTarget = false;
+        SetBackRect(backArtwork.rectTransform, Vector2.zero, new Vector2(240f, 340f));
+        var fillTransform = backFace.transform.Find("BackFill");
+        var fill = fillTransform != null ? fillTransform.GetComponent<Image>() : null;
+        if (fill == null)
         {
-            backArtwork.gameObject.SetActive(true);
-            backArtwork.sprite = definition.backArtwork;
-            return;
+            var fillObject = new GameObject("BackFill", typeof(RectTransform), typeof(Image));
+            fillObject.layer = backFace.layer;
+            fillObject.transform.SetParent(backFace.transform, false);
+            fill = fillObject.GetComponent<Image>();
         }
+        fill.transform.SetAsFirstSibling();
+        backArtwork.transform.SetSiblingIndex(1);
+        SetBackRect(fill.rectTransform, new Vector2(-1f, -1f), new Vector2(152f, 258f));
+        var sourceFill = definition.backPrefab != null ? definition.backPrefab.transform.Find("EffectBackground") : null;
+        fill.color = sourceFill != null && sourceFill.TryGetComponent<Image>(out var sourceImage)
+            ? sourceImage.color : new Color(.32f, .205f, .035f, 1f);
+        fill.raycastTarget = false;
 
-        backArtwork.gameObject.SetActive(false);
-        backInstance = Instantiate(definition.backPrefab, backFace.transform);
-        backInstance.name = $"Back_{definition.backPrefab.name}";
-        backInstance.transform.SetAsFirstSibling();
-
-        ConfigureBack(backInstance);
+        SetBackRect(titleText.rectTransform, new Vector2(-3f, 86f), new Vector2(130f, 44f));
+        SetBackRect(scopeText.rectTransform, new Vector2(0f, -2f), new Vector2(138f, 84f));
+        SetBackRect((RectTransform)sacrificeButton.transform, new Vector2(0f, -102f), new Vector2(134f, 28f));
+        SetBackLabel(titleText, 18f, 13f);
+        SetBackLabel(scopeText, 14f, 12f);
+        foreach (var label in sacrificeButton.GetComponentsInChildren<TMP_Text>(true))
+        {
+            GameFonts.Apply(label, GameFontRole.Heading);
+            SetBackLabel(label, 14f, 12f);
+        }
     }
 
-    private void ConfigureBack(GameObject target)
+    private static void SetBackRect(RectTransform rect, Vector2 position, Vector2 size)
     {
-        if (backArtwork != null && backArtwork.gameObject != target)
-        {
-            backArtwork.gameObject.SetActive(false);
-        }
-        target.SetActive(true);
+        rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(.5f, .5f);
+        rect.anchoredPosition3D = new Vector3(position.x, position.y, 0f);
+        rect.sizeDelta = size;
+        rect.localScale = Vector3.one;
+        rect.localRotation = Quaternion.identity;
+    }
 
-        foreach (Graphic graphic in target.GetComponentsInChildren<Graphic>(true))
-        {
-            graphic.raycastTarget = false;
-        }
-
-        Image backImage = target.GetComponent<Image>();
-        if (backImage != null)
-        {
-            backImage.preserveAspect = false;
-        }
-
-        RectTransform backRect = target.GetComponent<RectTransform>();
-        if (backRect != null)
-        {
-            backRect.anchorMin = new Vector2(0.5f, 0.5f);
-            backRect.anchorMax = new Vector2(0.5f, 0.5f);
-            backRect.pivot = new Vector2(0.5f, 0.5f);
-            backRect.anchoredPosition = Vector2.zero;
-            backRect.sizeDelta = new Vector2(150f, 250f);
-            backRect.localRotation = Quaternion.identity;
-            backRect.localScale = Vector3.one;
-        }
+    private static void SetBackLabel(TMP_Text text, float maximum, float minimum)
+    {
+        text.enableAutoSizing = true;
+        text.fontSize = text.fontSizeMax = maximum;
+        text.fontSizeMin = minimum;
+        text.alignment = TextAlignmentOptions.Center;
+        text.margin = Vector4.zero;
+        text.raycastTarget = false;
     }
 
     private void BuildCombatFront()
@@ -208,7 +233,7 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
         if (definition.combatPrefab == null)
         {
             frontArtwork.gameObject.SetActive(true);
-            frontArtwork.sprite = definition.frontArtwork;
+            frontArtwork.sprite = definition.FrontIllustration;
             return;
         }
 
@@ -229,10 +254,11 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
 
         foreach (TMP_Text combatLabel in target.GetComponentsInChildren<TMP_Text>(true))
         {
-            combatLabel.text = definition.combatEffectText;
+            combatLabel.text = GameFonts.FormatEffect(definition.GetCombatDescription());
         }
 
         // After the labels above, so the card's cost number isn't overwritten with effect text.
+        GameFonts.ApplyHierarchy(target.transform);
         foreach (BuffCards combatCard in target.GetComponentsInChildren<BuffCards>(true))
         {
             combatCard.enabled = false;
@@ -259,7 +285,7 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        if (!initialized) return;
+        if (!initialized || interactionLocked) return;
         pointerHovered = true;
         targetBack = true;
         selectionGlow.SetActive(true);
@@ -299,6 +325,13 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
     {
         sacrificedOverlay.SetActive(true);
         sacrificeButton.interactable = false;
+    }
+
+    public void SetInteractionLocked(bool value)
+    {
+        interactionLocked = value;
+        sacrificeButton.interactable = !value;
+        if (value) OnPointerExit(null);
     }
 
     private void SetFace(bool backVisible)

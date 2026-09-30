@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardDefinition
   cardId: solar_shield
   displayName: Solar Shield
-  combatEffectText: +3 Shield
+  combatEffectText: "+{amount} Shield"
   cardType: 2
-  capacityCost: 5
+  capacityCost: 2
   combatPrefab: {fileID: 1483386276342972719, guid: 0c184178eacdc23479cf29628174430f, type: 3}
   mapPrefab: {fileID: 5510309902124097987, guid: 34d036743278bf241b043f9ec62c884f, type: 3}
   backPrefab: {fileID: 1988278338754953843, guid: 3b10914faf6ed474c8622bf2d64ea079, type: 3}
@@ -27,5 +27,5 @@ MonoBehaviour:
     effectType: 2
     magnitude: 5
     title: Solar Shield
-    description: Player starts with 5 Shield.
+    description: "+{magnitude} starting Shield."
     scopeLabel: NEXT BATTLE - PERMANENT REMOVAL

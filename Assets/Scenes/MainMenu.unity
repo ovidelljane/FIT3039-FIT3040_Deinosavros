@@ -575,6 +575,51 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 825102858}
   m_CullTransparentMesh: 1
+--- !u!1 &902800001
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 902800002}
+  - component: {fileID: 902800003}
+  m_Layer: 0
+  m_Name: Run Settings
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &902800002
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 902800001}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &902800003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 902800001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3da4c4cf5eab49a5b53cf839b2d4a1ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RunSettings
+  configuration: {fileID: 11400000, guid: 49ac45375d444a82b8dde5209c5e4dca, type: 2}
 --- !u!1 &1038212332
 GameObject:
   m_ObjectHideFlags: 0
@@ -1453,7 +1498,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 4b0366f562ae0134cb2b7bc7cb00507e, type: 3}
+  m_Sprite: {fileID: 21300000, guid: c0d3a4058955ee64a97c22adc8b70677, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -1619,6 +1664,7 @@ GameObject:
   - component: {fileID: 1817209615}
   - component: {fileID: 1817209614}
   - component: {fileID: 1817209613}
+  - component: {fileID: 1817209616}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -1700,6 +1746,50 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1817209616
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1817209612}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a79441f348de89743a2939f4d699eac1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalCameraData
+  m_RenderShadows: 1
+  m_RequiresDepthTextureOption: 2
+  m_RequiresOpaqueTextureOption: 2
+  m_CameraType: 0
+  m_Cameras: []
+  m_RendererIndex: -1
+  m_VolumeLayerMask:
+    serializedVersion: 2
+    m_Bits: 1
+  m_VolumeTrigger: {fileID: 0}
+  m_VolumeFrameworkUpdateModeOption: 2
+  m_RenderPostProcessing: 0
+  m_Antialiasing: 0
+  m_AntialiasingQuality: 2
+  m_StopNaN: 0
+  m_Dithering: 0
+  m_ClearDepth: 1
+  m_AllowXRRendering: 1
+  m_AllowHDROutput: 1
+  m_UseScreenCoordOverride: 0
+  m_ScreenSizeOverride: {x: 0, y: 0, z: 0, w: 0}
+  m_ScreenCoordScaleBias: {x: 0, y: 0, z: 0, w: 0}
+  m_RequiresDepthTexture: 0
+  m_RequiresColorTexture: 0
+  m_TaaSettings:
+    m_Quality: 3
+    m_FrameInfluence: 0.1
+    m_JitterScale: 1
+    m_MipBias: 0
+    m_VarianceClampScale: 0.9
+    m_ContrastAdaptiveSharpening: 0
+  m_Version: 2
 --- !u!1 &1858749661
 GameObject:
   m_ObjectHideFlags: 0
@@ -1873,19 +1963,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MainMenuController
   firstBattleSceneName: Deinosavros
   startingDeck:
-  - {fileID: 11400000, guid: f963c88070c84486ad5509fd6cef0df7, type: 2}
   - {fileID: 11400000, guid: d42fd34482a646db88d1cfc35212db21, type: 2}
   - {fileID: 11400000, guid: 62c839f6b1f4436eab192d385469f077, type: 2}
-  - {fileID: 11400000, guid: c06a7209498843518634d9c669d0b2df, type: 2}
   - {fileID: 11400000, guid: 40c6f4cd073f50040827759f30980905, type: 2}
   - {fileID: 11400000, guid: 7231b14fd99b4c4ba25555b62b805924, type: 2}
   - {fileID: 11400000, guid: da8534622ebc4da5ab63893b0a75014d, type: 2}
   - {fileID: 11400000, guid: 993d1616c1c545dab74afde4f98de0ec, type: 2}
   startButton: {fileID: 497733442}
+  routeGraph: {fileID: 11400000, guid: be1480a76c9e3ad42a6aa01d95cc5245, type: 2}
+  nodeCatalog: {fileID: 11400000, guid: 78e41e6cbad52fc44a61339b4c29e24e, type: 2}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
+  - {fileID: 902800002}
   - {fileID: 1817209615}
   - {fileID: 1858749663}
   - {fileID: 1377334916}

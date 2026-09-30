@@ -1,81 +1,72 @@
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
+// Applies run health, layer difficulty and the next-combat offering after receiver readiness.
 public sealed class BattleRunBridge : MonoBehaviour
 {
-    [SerializeField] private string battleSceneName = "Deinosavros";
+    private RunSession owner;
     private BattleScript trackedPlayer;
+    private string initializedEncounterId;
 
     private void OnEnable()
     {
-        SceneManager.sceneLoaded += HandleSceneLoaded;
-    }
-
-    private void OnDisable()
-    {
-        if (RunSession.Instance != null && trackedPlayer != null)
-        {
-            RunSession.Instance.CapturePlayerStats(trackedPlayer);
-        }
-        SceneManager.sceneLoaded -= HandleSceneLoaded;
+        owner = GetComponent<RunSession>();
+        if (owner != null && RunSession.Instance != null && RunSession.Instance != owner) enabled = false;
     }
 
     private void Update()
     {
-        if (trackedPlayer != null && RunSession.Instance != null)
+        if (owner != null && owner == RunSession.Instance && trackedPlayer != null &&
+            owner.Progress?.Phase == MapProgressPhase.InEncounter)
+            owner.CapturePlayerStats(trackedPlayer);
+    }
+
+    public bool InitializeConfirmedEncounter(string id, BattleScript player)
+    {
+        var session = RunSession.Instance;
+        if (owner != session || session?.Progress?.Phase != MapProgressPhase.InEncounter ||
+            session.Progress.CurrentEncounter?.EncounterId != id || !session.Progress.CurrentEncounter.IsCombat ||
+            initializedEncounterId == id || player == null || !player.isActiveAndEnabled) return false;
+        initializedEncounterId = id;
+        trackedPlayer = player;
+        session.ConfigureBattleDefaults(player);
+        session.ApplyPlayerStats(player);
+        ApplyEnemyDifficulty(session.Rules, session.Progress.CurrentEncounterLayer, player);
+        if (session.TryConsumePendingModifier(out var modifier)) ApplyModifier(modifier, player);
+        session.CapturePlayerStats(player);
+        return true;
+    }
+
+    private static void ApplyEnemyDifficulty(RunBalance rules, int layer, BattleScript player)
+    {
+        foreach (var enemy in BattleScript.FindFighters("Enemy"))
         {
-            RunSession.Instance.CapturePlayerStats(trackedPlayer);
+            if (enemy.gameObject.scene != player.gameObject.scene || enemy.health <= 0) continue;
+            int baseMaxHealth = Mathf.Max(1, enemy.maxHealth);
+            float healthFraction = Mathf.Clamp01((float)enemy.health / baseMaxHealth);
+            enemy.maxHealth = rules.EnemyMaxHealthAtLayer(baseMaxHealth, layer);
+            enemy.health = Mathf.Clamp(Mathf.RoundToInt(enemy.maxHealth * healthFraction), 1, enemy.maxHealth);
+            enemy.attackDmg = rules.EnemyDamageAtLayer(enemy.attackDmg, layer);
         }
     }
 
-    private void HandleSceneLoaded(Scene scene, LoadSceneMode mode)
+    private void ApplyModifier(PendingEncounterModifier modifier, BattleScript player)
     {
-        if (scene.name != battleSceneName || RunSession.Instance == null)
-        {
-            trackedPlayer = null;
-            return;
-        }
-
-<<<<<<< Updated upstream
-=======
-        HideSacrificedCard(RunSession.Instance);
-        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
-        trackedPlayer = playerObject != null ? playerObject.GetComponent<BattleScript>() : null;
-        RunSession.Instance.ApplyPlayerStats(trackedPlayer);
->>>>>>> Stashed changes
-        if (RunSession.Instance.TryConsumePendingModifier(out PendingEncounterModifier modifier))
-        {
-            ApplyModifier(modifier);
-        }
-        RunSession.Instance.CapturePlayerStats(trackedPlayer);
-    }
-
-    private static void ApplyModifier(PendingEncounterModifier modifier)
-    {
-        List<BattleScript> players = BattleScript.FindFighters("Player");
-        BattleScript player = players.Count > 0 ? players[0] : null;
-
         switch (modifier.effectType)
         {
             case OverworldEffectType.ReduceEnemyStartingHealth:
-                foreach (BattleScript enemy in BattleScript.FindFighters("Enemy"))
-                {
-                    enemy.health = Mathf.Max(1, Mathf.CeilToInt(enemy.health * modifier.magnitude / 100f));
-                }
+                foreach (var enemy in BattleScript.FindFighters("Enemy"))
+                    if (enemy.gameObject.scene == player.gameObject.scene)
+                        enemy.health = Mathf.Max(1, Mathf.CeilToInt(enemy.health * modifier.magnitude / 100f));
                 break;
             case OverworldEffectType.ImprovePlayerAttackSpeed:
-                if (player != null) player.attackSpd = Mathf.Max(1, player.attackSpd - modifier.magnitude);
+                player.attackSpd = Mathf.Max(owner.MinimumOfferingAttackInterval, player.attackSpd - modifier.magnitude);
                 break;
             case OverworldEffectType.GrantStartingShield:
-                if (player != null) player.shield += modifier.magnitude;
+                player.shield += modifier.magnitude;
                 break;
             case OverworldEffectType.IncreaseStartingElixir:
-                if (player != null)
-                {
-                    player.maxElixir += modifier.magnitude;
-                    player.elixir = Mathf.Min(player.maxElixir, player.elixir + modifier.magnitude);
-                }
+                player.maxElixir += modifier.magnitude;
+                player.elixir = Mathf.Min(player.maxElixir, player.elixir + modifier.magnitude);
                 break;
         }
     }

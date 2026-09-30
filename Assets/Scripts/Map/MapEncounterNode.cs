@@ -32,31 +32,40 @@ public sealed class MapEncounterNode : MonoBehaviour
     private void Awake()
     {
         sceneCamera = Camera.main;
-        markerBasePosition = typeMarker.localPosition;
-        markerBaseScale = typeMarker.localScale;
+        markerBasePosition = typeMarker != null ? typeMarker.localPosition : Vector3.zero;
+        markerBaseScale = typeMarker != null ? typeMarker.localScale : Vector3.one;
         ApplyVisualState();
     }
 
     private void Update()
     {
+        if (mapController != null && mapController.UsesTravelInteraction) return;
         if (sceneCamera == null || Mouse.current == null || interactionCollider == null)
         {
             return;
         }
 
         Ray pointerRay = sceneCamera.ScreenPointToRay(Mouse.current.position.ReadValue());
-        bool hovered = available && !selected && interactionCollider.Raycast(pointerRay, out _, sceneCamera.farClipPlane);
+        bool hovered = available && !selected && mapController != null && !mapController.BlocksMapPointer(Mouse.current.position.ReadValue()) &&
+            interactionCollider.Raycast(pointerRay, out _, sceneCamera.farClipPlane);
         if (hovered != pointerHovered)
         {
             pointerHovered = hovered;
             SetHoverParticles(pointerHovered);
         }
-        typeMarker.localScale = hovered ? markerBaseScale * hoverScale : markerBaseScale;
+        if (typeMarker != null) typeMarker.localScale = hovered ? markerBaseScale * hoverScale : markerBaseScale;
 
         if (hovered && Mouse.current.leftButton.wasPressedThisFrame)
         {
             mapController.SelectNode(this);
         }
+    }
+
+    public void SetHovered(bool value)
+    {
+        value &= available;
+        if (pointerHovered != value) { pointerHovered = value; SetHoverParticles(value); }
+        if (typeMarker != null) typeMarker.localScale = markerBaseScale * (value ? hoverScale : 1);
     }
 
     public void SetSelected(bool value)
@@ -72,7 +81,19 @@ public sealed class MapEncounterNode : MonoBehaviour
         {
             PlaySelectionBurst();
         }
-        typeMarker.localPosition = markerBasePosition + (selected ? Vector3.up * selectedLift : Vector3.zero);
+        if (typeMarker != null) typeMarker.localPosition = markerBasePosition + (selected ? Vector3.up * selectedLift : Vector3.zero);
+        ApplyVisualState();
+    }
+    public Collider InteractionCollider => interactionCollider;
+    public Transform TypeMarker => typeMarker;
+    public void Bind(MapController owner) => mapController = owner;
+    public void Configure(string id, int layer, MapController owner, Collider hit)
+    { nodeId = id; level = layer; mapController = owner; interactionCollider = hit; }
+    public void SetAvailable(bool value)
+    {
+        available = value;
+        if (interactionCollider != null) interactionCollider.enabled = value;
+        if (!value) { pointerHovered = false; SetHoverParticles(false); }
         ApplyVisualState();
     }
 

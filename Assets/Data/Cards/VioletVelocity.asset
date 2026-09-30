@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardDefinition
   cardId: violet_velocity
   displayName: Violet Velocity
-  combatEffectText: +2 AttackSpeed
+  combatEffectText: "Attack interval -{amount}s for {duration}s"
   cardType: 1
-  capacityCost: 5
+  capacityCost: 4
   combatPrefab: {fileID: 3386567266915157623, guid: cb5f057433df45f49c7f9d19229cf3ae, type: 3}
   mapPrefab: {fileID: 0}
   backPrefab: {fileID: 0}
@@ -27,5 +27,5 @@ MonoBehaviour:
     effectType: 1
     magnitude: 2
     title: Violet Velocity
-    description: Player attack speed is reduced by 2, to a minimum of 1.
+    description: "Attack interval -{magnitude}s, minimum {minInterval}s."
     scopeLabel: NEXT BATTLE - PERMANENT REMOVAL

@@ -12,12 +12,21 @@ public sealed class BattleCountdown : MonoBehaviour
 
     private IEnumerator Start()
     {
+        BattleHud hud = BattleHud.Find(gameObject.scene);
+        while (hud == null || !hud.CountdownArmed)
+        {
+            if (hud == null) hud = BattleHud.Find(gameObject.scene);
+            if (RunSession.Instance == null && hud != null && hud.TryPrepare(null, BattleHud.FindPlayer(gameObject.scene)))
+                hud.ArmCountdown();
+            yield return null;
+        }
         TextMeshProUGUI text = CreateText();
         for (int number = countFrom; number > 0; number--)
         {
             text.text = number.ToString();
             for (float elapsed = 0f; elapsed < 1f; elapsed += Time.deltaTime)
             {
+                if (!hud.CountdownArmed) { Destroy(text.gameObject); yield break; }
                 // Each number pops in large, settles, then fades just before the next one.
                 text.rectTransform.localScale = Vector3.one * Mathf.Lerp(1.5f, 1f, Mathf.Clamp01(elapsed * 4f));
                 text.alpha = 1f - Mathf.Clamp01((elapsed - 0.7f) / 0.3f);
@@ -25,7 +34,7 @@ public sealed class BattleCountdown : MonoBehaviour
             }
         }
         Destroy(text.gameObject);
-        GetComponent<TimeTickSystem>().StartTimer();
+        hud.BeginCombat();
     }
 
     private TextMeshProUGUI CreateText()

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardDefinition
   cardId: thunderbolt
   displayName: Thunderbolt
-  combatEffectText: 4 Damage to all enemies
+  combatEffectText: "{amount} Damage to all enemies"
   cardType: 0
   capacityCost: 5
   combatPrefab: {fileID: 3386567266915157623, guid: 219f7ce827e74f88bef3148b5a90745b, type: 3}
@@ -25,7 +25,7 @@ MonoBehaviour:
   backArtwork: {fileID: 21300000, guid: a01861b4cd9e850469d6289ac770f583, type: 3}
   overworldEffect:
     effectType: 0
-    magnitude: 80
+    magnitude: 70
     title: Thunderbolt
-    description: All enemies enter at 80% of their current health.
+    description: "Enemies start with {magnitude}% HP."
     scopeLabel: NEXT BATTLE - PERMANENT REMOVAL

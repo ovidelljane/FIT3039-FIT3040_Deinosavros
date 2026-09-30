@@ -7,6 +7,9 @@ using UnityEngine;
 public class BattleScript : MonoBehaviour
 {
     public static event Action OnAllEnemiesDefeated;
+    public static event Action<BattleScript, bool> OnBattleFinished;
+    public static event Action<BattleScript, BattleScript> OnAttackPerformed;
+    public static event Action<BattleScript, BattleScript, int, int> OnDamageReceived;
 
     public int attackDmg = 1;
     public float attackSpd = 5f;
@@ -14,12 +17,12 @@ public class BattleScript : MonoBehaviour
     public int maxHealth = 10;
     public float elixir = 10f;
     public float maxElixir = 10f;
-    public float elixirRegen = 0.05f;
+    [Tooltip("Elixir restored per second, independent of the simulation step.")]
+    public float elixirRegen = 0.5f;
     public int shield = 0;
     public int hitsPerAttack = 1;
 
-    private int _currentTickCount;
-    private float _attackTick;
+    private double attackElapsed;
     private bool _victoryFired;
     
     List<GameObject> _OpponentList;
@@ -28,6 +31,12 @@ public class BattleScript : MonoBehaviour
     [SerializeField] private AudioSource audioSource;
     
     private Vector3 startPosition;
+
+    private void Start()
+    {
+        if (CompareTag("Player") && RunSession.Instance == null)
+            health = maxHealth = Mathf.Max(1, RunSettings.ForScene(gameObject.scene).startingMaxHealth);
+    }
     
     
     void OnEnable()
@@ -65,40 +74,49 @@ public class BattleScript : MonoBehaviour
     
     private void HandleTick()
     {
-        _currentTickCount++;
-        _attackTick = Mathf.Max(1f, attackSpd * 10f);
+        if (!isActiveAndEnabled || TimeTickSystem.Active == null || !TimeTickSystem.Active.IsStarted) return;
+        if (health <= 0) { FinishDeath(); return; }
+        enemyListManager();
+        float seconds = TimeTickSystem.Active.TickDeltaSeconds;
+        attackElapsed += seconds;
+        elixir = Mathf.Min(elixir + elixirRegen * seconds, maxElixir);
 
-        elixir = Mathf.Min(elixir + elixirRegen, maxElixir);
-
-        if (_currentTickCount % (int)_attackTick == 0 && _OpponentList.Count > 0)
+        while (attackElapsed + .000001f >= Mathf.Max(.01f, attackSpd) && enemyListManager() > 0)
         {
+            attackElapsed = Math.Max(0, attackElapsed - Mathf.Max(.01f, attackSpd));
             Attack();
-            StartCoroutine(Bounce());
+            if (!CombatFeedback.IsPresent(gameObject.scene)) StartCoroutine(Bounce());
             if (audioSource != null) audioSource.Play();
-            _currentTickCount = 0;
         }
 
         if (enemyListManager() == 0)
         {
-            _renderer.material.color = Color.lawnGreen;
+            if (_renderer != null && !CombatFeedback.IsPresent(gameObject.scene)) _renderer.material.color = Color.lawnGreen;
             gameObject.GetComponent<BattleScript>().enabled = false;
 
             if (CompareTag("Player") && !_victoryFired)
             {
                 _victoryFired = true;
+                OnBattleFinished?.Invoke(this, health > 0);
                 OnAllEnemiesDefeated?.Invoke();
             }
         }
         
-        if (health <= 0)
-        {
-            health = 0;
-            _renderer.material.color = Color.red;
-            _currentTickCount = 0;
-            attackDmg = 0;
+        if (health <= 0) FinishDeath();
+    }
 
-            Invoke("Disable", 5f);
+    private void FinishDeath()
+    {
+        health = 0;
+        if (_renderer != null && !CombatFeedback.IsPresent(gameObject.scene)) _renderer.material.color = Color.red;
+        attackElapsed = 0;
+        if (CompareTag("Player") && !_victoryFired)
+        {
+            _victoryFired = true;
+            OnBattleFinished?.Invoke(this, false);
         }
+        enabled = false;
+        Invoke(nameof(Disable), 5f);
     }
 
     private void Disable()
@@ -115,14 +133,18 @@ public class BattleScript : MonoBehaviour
     {
         GameObject opponent = _OpponentList[0];
         opponentScript = opponent.GetComponent<BattleScript>();
+        OnAttackPerformed?.Invoke(this, opponentScript);
         for (int i = 0; i < Mathf.Max(1, hitsPerAttack); i++)
         {
-            opponentScript.TakeDamage(attackDmg);
+            opponentScript.TakeDamage(attackDmg, this);
         }
     }
 
-    public void TakeDamage(int damage)
+    public void TakeDamage(int damage) => TakeDamage(damage, null);
+
+    public void TakeDamage(int damage, BattleScript source)
     {
+        int beforeHealth = Mathf.Max(0, health), beforeShield = Mathf.Max(0, shield);
         if (shield > 0)
         {
             if (shield <= damage)
@@ -140,15 +162,21 @@ public class BattleScript : MonoBehaviour
         {
             health -= damage;
         }
+        int healthLost = Mathf.Max(0, beforeHealth - Mathf.Max(0, health));
+        int shieldLost = Mathf.Max(0, beforeShield - Mathf.Max(0, shield));
+        if (beforeHealth > 0 && (healthLost > 0 || shieldLost > 0))
+            OnDamageReceived?.Invoke(this, source, healthLost, shieldLost);
+        if (health <= 0) FinishDeath();
     }
 
     private int enemyListManager()
     {
         foreach (GameObject opponent in _OpponentList.ToList())
         {
+            if (opponent == null) { _OpponentList.Remove(opponent); continue; }
             opponentScript = opponent.GetComponent<BattleScript>();
 
-            if (opponentScript.health <= 0)
+            if (opponentScript == null || opponentScript.health <= 0 || !opponentScript.isActiveAndEnabled)
             {
                 _OpponentList.Remove(opponent);
             }

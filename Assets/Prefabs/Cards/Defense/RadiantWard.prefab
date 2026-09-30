@@ -110,11 +110,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7492377783938483649, guid: f58c99bc3df17c64c975b6fe9f96a7d7, type: 3}
       propertyPath: amount
-      value: 6
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 7492377783938483649, guid: f58c99bc3df17c64c975b6fe9f96a7d7, type: 3}
       propertyPath: elixirCost
-      value: 2
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 7492377783938483649, guid: f58c99bc3df17c64c975b6fe9f96a7d7, type: 3}
       propertyPath: effectDuration

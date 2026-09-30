@@ -17,6 +17,12 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Deinosavros.unity
     guid: 50dbe22ef3a39e64ab1ce0cb46b6c414
+  - enabled: 1
+    path: Assets/Scenes/MapOpportunity.unity
+    guid: 4d08a868c81ccde49ab5e3fc0963ac89
+  - enabled: 1
+    path: Assets/Scenes/MapRecovery.unity
+    guid: 9e70b6a6d3ca46c47bdd31df0b7a753c
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0

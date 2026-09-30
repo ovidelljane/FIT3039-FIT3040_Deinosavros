@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CardDefinition
   cardId: crossroads_of_destiny
   displayName: Crossroads of Destiny
-  combatEffectText: +Elixir regen for 5s
+  combatEffectText: "+{amount} Elixir/s for {duration}s"
   cardType: 3
-  capacityCost: 5
+  capacityCost: 3
   combatPrefab: {fileID: 3386567266915157623, guid: d27008d8a1764ea4922756a909fc1bec, type: 3}
   mapPrefab: {fileID: 0}
   backPrefab: {fileID: 0}
@@ -25,7 +25,7 @@ MonoBehaviour:
   backArtwork: {fileID: 21300000, guid: 2e1a05b3b65acae499cad2d809ceeb57, type: 3}
   overworldEffect:
     effectType: 3
-    magnitude: 2
+    magnitude: 4
     title: Crossroads of Destiny
-    description: Player gains 2 maximum Elixir and restores 2 Elixir.
+    description: "+{magnitude} maximum Elixir; restore {magnitude} Elixir."
     scopeLabel: NEXT BATTLE - PERMANENT REMOVAL
