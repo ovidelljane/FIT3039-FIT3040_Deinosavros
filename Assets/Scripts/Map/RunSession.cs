@@ -23,11 +23,27 @@ public sealed class RunSession : MonoBehaviour
         Instance = this;
         transform.SetParent(null, true);
         DontDestroyOnLoad(gameObject);
-        if (runDeck.Count != 0) return;
+        if (runDeck.Count != 0 || startingDeck == null) return;
         foreach (CardDefinition definition in startingDeck)
         {
             if (definition != null) runDeck.Add(new RunCardInstance { definition = definition });
         }
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+    }
+
+    public static RunSession StartNewRun(IEnumerable<CardDefinition> deck)
+    {
+        if (Instance != null) Destroy(Instance.gameObject);
+        Instance = null;
+        var sessionObject = new GameObject("RunSession");
+        sessionObject.AddComponent<BattleRunBridge>();
+        RunSession session = sessionObject.AddComponent<RunSession>();
+        foreach (CardDefinition definition in deck) session.AddCard(definition);
+        return session;
     }
 
     public void SelectNode(string nodeId) => selectedNodeId = nodeId;

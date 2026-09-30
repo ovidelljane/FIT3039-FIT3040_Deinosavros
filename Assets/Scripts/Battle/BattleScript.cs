@@ -38,17 +38,29 @@ public class BattleScript : MonoBehaviour
         
         if (gameObject.CompareTag("Player"))
         {
-            _OpponentList.AddRange(GameObject.FindGameObjectsWithTag("Enemy"));
+            _OpponentList.AddRange(FindFighters("Enemy").Select(fighter => fighter.gameObject));
             Debug.unityLogger.Log("Player Opponent List", _OpponentList);
         }
         else
         {
-            _OpponentList.AddRange(GameObject.FindGameObjectsWithTag("Player"));
+            _OpponentList.AddRange(FindFighters("Player").Select(fighter => fighter.gameObject));
             Debug.unityLogger.Log("Enemy Opponent List", _OpponentList);
         }
 
         TimeTickSystem.OnTick += HandleTick;
-        
+
+    }
+
+    // Shadow copies share the Player/Enemy tag but have their BattleScript disabled, so skip them.
+    public static List<BattleScript> FindFighters(string tag)
+    {
+        var fighters = new List<BattleScript>();
+        foreach (GameObject candidate in GameObject.FindGameObjectsWithTag(tag))
+        {
+            BattleScript fighter = candidate.GetComponent<BattleScript>();
+            if (fighter != null && fighter.enabled) fighters.Add(fighter);
+        }
+        return fighters;
     }
     
     private void HandleTick()

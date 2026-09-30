@@ -7,7 +7,7 @@ using TMPro;
 // Append new values at the end: prefabs store these as ints.
 public enum StatType { Damage, AttackSpeed, Heal, Shield, Elixir, DamageAllEnemies, ExtraHits, EnemySlow, ElixirRegen }
 
-public class BuffCards : MonoBehaviour, IPointerClickHandler
+public class BuffCards : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
 {
     [SerializeField] StatType stat;
     [SerializeField] float amount = 1;
@@ -27,10 +27,28 @@ public class BuffCards : MonoBehaviour, IPointerClickHandler
 
     void Start()
     {
-        player = GameObject.FindWithTag("Player").GetComponent<BattleScript>();
-        if (label) label.text = definition != null && !string.IsNullOrEmpty(definition.combatEffectText)
+        player = BattleScript.FindFighters("Player")[0];
+        // Card details show in the hover panel instead of on the card face.
+        if (label) label.gameObject.SetActive(false);
+    }
+
+    void OnDisable()
+    {
+        CardInfoPanel.Hide(this);
+    }
+
+    public void OnPointerEnter(PointerEventData e)
+    {
+        string title = definition != null ? definition.displayName : name;
+        string effect = definition != null && !string.IsNullOrEmpty(definition.combatEffectText)
             ? definition.combatEffectText
             : $"+{amount} {stat}";
+        CardInfoPanel.Show(this, GetComponentInParent<Canvas>().rootCanvas, title, elixirCost, effect);
+    }
+
+    public void OnPointerExit(PointerEventData e)
+    {
+        CardInfoPanel.Hide(this);
     }
 
     public void Initialize(DeckManager deckManager, CardDefinition cardDefinition)
@@ -103,13 +121,7 @@ public class BuffCards : MonoBehaviour, IPointerClickHandler
 
     private static List<BattleScript> LivingEnemies()
     {
-        var enemies = new List<BattleScript>();
-        foreach (GameObject enemyObject in GameObject.FindGameObjectsWithTag("Enemy"))
-        {
-            BattleScript enemy = enemyObject.GetComponent<BattleScript>();
-            if (enemy != null && enemy.health > 0) enemies.Add(enemy);
-        }
-        return enemies;
+        return BattleScript.FindFighters("Enemy").FindAll(enemy => enemy.health > 0);
     }
     
     

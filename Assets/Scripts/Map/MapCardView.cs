@@ -43,9 +43,14 @@ public sealed class MapCardView : MonoBehaviour, IPointerClickHandler, IPointerE
     public void Initialize(MapController owner, CardDefinition cardDefinition)
     {
         controller = owner;
-        if (cardDefinition != null)
+        if (cardDefinition != null && cardDefinition != definition)
         {
             definition = cardDefinition;
+            // Views cloned from another card still hold that card's art, so rebuild it.
+            if (combatFrontInstance != null) Destroy(combatFrontInstance);
+            if (backInstance != null) Destroy(backInstance);
+            combatFrontInstance = null;
+            backInstance = null;
         }
         initialized = true;
         if (combatFrontInstance == null) BuildCombatFront();

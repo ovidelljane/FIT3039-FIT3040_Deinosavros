@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -146,21 +147,30 @@ public sealed class MapController : MonoBehaviour
 
     private void BuildDeckView()
     {
+        var unusedViews = new List<MapCardView>();
         foreach (MapCardView cardView in prebuiltCardViews)
         {
-            if (cardView == null || cardView.Definition == null) continue;
-            RunCardInstance runCard = null;
-            foreach (RunCardInstance candidate in runSession.RunDeck)
+            if (cardView == null) continue;
+            cardView.gameObject.SetActive(false);
+            unusedViews.Add(cardView);
+        }
+        MapCardView template = unusedViews.Count > 0 ? unusedViews[0] : null;
+
+        // Reuse a prebuilt view for each card when one exists; clone the template for cards won in battle.
+        foreach (CardDefinition definition in runSession.GetActiveDeck())
+        {
+            MapCardView cardView = unusedViews.Find(candidate => candidate.Definition == definition);
+            if (cardView != null)
             {
-                if (candidate.definition == cardView.Definition)
-                {
-                    runCard = candidate;
-                    break;
-                }
+                unusedViews.Remove(cardView);
             }
-            bool active = runCard != null && !runCard.sacrificed;
-            cardView.gameObject.SetActive(active);
-            if (active) cardView.Initialize(this, cardView.Definition);
+            else
+            {
+                if (template == null) continue;
+                cardView = Instantiate(template, deckContainer);
+            }
+            cardView.gameObject.SetActive(true);
+            cardView.Initialize(this, definition);
         }
     }
 

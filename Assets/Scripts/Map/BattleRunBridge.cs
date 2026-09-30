@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -30,19 +31,15 @@ public sealed class BattleRunBridge : MonoBehaviour
 
     private static void ApplyModifier(PendingEncounterModifier modifier)
     {
-        GameObject playerObject = GameObject.FindGameObjectWithTag("Player");
-        BattleScript player = playerObject != null ? playerObject.GetComponent<BattleScript>() : null;
+        List<BattleScript> players = BattleScript.FindFighters("Player");
+        BattleScript player = players.Count > 0 ? players[0] : null;
 
         switch (modifier.effectType)
         {
             case OverworldEffectType.ReduceEnemyStartingHealth:
-                foreach (GameObject enemyObject in GameObject.FindGameObjectsWithTag("Enemy"))
+                foreach (BattleScript enemy in BattleScript.FindFighters("Enemy"))
                 {
-                    BattleScript enemy = enemyObject.GetComponent<BattleScript>();
-                    if (enemy != null)
-                    {
-                        enemy.health = Mathf.Max(1, Mathf.CeilToInt(enemy.health * modifier.magnitude / 100f));
-                    }
+                    enemy.health = Mathf.Max(1, Mathf.CeilToInt(enemy.health * modifier.magnitude / 100f));
                 }
                 break;
             case OverworldEffectType.ImprovePlayerAttackSpeed:
