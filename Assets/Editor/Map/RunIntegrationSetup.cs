@@ -53,10 +53,27 @@ public static class RunIntegrationSetup
             else if (action == "balance") RunIntegrationPlayVerification.RunBalance();
             else if (action == "combat-feedback-apply") CombatFeedbackSetup.Apply();
             else if (action == "combat-feedback") RunIntegrationPlayVerification.RunCombatFeedback();
+            else if (action == "combat-shadow-inspect") CombatShadowSetup.Inspect();
+            else if (action == "combat-shadow-apply") CombatShadowSetup.Apply();
+            else if (action == "combat-shadows") RunIntegrationPlayVerification.RunCombatShadows();
             else if (action == "card-artwork") MapCardArtworkVerification.StartBatch();
             else if (action == "author-encounters") MapEncounterSceneAuthoring.Apply();
             else if (action == "opportunity-ui") RunIntegrationPlayVerification.RunOpportunityPages();
             else if (action == "author-combat-status") CombatStatusSceneAuthoring.Apply();
+            else if (action == "combat-speed-units") CombatStatusSceneAuthoring.UseAttackInterval();
+            else if (action == "author-map-status") MapStatusSceneAuthoring.ApplyAndVerify();
+            else if (action == "map-status") RunIntegrationPlayVerification.RunMapStatus();
+            else if (action == "show-map-status") MapStatusSceneAuthoring.Show();
+            else if (action == "author-attack-countdowns") CombatAttackCountdownAuthoring.ApplyAndVerify();
+            else if (action == "attack-countdowns") RunIntegrationPlayVerification.RunAttackCountdowns();
+            else if (action == "menu-background") MenuBackgroundAuthoring.ApplyAndVerify();
+            else if (action == "menu-embers") MenuBackgroundAuthoring.ApplyEmbers();
+            else if (action == "menu-embers-play") RunIntegrationPlayVerification.RunMenuEmbers();
+            else if (action == "author-card-feedback") CombatCardFeedbackAuthoring.Apply();
+            else if (action == "enlarge-countdowns") CombatCardFeedbackAuthoring.EnlargeCountdowns();
+            else if (action == "card-feedback") RunIntegrationPlayVerification.RunCardFeedback();
+            else if (action == "author-sacrifice") MapSacrificeAuthoring.Apply();
+            else if (action == "sacrifice") RunIntegrationPlayVerification.RunSacrifice();
             else throw new ArgumentException("Unknown integration action.");
             File.WriteAllText(ResultDirectory + "/action-result.txt", "PASS: " + action + "\n");
         }

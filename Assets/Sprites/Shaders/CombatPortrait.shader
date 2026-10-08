@@ -13,12 +13,27 @@ Shader "Deinosavros/Combat/Portrait"
         _AmbientStrength("Ambient Strength", Range(0,2)) = 1
         _DiffuseWrap("Soft Diffuse Wrap", Range(0,.5)) = .25
         _ReceiveShadows("Receive Shadows", Range(0,1)) = 1
+        [ToggleUI] _CastShadows("Cast Silhouette Shadows", Float) = 1
+        _ShadowCutoff("Shadow Alpha Cutoff", Range(.05,.95)) = .35
         [HideInInspector] _WorldOffset("World Offset", Vector) = (0,0,0,0)
         [Toggle] _ZWrite("Depth Write", Float) = 1
     }
     SubShader
     {
         Tags { "RenderPipeline"="UniversalPipeline" "Queue"="Transparent" "RenderType"="Transparent" }
+        HLSLINCLUDE
+        #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+        TEXTURE2D(_MainTex); SAMPLER(sampler_MainTex);
+        CBUFFER_START(UnityPerMaterial)
+            float4 _MainTex_ST, _MainTex_TexelSize;
+            half4 _Color, _OutlineColor, _HitColor;
+            float4 _WorldOffset;
+            float _OutlinePixels, _HitBlend, _Defeated, _ZWrite;
+            float _LightingStrength, _AmbientStrength, _DiffuseWrap, _ReceiveShadows;
+            float _CastShadows, _ShadowCutoff;
+        CBUFFER_END
+        ENDHLSL
+
         Pass
         {
             Name "Portrait"
@@ -40,14 +55,6 @@ Shader "Deinosavros/Combat/Portrait"
             #define _SURFACE_TYPE_TRANSPARENT 1
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
-            TEXTURE2D(_MainTex); SAMPLER(sampler_MainTex);
-            CBUFFER_START(UnityPerMaterial)
-                float4 _MainTex_ST, _MainTex_TexelSize;
-                half4 _Color, _OutlineColor, _HitColor;
-                float4 _WorldOffset;
-                float _OutlinePixels, _HitBlend, _Defeated, _ZWrite;
-                float _LightingStrength, _AmbientStrength, _DiffuseWrap, _ReceiveShadows;
-            CBUFFER_END
             struct Attributes { float4 positionOS : POSITION; float2 uv : TEXCOORD0; float3 normalOS : NORMAL; };
             struct Varyings
             {
@@ -125,6 +132,64 @@ Shader "Deinosavros/Combat/Portrait"
                 half gray = dot(rgb, half3(.25,.6,.15));
                 rgb = lerp(rgb, gray * half3(.56,.48,.43), _Defeated);
                 return half4(rgb, alpha * (1 - _Defeated * .25));
+            }
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "ShadowCaster"
+            Tags { "LightMode"="ShadowCaster" }
+            ZWrite On
+            ZTest LEqual
+            ColorMask 0
+            Cull Off
+            HLSLPROGRAM
+            #pragma target 3.5
+            #pragma vertex ShadowVert
+            #pragma fragment ShadowFrag
+            #pragma multi_compile_vertex _ _CASTING_PUNCTUAL_LIGHT_SHADOW
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Shadows.hlsl"
+            float3 _LightDirection;
+            float3 _LightPosition;
+            struct ShadowAttributes
+            {
+                float4 positionOS : POSITION;
+                float3 normalOS : NORMAL;
+                float2 uv : TEXCOORD0;
+            };
+            struct ShadowVaryings
+            {
+                float4 positionCS : SV_POSITION;
+                float2 uv : TEXCOORD0;
+            };
+            ShadowVaryings ShadowVert(ShadowAttributes input)
+            {
+                ShadowVaryings output;
+                // Idle animation already deforms the shared mesh. Match the forward
+                // pass's recoil/lunge and current frame instead of casting a static card.
+                float3 positionWS = TransformObjectToWorld(input.positionOS.xyz) + _WorldOffset.xyz;
+                float3 normalWS = TransformObjectToWorldNormal(input.normalOS);
+                #if defined(_CASTING_PUNCTUAL_LIGHT_SHADOW)
+                    float3 lightDirectionWS = normalize(_LightPosition - positionWS);
+                #else
+                    float3 lightDirectionWS = _LightDirection;
+                #endif
+                // Mirrored, two-sided planes need a normal facing the shadow light.
+                normalWS *= dot(normalWS, lightDirectionWS) < 0 ? -1 : 1;
+                output.positionCS = ApplyShadowClamping(TransformWorldToHClip(
+                    ApplyShadowBias(positionWS, normalWS, lightDirectionWS)));
+                output.uv = TRANSFORM_TEX(input.uv, _MainTex);
+                return output;
+            }
+            half4 ShadowFrag(ShadowVaryings input) : SV_Target
+            {
+                clip(_CastShadows - .5);
+                half alpha = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv).a * _Color.a;
+                // Cast only the painted silhouette, not its transparent rectangular plane
+                // or the cosmetic outline. Defeated bodies remain visible, so keep their shadow.
+                clip(alpha - _ShadowCutoff);
+                return 0;
             }
             ENDHLSL
         }

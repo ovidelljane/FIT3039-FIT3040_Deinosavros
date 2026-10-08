@@ -2,7 +2,8 @@ using UnityEngine;
 
 public sealed class MapPlayerStatusPanel : MonoBehaviour
 {
-    public PlayerStatusView View { get; private set; }
+    [SerializeField] private PlayerStatusView view;
+    public PlayerStatusView View => view;
     public static MapPlayerStatusPanel Create(Transform parent)
     {
         var rect = PlayerStatusView.Rect("PlayerStatusPanel", parent);
@@ -10,12 +11,13 @@ public sealed class MapPlayerStatusPanel : MonoBehaviour
         rect.pivot = new Vector2(0, .5f);
         rect.offsetMin = new Vector2(18, 18); rect.offsetMax = new Vector2(225, -18);
         var panel = rect.gameObject.AddComponent<MapPlayerStatusPanel>();
-        panel.View = PlayerStatusView.Create(rect, true);
+        panel.view = PlayerStatusView.Create(rect, true);
         return panel;
     }
     public void Initialize(RunSession session)
     {
-        if (View == null) View = PlayerStatusView.Create(transform, true);
-        View.Bind(session);
+        if (view == null) view = GetComponentInChildren<PlayerStatusView>(true);
+        if (view == null) view = PlayerStatusView.Create(transform, true);
+        view.Bind(session);
     }
 }

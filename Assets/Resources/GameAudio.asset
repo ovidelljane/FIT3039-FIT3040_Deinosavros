@@ -16,11 +16,11 @@ MonoBehaviour:
   buff: {fileID: 8300000, guid: bca91e90da364124d821dcd0f10904a8, type: 3}
   debuff: {fileID: 8300000, guid: 1d7514951b33252408e07ff01a537116, type: 3}
   defense: {fileID: 8300000, guid: 4446992c84b567e44ae0ce40d3e48aa7, type: 3}
-  cardVolume: 1
-  attackGain: 1
-  buffGain: 0.85
-  debuffGain: 0.7
-  defenseGain: 1.7
+  cardVolume: 0.274
+  attackGain: 1.73
+  buffGain: 1.86
+  debuffGain: 1.78
+  defenseGain: 1.81
   music: {fileID: 8300000, guid: 8093961cfc7770149b2c63472176e1c5, type: 3}
-  musicVolume: 0.1
+  musicVolume: 0.306
   musicFadeSeconds: 0.8

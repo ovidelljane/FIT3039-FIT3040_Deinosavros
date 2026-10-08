@@ -8,6 +8,7 @@ public sealed class ResourceBarView : MonoBehaviour
     [SerializeField] private Image fill, preview, marker;
     [SerializeField] private TMP_Text hint, number;
     [SerializeField] private string resource;
+    [SerializeField] private Image changeOverlay;
     [Header("Cost Preview")]
     [SerializeField] private Color affordableColor = new Color(1f, .91f, .74f);
     [SerializeField] private Color unaffordableColor = new Color(1f, .27f, .21f);
@@ -16,6 +17,10 @@ public sealed class ResourceBarView : MonoBehaviour
     public Image Fill { get => fill; private set => fill = value; }
     public Image Preview { get => preview; private set => preview = value; }
     public TMP_Text Hint { get => hint; private set => hint = value; }
+    public TMP_Text Number => number;
+    public Image ChangeOverlay => changeOverlay;
+    private float changeAge, changeDuration;
+    private Color changeTint;
     public bool IsReady => Fill != null && Preview != null && Hint != null && number != null && marker != null;
     private float previousValue = float.NaN, previousMaximum;
     private int previousCost = -1;
@@ -29,12 +34,12 @@ public sealed class ResourceBarView : MonoBehaviour
         var view = root.gameObject.AddComponent<ResourceBarView>(); view.resource = resource;
         var icon = PlayerStatusView.Icon(root,symbol,tint);
         PlayerStatusView.Place(icon.rectTransform,new Vector2(0,1),new Vector2(11,-10),new Vector2(22,22));
-        var label = PlayerStatusView.Text(root,"Label",resource.ToUpperInvariant(),14,GameFontRole.Heading);
+        var label = PlayerStatusView.Text(root,"Label",resource.ToUpperInvariant(),compact ? 15 : 14,GameFontRole.Heading);
         label.alignment = TextAlignmentOptions.Left;
-        PlayerStatusView.Place(label.rectTransform,new Vector2(0,1),new Vector2(28,-10),new Vector2(90,20),new Vector2(0,.5f));
-        view.number = PlayerStatusView.Text(root,"Value","",compact ? 19 : 20,GameFontRole.Numeric);
+        PlayerStatusView.Place(label.rectTransform,new Vector2(0,1),new Vector2(28,-10),new Vector2(90,compact ? 26 : 20),new Vector2(0,.5f));
+        view.number = PlayerStatusView.Text(root,"Value","",compact ? 21 : 20,GameFontRole.Numeric);
         view.number.alignment = TextAlignmentOptions.Right;
-        PlayerStatusView.Place(view.number.rectTransform,new Vector2(1,1),new Vector2(0,-10),new Vector2(94,22),new Vector2(1,.5f));
+        PlayerStatusView.Place(view.number.rectTransform,new Vector2(1,1),new Vector2(0,-10),new Vector2(94,compact ? 30 : 22),new Vector2(1,.5f));
         var track = PlayerStatusView.Box("Track",root,new Color(.08f,.065f,.06f));
         track.rectTransform.anchorMin = new Vector2(0,1); track.rectTransform.anchorMax = Vector2.one;
         track.rectTransform.pivot = new Vector2(.5f,1); track.rectTransform.anchoredPosition = new Vector2(0,-25);
@@ -86,4 +91,25 @@ public sealed class ResourceBarView : MonoBehaviour
         rect.anchorMin=new Vector2(left,0); rect.anchorMax=new Vector2(right,1);
         rect.offsetMin=rect.offsetMax=Vector2.zero;
     }
+
+    public void FlashChange(float before, float after, float maximum, Color tint, float duration)
+    {
+        if (changeOverlay == null || maximum <= 0 || Mathf.Approximately(before, after)) return;
+        Stretch(changeOverlay.rectTransform, Mathf.Clamp01(Mathf.Min(before, after) / maximum),
+            Mathf.Clamp01(Mathf.Max(before, after) / maximum));
+        changeAge = 0; changeDuration = Mathf.Max(.01f, duration); changeTint = tint;
+        changeOverlay.color = tint; changeOverlay.gameObject.SetActive(true);
+    }
+
+    private void Update()
+    {
+        if (changeOverlay == null || !changeOverlay.gameObject.activeSelf) return;
+        if (TimeTickSystem.Active != null && TimeTickSystem.Active.IsStarted) changeAge += Time.deltaTime;
+        Color tint = changeTint; tint.a *= 1 - Mathf.Clamp01(changeAge / changeDuration);
+        changeOverlay.color = tint;
+        if (changeAge >= changeDuration) ClearFeedback();
+    }
+
+    public void ClearFeedback() { if (changeOverlay != null) changeOverlay.gameObject.SetActive(false); }
+    private void OnDisable() => ClearFeedback();
 }

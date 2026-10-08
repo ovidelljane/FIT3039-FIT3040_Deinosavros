@@ -14,6 +14,56 @@ public static class CombatStatusSceneAuthoring
 {
     private const string ScenePath = "Assets/Scenes/Deinosavros.unity";
 
+    [MenuItem("Tools/Battle/Use Attack Interval Display")]
+    public static void UseAttackInterval()
+    {
+        Require(!EditorApplication.isPlayingOrWillChangePlaymode, "Stop Play Mode before changing status units.");
+        for (int i = 0; i < SceneManager.sceneCount; i++)
+            Require(!SceneManager.GetSceneAt(i).isDirty, "Save your scene changes before changing status units.");
+        var setup = EditorSceneManager.GetSceneManagerSetup();
+        Directory.CreateDirectory(RunIntegrationSetup.ResultDirectory);
+        string backup = RunIntegrationSetup.ResultDirectory + "/Combat-before-speed-units.unity";
+        if (!File.Exists(backup)) File.Copy(ScenePath, backup);
+        try
+        {
+            string snapshot = null;
+            for (int pass = 0; pass < 2; pass++)
+            {
+                var scene = EditorSceneManager.OpenScene(ScenePath);
+                var view = Components<BattleHud>(scene).Single().Status;
+                Require(view != null && view.IsReady, "Keep the existing authored player status UI.");
+                var label = view.transform.Find("Attributes/Speed/Label")?.GetComponent<TMP_Text>();
+                Require(label != null, "The attack interval label must already exist.");
+                using var data = new SerializedObject(view);
+                data.FindProperty("displayAttackInterval").boolValue = true;
+                data.FindProperty("showAttackSpeedUnit").boolValue = true;
+                data.ApplyModifiedPropertiesWithoutUndo();
+                label.text = "INTERVAL";
+                var number = view.ValueLabel(StatType.AttackSpeed);
+                number.text = view.FormatAttackSpeed(BattleHud.FindPlayer(scene).attackSpd);
+                Vector2 size = number.rectTransform.sizeDelta;
+                size.y = Mathf.Max(size.y, Mathf.Ceil(number.GetPreferredValues(number.text).y));
+                number.rectTransform.sizeDelta = size;
+                EditorSceneManager.MarkSceneDirty(scene);
+                Require(EditorSceneManager.SaveScene(scene), "Could not save the interval display.");
+                string saved = File.ReadAllText(ScenePath);
+                if (pass == 0) snapshot = saved;
+                else Require(saved == snapshot, "Repeated unit configuration must preserve the saved scene bytes.");
+            }
+            var reopened = Components<BattleHud>(EditorSceneManager.OpenScene(ScenePath)).Single().Status;
+            Require(reopened.FormatAttackSpeed(5) == "5s" && reopened.FormatAttackSpeed(1.5f) == "1.5s" &&
+                reopened.transform.Find("Attributes/Speed/Label").GetComponent<TMP_Text>().text == "INTERVAL",
+                "The saved Combat status must match the Map interval units.");
+            File.WriteAllText(RunIntegrationSetup.ResultDirectory + "/combat-speed-units.txt",
+                "PASS: seconds per attack saved, reopened and applied twice without drift.\n");
+        }
+        finally
+        {
+            if (setup.Any(entry => entry.isLoaded && entry.isActive)) EditorSceneManager.RestoreSceneManagerSetup(setup);
+            else EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+        }
+    }
+
     [MenuItem("Tools/Battle/Author Combat Status UI")]
     public static void Apply()
     {

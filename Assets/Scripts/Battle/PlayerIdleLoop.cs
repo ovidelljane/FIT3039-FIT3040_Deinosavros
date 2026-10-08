@@ -9,7 +9,8 @@ public sealed class PlayerIdleLoop : MonoBehaviour
     [SerializeField] private MeshFilter[] visualMeshes;
     [SerializeField] private BattleScript actor;
     [Header("Timing")]
-    [SerializeField, Min(.5f)] private float loopDuration = 2.8f;
+    [SerializeField, Min(.5f), InspectorName("Breathing Cycle")] private float loopDuration = 2.8f;
+    [SerializeField, Range(.12f, 1f)] private float attackDuration = .32f;
     [Header("Secondary Motion")]
     [SerializeField, Range(0, .025f)] private float breathAmount = .008f;
     [SerializeField, Range(0, .015f)] private float swayAmount = .0035f;
@@ -30,8 +31,10 @@ public sealed class PlayerIdleLoop : MonoBehaviour
     private Vector2[] restUV, frameUV;
     private Vector3 horizontal, vertical;
     private float playbackTime;
+    private float attackElapsed = -1f;
     private int currentFrame = -1;
     public int CurrentFrameIndex => currentFrame;
+    public bool IsAttacking => attackElapsed >= 0;
 
     private void OnEnable()
     {
@@ -67,8 +70,11 @@ public sealed class PlayerIdleLoop : MonoBehaviour
             renderers[i].GetPropertyBlock(frameProperties[i]);
         }
         playbackTime = 0;
+        attackElapsed = -1f;
         currentFrame = -1;
+        if (actor == null) actor = GetComponent<BattleScript>();
         ApplyPose(0);
+        BattleScript.OnAttackPerformed += OnAttack;
     }
 
     private bool FindTextureAxes(Mesh source)
@@ -91,17 +97,44 @@ public sealed class PlayerIdleLoop : MonoBehaviour
 
     private void LateUpdate()
     {
-        if (animatedMesh == null || Time.deltaTime <= 0 || (actor != null && (!actor.enabled || actor.health <= 0))) return;
-        playbackTime += Time.deltaTime;
+        if (animatedMesh == null) return;
+        if (actor != null && actor.health <= 0)
+        {
+            if (IsAttacking) { attackElapsed = -1f; ApplyPose(playbackTime); }
+            return;
+        }
+        // Victory disables combat immediately. Let its final bite finish, then stop idle motion.
+        if (actor != null && !actor.isActiveAndEnabled && !IsAttacking) return;
+        AdvanceAnimation(Time.deltaTime);
+    }
+
+    private void OnAttack(BattleScript attacker, BattleScript target)
+    {
+        if (attacker != actor || actor == null || !actor.isActiveAndEnabled || actor.health <= 0 ||
+            target == null || !target.isActiveAndEnabled || target.health <= 0 || Time.timeScale <= 0) return;
+        // Each real attack starts one bite. Extra hits never queue idle mouth cycles.
+        attackElapsed = 0;
+        ApplyPose(playbackTime);
+    }
+
+    private void AdvanceAnimation(float delta)
+    {
+        if (delta <= 0) return;
+        playbackTime += delta;
+        if (IsAttacking)
+        {
+            attackElapsed += delta;
+            if (attackElapsed >= Mathf.Max(.12f, attackDuration)) attackElapsed = -1f;
+        }
         ApplyPose(playbackTime);
     }
 
     private void ApplyPose(float time)
     {
         if (animatedMesh == null) return;
-        float phase = Mathf.Repeat(time / Mathf.Max(.5f, loopDuration), 1f);
-        // Closed -> half -> open -> half -> closed; never jump from open straight to closed.
-        int index = phase < .68f || phase >= .86f ? 2 : phase < .72f || phase >= .82f ? 1 : 0;
+        float phase = IsAttacking ? attackElapsed / Mathf.Max(.12f, attackDuration) : 1f;
+        // Idle stays closed. A bite opens alongside the existing attack lunge, then settles.
+        int index = !IsAttacking || phase >= .82f ? 2 : phase < .2f || phase >= .55f ? 1 : 0;
         if (index != currentFrame)
         {
             currentFrame = index;
@@ -120,7 +153,7 @@ public sealed class PlayerIdleLoop : MonoBehaviour
             }
         }
 
-        float breath = Mathf.Sin(time * Mathf.PI * 2f / 2.8f);
+        float breath = Mathf.Sin(time * Mathf.PI * 2f / Mathf.Max(.5f, loopDuration));
         float sway = Mathf.Sin(time * Mathf.PI * 2f / 4.7f);
         for (int i = 0; i < vertices.Length; i++)
         {
@@ -139,6 +172,8 @@ public sealed class PlayerIdleLoop : MonoBehaviour
 
     private void OnDisable()
     {
+        BattleScript.OnAttackPerformed -= OnAttack;
+        attackElapsed = -1f;
         if (animatedMesh == null) return;
         for (int i = 0; i < visualMeshes.Length; i++)
         {

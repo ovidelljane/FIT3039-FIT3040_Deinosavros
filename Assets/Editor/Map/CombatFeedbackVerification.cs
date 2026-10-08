@@ -55,9 +55,10 @@ public static class CombatFeedbackVerification
         // Let capture/first-use shader compilation settle before timing a short hit cue.
         yield return Delay(.2f, true);
         int before = feedback.DamageEventCount;
+        int playerHealthBeforeHit = player.health;
         enemy.shield = 5; enemy.TakeDamage(12, player); player.shield = 0; player.TakeDamage(4, enemy);
         yield return null;
-        check(enemy.health == 193 && enemy.shield == 0 && player.health == 96, "Feedback does not change health or shield arithmetic.");
+        check(enemy.health == 193 && enemy.shield == 0 && player.health == playerHealthBeforeHit - 4, "Feedback does not change health or shield arithmetic.");
         var numbers = feedback.canvas.transform.Find("Impacts").GetComponentsInChildren<TMP_Text>();
         check(numbers.Any(t => t.text == "-7") && numbers.Any(t => t.text == "5") && numbers.Any(t => t.text == "-4") &&
             feedback.canvas.transform.Find("Impacts").GetComponentsInChildren<StatusIcon>().Length == 1,

@@ -41,7 +41,7 @@ public static class GameFonts
         if (text == null) return;
         var font = role == GameFontRole.Heading ? CinzelBlack : Body;
         if (font != null) text.font = font;
-        text.fontStyle = FontStyles.Normal;
+        text.fontStyle = text.name == "CostText" ? FontStyles.Bold : FontStyles.Normal;
         text.characterSpacing = role == GameFontRole.Heading ? 1.2f : 0f;
     }
     public static void ApplyHierarchy(Transform root, Transform preserveRoot = null)
@@ -49,6 +49,9 @@ public static class GameFonts
         foreach (var text in root.GetComponentsInChildren<TMP_Text>(true))
         {
             if (preserveRoot != null && text.transform.IsChildOf(preserveRoot)) continue;
+            if (text.GetComponentInParent<MapSacrificePanel>(true) != null ||
+                text.GetComponentInParent<MapPlayerStatusPanel>(true) != null ||
+                text.GetComponentInParent<MapCardView>(true)?.PreservesBackTypography(text.transform) == true) continue;
             string label = text.name.ToLowerInvariant();
             var role = label.Contains("title") || label.Contains("name") || text.GetComponentInParent<Button>() != null
                 ? GameFontRole.Heading : GameFontRole.Body;

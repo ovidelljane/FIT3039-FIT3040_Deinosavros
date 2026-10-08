@@ -16,25 +16,17 @@ public sealed class MapController : MonoBehaviour
     [SerializeField] private TMP_Text selectedRouteText;
     [SerializeField] private TMP_Text sacrificeStatusText;
     [SerializeField] private TMP_Text capacityText;
-    [SerializeField] private GameObject confirmationModal;
-    [SerializeField] private TMP_Text confirmationText;
-    [SerializeField] private Button confirmSacrificeButton;
-    [SerializeField] private Button cancelSacrificeButton;
-    [SerializeField] private GameObject cardDetailPanel;
-    [SerializeField] private Transform cardDetailContainer;
-    [SerializeField] private Image cardDetailBackground;
-    [SerializeField] private Image cardDetailBorder;
-    [SerializeField] private TMP_Text cardDetailNameText;
-    [SerializeField] private TMP_Text cardDetailEffectText;
-    [SerializeField] private TMP_Text cardDetailWarningText;
+    [SerializeField] private MapSacrificePanel sacrificePanel;
+    public MapSacrificePanel SacrificePanel => sacrificePanel;
+    [SerializeField, Min(0)] private int sacrificeReminderCapacity = 25;
+    private string warnedNodeId;
+    private int inputReleaseFrame = -1;
     [SerializeField] private MapCardView[] prebuiltCardViews;
     [SerializeField] private MapGraphDefinition routeGraph;
     [SerializeField] private MapTravelView travelView;
     [SerializeField] private MapEncounterRouting encounterRouting;
     private MapEncounterNode selectedNode;
-    private MapCardView pendingSacrificeView;
-    private MapCardView detailedCardView;
-    private MapPlayerStatusPanel playerStatusPanel;
+    [SerializeField] private MapPlayerStatusPanel playerStatusPanel;
     private bool loading;
     private bool refreshPending;
     private bool deckRefreshPending;
@@ -55,7 +47,7 @@ public sealed class MapController : MonoBehaviour
     public bool UsesTravelInteraction => travelView != null && routeGraph != null;
     public MapNodeInteraction NodeInteraction => nodeInteraction;
     public MapEncounterRouting EncounterRouting => encounterRouting;
-    public bool CanInteract => !loading && (confirmationModal == null || !confirmationModal.activeSelf) &&
+    public bool CanInteract => !loading && Time.frameCount > inputReleaseFrame && (sacrificePanel == null || !sacrificePanel.IsBlocking) &&
         (runSession?.Progress == null || runSession.Progress.Phase == MapProgressPhase.OnMap) && (travel == null || !travel.IsBusy);
 
     private void Start()
@@ -77,10 +69,7 @@ public sealed class MapController : MonoBehaviour
         runSession.DeckChanged += QueueDeckRefresh;
         BuildDeckView();
         enterBattleButton.interactable = false;
-        confirmationModal.SetActive(false);
-        cardDetailPanel.SetActive(false);
-        confirmSacrificeButton.onClick.AddListener(ConfirmSacrifice);
-        cancelSacrificeButton.onClick.AddListener(CancelSacrifice);
+        sacrificePanel?.Bind(this);
         enterBattleButton.onClick.AddListener(EnterBattle);
         RefreshHud();
         RefreshProgress();
@@ -133,8 +122,9 @@ public sealed class MapController : MonoBehaviour
     public void SetTravelNotice(string message) { travelNotice = message; RefreshHud(); }
     public void CloseForTravel()
     {
+        warnedNodeId = null;
         nodeInteraction?.Close();
-        loading = true; detailedCardView = null; cardDetailPanel.SetActive(false);
+        loading = true; sacrificePanel?.HideImmediate();
         foreach (var card in prebuiltCardViews) if (card != null) card.SetInteractionLocked(true);
         enterBattleButton.interactable = false;
     }
@@ -155,7 +145,7 @@ public sealed class MapController : MonoBehaviour
             return;
         }
 
-        playerStatusPanel = panelParent.GetComponentInChildren<MapPlayerStatusPanel>(true);
+        if (playerStatusPanel == null) playerStatusPanel = panelParent.GetComponentInChildren<MapPlayerStatusPanel>(true);
         if (playerStatusPanel == null)
         {
             playerStatusPanel = MapPlayerStatusPanel.Create(panelParent);
@@ -170,85 +160,6 @@ public sealed class MapController : MonoBehaviour
         if (deckLayout != null)
         {
             deckLayout.childAlignment = TextAnchor.MiddleLeft;
-        }
-    }
-
-    public void SetCardDetail(MapCardView cardView, bool visible)
-    {
-        if (cardView == null || cardDetailPanel == null || (visible && !CanInteract))
-        {
-            return;
-        }
-
-        if (!visible)
-        {
-            if (detailedCardView == cardView)
-            {
-                detailedCardView = null;
-                cardDetailPanel.SetActive(false);
-            }
-            return;
-        }
-
-        detailedCardView = cardView;
-        CardDefinition definition = cardView.Definition;
-        if (definition == null || cardDetailContainer == null)
-        {
-            cardDetailPanel.SetActive(false);
-            return;
-        }
-
-        if (cardDetailNameText != null)
-        {
-            cardDetailNameText.text = definition.displayName;
-        }
-        if (cardDetailEffectText != null)
-        {
-            cardDetailEffectText.text = definition.GetSacrificeDescription(runSession);
-        }
-        if (cardDetailWarningText != null)
-        {
-            cardDetailWarningText.text = $"Capacity: {definition.capacityCost}\nSacrifice permanently removes this card.";
-        }
-
-        if (cardDetailBackground != null)
-        {
-            // Back artwork already contains the frame; the inset is only a text backing.
-            cardDetailBackground.sprite = null;
-            cardDetailBackground.color = new Color(.20f, .13f, .075f, 1f);
-        }
-        if (cardDetailBorder != null)
-        {
-            cardDetailBorder.sprite = definition.backArtwork;
-            cardDetailBorder.enabled = definition.backArtwork != null;
-            cardDetailBorder.color = Color.white;
-        }
-        ApplyDetailArtwork(definition.backPrefab);
-
-        cardDetailPanel.SetActive(true);
-    }
-
-    private void ApplyDetailArtwork(GameObject sourcePrefab)
-    {
-        if (sourcePrefab == null)
-        {
-            return;
-        }
-
-        Transform sourceBackgroundTransform = sourcePrefab.transform.Find("EffectBackground");
-        Transform sourceBorderTransform = sourcePrefab.transform.Find("BorderArtwork");
-        Image sourceBackground = sourceBackgroundTransform != null ? sourceBackgroundTransform.GetComponent<Image>() : null;
-        Image sourceBorder = sourceBorderTransform != null ? sourceBorderTransform.GetComponent<Image>() : null;
-
-        if (cardDetailBackground != null && sourceBackground != null)
-        {
-            cardDetailBackground.color = sourceBackground.color;
-        }
-        if (cardDetailBorder != null && sourceBorder != null)
-        {
-            cardDetailBorder.sprite = sourceBorder.sprite;
-            cardDetailBorder.color = sourceBorder.color;
-            cardDetailBorder.enabled = sourceBorder.sprite != null;
         }
     }
 
@@ -268,28 +179,39 @@ public sealed class MapController : MonoBehaviour
 
     public void RequestSacrifice(MapCardView cardView)
     {
-        if (!CanInteract || cardView == null || runSession.SacrificeUsed) return;
-        pendingSacrificeView = cardView;
-        confirmationText.text = $"Permanently remove {cardView.Definition.displayName} and apply its next-battle effect?";
-        confirmationModal.SetActive(true);
+        if (!CanInteract || cardView == null || sacrificePanel == null) return;
+        nodeInteraction?.Close();
+        foreach (var card in prebuiltCardViews) if (card != null) card.SetInteractionLocked(true);
+        sacrificePanel.Open(cardView);
     }
 
-    private void ConfirmSacrifice()
+    public bool TryCommitSacrifice(CardDefinition definition, string instanceId, out string reason)
     {
-        if (pendingSacrificeView != null && runSession.TrySacrificeInstance(pendingSacrificeView.InstanceId)) pendingSacrificeView.SetSacrificed();
-        pendingSacrificeView = null;
-        confirmationModal.SetActive(false);
+        var preview = MapSacrificePreview.For(runSession, definition, instanceId);
+        reason = preview.Reason;
+        if (sacrificePanel == null || !sacrificePanel.IsOpen || sacrificePanel.SelectedInstanceId != instanceId ||
+            !preview.CanConfirm) return false;
+        if (runSession.TrySacrificeInstance(instanceId)) return true;
+        reason = "The offering could not be applied. Inspect this card again.";
+        return false;
+    }
+
+    public void ReleaseSacrificeInput()
+    {
+        inputReleaseFrame = Time.frameCount + 1;
+        pointerFrame = -1;
+        foreach (var card in prebuiltCardViews) if (card != null) card.SetInteractionLocked(loading);
+        EventSystem.current?.SetSelectedGameObject(null);
         RefreshHud();
-    }
-
-    private void CancelSacrifice()
-    {
-        pendingSacrificeView = null;
-        confirmationModal.SetActive(false);
     }
 
     private void BuildDeckView()
     {
+        var previous = new Dictionary<string, Vector3>();
+        if (sacrificePanel != null && sacrificePanel.IsBusy)
+            foreach (var view in prebuiltCardViews)
+                if (view != null && view.gameObject.activeInHierarchy && !string.IsNullOrEmpty(view.InstanceId))
+                    previous[view.InstanceId] = view.transform.position;
         var views = new List<MapCardView>(prebuiltCardViews);
         var used = new HashSet<MapCardView>();
         int order = 0;
@@ -319,12 +241,21 @@ public sealed class MapController : MonoBehaviour
         }
         foreach (var view in views) if (view != null && !used.Contains(view)) view.gameObject.SetActive(false);
         prebuiltCardViews = views.ToArray();
+        if (sacrificePanel != null && sacrificePanel.IsBlocking)
+            foreach (var view in prebuiltCardViews) if (view != null) view.SetInteractionLocked(true);
+        if (previous.Count > 0)
+        {
+            Canvas.ForceUpdateCanvases();
+            LayoutRebuilder.ForceRebuildLayoutImmediate((RectTransform)deckContainer);
+            foreach (var view in used)
+                if (previous.TryGetValue(view.InstanceId, out var position)) view.SettleFrom(position, sacrificePanel.deckSettleDuration);
+        }
     }
 
     private void RefreshHud()
     {
         selectedRouteText.text = selectedNode == null ? "Route: Select Level 1" : $"Route: Level {selectedNode.Level}";
-        sacrificeStatusText.text = runSession.SacrificeUsed ? "Sacrifice 1/1" : "Sacrifice 0/1";
+        if (sacrificePanel != null) sacrificePanel.RefreshStatus();
         capacityText.text = $"Deck Capacity {runSession.DeckCapacity}/{runSession.DeckCapacityLimit}";
         if (runSession.Progress != null)
         {
@@ -336,8 +267,39 @@ public sealed class MapController : MonoBehaviour
         }
     }
 
-    private void EnterBattle()
+    public bool NeedsSacrificeReminder(MapEncounterKind kind) =>
+        (kind == MapEncounterKind.Battle || kind == MapEncounterKind.Boss) &&
+        runSession != null && runSession.DeckCapacity > sacrificeReminderCapacity &&
+        !runSession.SacrificeUsed && !runSession.HasPendingModifier;
+
+    public void CancelDepartureWarning()
     {
+        warnedNodeId = null; selectedNode = null; runSession.SelectNode(null);
+        foreach (var node in nodes) if (node != null) node.SetSelected(false);
+        travelView?.Preview(null); ReleaseSacrificeInput();
+    }
+
+    public void ConfirmDepartureWithoutSacrifice(string nodeId)
+    {
+        if (string.IsNullOrEmpty(nodeId) || warnedNodeId != nodeId || selectedNode == null ||
+            selectedNode.NodeId != nodeId || !selectedNode.IsAvailable || !CanInteract)
+        { CancelDepartureWarning(); return; }
+        warnedNodeId = null;
+        EnterBattle(true);
+        if (!loading && (travel == null || !travel.IsBusy)) ReleaseSacrificeInput();
+    }
+
+    private void EnterBattle() => EnterBattle(false);
+
+    private void EnterBattle(bool confirmedWithoutSacrifice)
+    {
+        if (CanInteract && selectedNode != null && !confirmedWithoutSacrifice && sacrificePanel != null &&
+            NeedsSacrificeReminder(runSession.Progress != null ? runSession.Progress.KindOf(selectedNode.NodeId) : MapEncounterKind.Battle))
+        {
+            warnedNodeId = selectedNode.NodeId; nodeInteraction?.Close();
+            foreach (var card in prebuiltCardViews) if (card != null) card.SetInteractionLocked(true);
+            sacrificePanel.ShowDepartureWarning(warnedNodeId); return;
+        }
         if (travel != null)
         {
             if (runSession.Progress.Phase == MapProgressPhase.Won || runSession.Progress.Phase == MapProgressPhase.Lost)
@@ -363,9 +325,9 @@ public sealed class MapController : MonoBehaviour
 
     private void ResetRunPresentation()
     {
+        warnedNodeId = null;
         nodeInteraction?.Close();
-        pendingSacrificeView = null; detailedCardView = null;
-        confirmationModal.SetActive(false); cardDetailPanel.SetActive(false);
+        sacrificePanel?.HideImmediate();
         selectedNode = null; loading = false; travelNotice = null;
         foreach (var node in nodes) if (node != null) node.SetSelected(false);
         BuildDeckView(); travelView.RestorePosition(runSession.Progress.CurrentNodeId);
@@ -379,7 +341,7 @@ public sealed class MapController : MonoBehaviour
             runSession?.Progress == null || travel == null || travel.IsBusy || travelView == null ||
             routeGraph == null || loading || UnityEditor.EditorApplication.isPaused ||
             travelView.gameObject.scene != SceneManager.GetActiveScene() ||
-            (confirmationModal != null && confirmationModal.activeSelf)) return false;
+            (sacrificePanel != null && sacrificePanel.IsBlocking)) return false;
         var phase = runSession.Progress.Phase;
         return phase == MapProgressPhase.OnMap || phase == MapProgressPhase.Won || phase == MapProgressPhase.Lost;
     }

@@ -13,8 +13,8 @@ public class BattleScript : MonoBehaviour
 
     public int attackDmg = 1;
     public float attackSpd = 5f;
-    public int health = 10;
-    public int maxHealth = 10;
+    public int health = 20;
+    public int maxHealth = 20;
     public float elixir = 10f;
     public float maxElixir = 10f;
     [Tooltip("Elixir restored per second, independent of the simulation step.")]
@@ -23,6 +23,9 @@ public class BattleScript : MonoBehaviour
     public int hitsPerAttack = 1;
 
     private double attackElapsed;
+    // Read-only presentation values; the tick loop remains the only attack scheduler.
+    public float AttackIntervalSeconds => Mathf.Max(.01f, attackSpd);
+    public float SecondsUntilNextAttack => Mathf.Max(0, AttackIntervalSeconds - (float)attackElapsed);
     private bool _victoryFired;
     
     List<GameObject> _OpponentList;

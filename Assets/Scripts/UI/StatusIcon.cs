@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-public enum StatusSymbol { Health, Elixir, Shield, Speed, Damage }
+public enum StatusSymbol { Health, Elixir, Shield, Speed, Damage, Hits }
 
 // Original vector silhouettes; no external texture dependencies.
 [RequireComponent(typeof(CanvasRenderer))]
@@ -19,6 +19,16 @@ public sealed class StatusIcon : MaskableGraphic
     protected override void OnPopulateMesh(VertexHelper vh)
     {
         vh.Clear();
+        if (symbol == StatusSymbol.Hits)
+        {
+            for (int i = -1; i <= 1; i++)
+            {
+                float x = i * .22f;
+                Line(vh, new(x - .08f, -.35f), new(x + .08f, .35f), .09f, color);
+                Line(vh, new(x - .14f, -.15f), new(x + .08f, -.1f), .06f, color);
+            }
+            return;
+        }
         Vector2[] shape = symbol == StatusSymbol.Health ? Heart : symbol == StatusSymbol.Elixir ? Flask :
             symbol == StatusSymbol.Shield ? Shield : symbol == StatusSymbol.Speed ? Wing : Blade;
         Polygon(vh,shape,1,new Color(.09f,.06f,.035f,color.a)); Polygon(vh,shape,.83f,color);

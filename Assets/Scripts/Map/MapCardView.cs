@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerMoveHandler
+public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerMoveHandler, IPointerClickHandler
 {
     [SerializeField] private GameObject frontFace;
     [SerializeField] private GameObject backFace;
@@ -16,8 +16,10 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
     [SerializeField] private GameObject selectionGlow;
     [SerializeField] private GameObject sacrificedOverlay;
     [SerializeField] private Button sacrificeButton;
+    [SerializeField] private StatusIcon offeringIcon;
+    [SerializeField] private Image brokenHeartCut;
+    [SerializeField] private Image backFill;
     [SerializeField] private float flipDuration = 0.28f;
-    [SerializeField] private float detailHoverDelay = 0.35f;
     [SerializeField] private float hoverScale = 1.04f;
     [SerializeField] private float hoverAnimationSpeed = 14f;
     [SerializeField] private float maxPitchAngle = 5f;
@@ -31,7 +33,6 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
     private MapController controller;
     private RectTransform rectTransform;
     private RectTransform visualTransform;
-    private Coroutine detailHoverRoutine;
     private Vector3 visualBaseScale;
     private Vector2 targetTilt;
     private Vector2 currentTilt;
@@ -45,13 +46,17 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
     private bool initialized;
     private bool pointerHovered;
     private bool interactionLocked;
+    private float settleRemaining, settleDuration;
+    private Vector3 settleOffset;
     public CardDefinition Definition => definition;
     public string InstanceId { get; private set; }
+    public bool PreservesBackTypography(Transform target) => backFace != null && target.IsChildOf(backFace.transform);
 
     private void Awake()
     {
         rectTransform = (RectTransform)transform;
         EnsureVisualTransform();
+
         frontArtwork.gameObject.SetActive(false);
         backFace.SetActive(false);
         selectionGlow.SetActive(false);
@@ -60,7 +65,7 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
 
     private void Update()
     {
-        if (!initialized)
+        if (!initialized || interactionLocked)
         {
             return;
         }
@@ -104,6 +109,11 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
         float scaleBlend = 1f - Mathf.Exp(-hoverAnimationSpeed * deltaTime);
         Vector3 targetScale = visualBaseScale * (pointerHovered ? hoverScale : 1f);
         visualTransform.localScale = Vector3.Lerp(visualTransform.localScale, targetScale, scaleBlend);
+        if (settleRemaining > 0)
+        {
+            settleRemaining = Mathf.Max(0, settleRemaining - deltaTime);
+            visualTransform.localPosition = settleOffset * Mathf.SmoothStep(0, 1, settleRemaining / settleDuration);
+        }
     }
 
     public void Initialize(MapController owner, CardDefinition cardDefinition, string instanceId = null)
@@ -132,34 +142,27 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
         currentRoll = 0f;
         visualTransform.localRotation = Quaternion.identity;
         visualTransform.localScale = visualBaseScale;
+        visualTransform.localPosition = Vector3.zero; settleRemaining = 0;
         if (combatFrontInstance == null) BuildCombatFront();
         else ConfigureCombatFront(combatFrontInstance);
         BuildBack();
         titleText.text = definition.displayName;
-        GameFonts.Apply(titleText, GameFontRole.Heading);
-        GameFonts.Apply(scopeText, GameFontRole.Body);
-        effectText.text = string.Empty;
-        effectText.gameObject.SetActive(false);
-        scopeText.text = definition.overworldEffect.scopeLabel;
+        var preview = MapSacrificePreview.For(owner != null ? owner.Session : null, definition, instanceId);
+        effectText.text = preview.BackValue;
+        effectText.color = owner != null && owner.SacrificePanel != null ? owner.SacrificePanel.EffectColor(preview.Symbol) : preview.Accent;
+        effectText.gameObject.SetActive(true);
+        scopeText.text = "Next battle";
+        if (offeringIcon != null) { offeringIcon.symbol = preview.Symbol; offeringIcon.color = effectText.color; offeringIcon.SetVerticesDirty(); }
+        if (brokenHeartCut != null) brokenHeartCut.enabled = preview.Symbol == StatusSymbol.Health;
         frontFace.SetActive(true);
         backFace.SetActive(false);
         selectionGlow.SetActive(false);
         sacrificedOverlay.SetActive(false);
-        sacrificeButton.onClick.RemoveAllListeners();
-        sacrificeButton.interactable = true;
-        sacrificeButton.onClick.AddListener(() => controller.RequestSacrifice(this));
+        if (sacrificeButton != null) sacrificeButton.gameObject.SetActive(false);
     }
 
     private void BuildBack()
     {
-        var faceRect = (RectTransform)backFace.transform;
-        faceRect.anchorMin = Vector2.zero;
-        faceRect.anchorMax = Vector2.one;
-        faceRect.pivot = new Vector2(.5f, .5f);
-        faceRect.anchoredPosition3D = Vector3.zero;
-        faceRect.sizeDelta = Vector2.zero;
-        faceRect.localScale = Vector3.one;
-        faceRect.localRotation = Quaternion.identity;
         if (backInstance != null)
         {
             backInstance.SetActive(false);
@@ -174,53 +177,7 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
         backArtwork.color = Color.white;
         backArtwork.preserveAspect = true;
         backArtwork.raycastTarget = false;
-        SetBackRect(backArtwork.rectTransform, Vector2.zero, new Vector2(240f, 340f));
-        var fillTransform = backFace.transform.Find("BackFill");
-        var fill = fillTransform != null ? fillTransform.GetComponent<Image>() : null;
-        if (fill == null)
-        {
-            var fillObject = new GameObject("BackFill", typeof(RectTransform), typeof(Image));
-            fillObject.layer = backFace.layer;
-            fillObject.transform.SetParent(backFace.transform, false);
-            fill = fillObject.GetComponent<Image>();
-        }
-        fill.transform.SetAsFirstSibling();
-        backArtwork.transform.SetSiblingIndex(1);
-        SetBackRect(fill.rectTransform, new Vector2(-1f, -1f), new Vector2(152f, 258f));
-        var sourceFill = definition.backPrefab != null ? definition.backPrefab.transform.Find("EffectBackground") : null;
-        fill.color = sourceFill != null && sourceFill.TryGetComponent<Image>(out var sourceImage)
-            ? sourceImage.color : new Color(.32f, .205f, .035f, 1f);
-        fill.raycastTarget = false;
-
-        SetBackRect(titleText.rectTransform, new Vector2(-3f, 86f), new Vector2(130f, 44f));
-        SetBackRect(scopeText.rectTransform, new Vector2(0f, -2f), new Vector2(138f, 84f));
-        SetBackRect((RectTransform)sacrificeButton.transform, new Vector2(0f, -102f), new Vector2(134f, 28f));
-        SetBackLabel(titleText, 18f, 13f);
-        SetBackLabel(scopeText, 14f, 12f);
-        foreach (var label in sacrificeButton.GetComponentsInChildren<TMP_Text>(true))
-        {
-            GameFonts.Apply(label, GameFontRole.Heading);
-            SetBackLabel(label, 14f, 12f);
-        }
-    }
-
-    private static void SetBackRect(RectTransform rect, Vector2 position, Vector2 size)
-    {
-        rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(.5f, .5f);
-        rect.anchoredPosition3D = new Vector3(position.x, position.y, 0f);
-        rect.sizeDelta = size;
-        rect.localScale = Vector3.one;
-        rect.localRotation = Quaternion.identity;
-    }
-
-    private static void SetBackLabel(TMP_Text text, float maximum, float minimum)
-    {
-        text.enableAutoSizing = true;
-        text.fontSize = text.fontSizeMax = maximum;
-        text.fontSizeMin = minimum;
-        text.alignment = TextAlignmentOptions.Center;
-        text.margin = Vector4.zero;
-        text.raycastTarget = false;
+        // The authored template owns dimensions, typography and fill; binding only changes content.
     }
 
     private void BuildCombatFront()
@@ -285,20 +242,16 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        if (!initialized || interactionLocked) return;
+        if (!initialized || interactionLocked || controller == null || !controller.CanInteract) return;
         pointerHovered = true;
         targetBack = true;
         selectionGlow.SetActive(true);
         UpdateTiltTarget(eventData);
-        if (showingBack)
-        {
-            StartDetailHoverCountdown();
-        }
     }
 
     public void OnPointerMove(PointerEventData eventData)
     {
-        if (!initialized || !pointerHovered)
+        if (!initialized || interactionLocked || !pointerHovered)
         {
             return;
         }
@@ -308,30 +261,32 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
 
     public void OnPointerExit(PointerEventData eventData)
     {
-        if (!initialized) return;
+        if (!initialized || interactionLocked) return;
         pointerHovered = false;
         targetBack = false;
         targetTilt = Vector2.zero;
         targetRoll = 0f;
         selectionGlow.SetActive(false);
-        StopDetailHoverCountdown();
-        if (showingBack)
-        {
-            controller.SetCardDetail(this, false);
-        }
     }
 
     public void SetSacrificed()
     {
         sacrificedOverlay.SetActive(true);
-        sacrificeButton.interactable = false;
+        if (sacrificeButton != null) sacrificeButton.interactable = false;
     }
 
     public void SetInteractionLocked(bool value)
     {
         interactionLocked = value;
-        sacrificeButton.interactable = !value;
-        if (value) OnPointerExit(null);
+        if (!initialized) return;
+        if (!value) OnPointerExit(null);
+        if (value)
+        {
+            targetTilt = currentTilt = Vector2.zero; targetRoll = currentRoll = 0;
+            visualTransform.localRotation = Quaternion.identity;
+            flipProgress = showingBack ? 1 : 0;
+            targetBack = showingBack;
+        }
     }
 
     private void SetFace(bool backVisible)
@@ -340,14 +295,30 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
         frontFace.SetActive(!showingBack);
         backFace.SetActive(showingBack);
 
-        if (showingBack && pointerHovered)
-        {
-            StartDetailHoverCountdown();
-            return;
-        }
+    }
 
-        StopDetailHoverCountdown();
-        controller.SetCardDetail(this, false);
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        if (initialized && !interactionLocked && controller != null && controller.CanInteract &&
+            eventData.button == PointerEventData.InputButton.Left) controller.RequestSacrifice(this);
+    }
+
+    public void SettleFrom(Vector3 worldPosition, float duration)
+    {
+        settleOffset = transform.InverseTransformPoint(worldPosition);
+        settleDuration = Mathf.Max(.01f, duration); settleRemaining = settleDuration;
+        visualTransform.localPosition = settleOffset;
+        StartCoroutine(SettleWhileLocked());
+    }
+
+    private IEnumerator SettleWhileLocked()
+    {
+        while (settleRemaining > 0 && interactionLocked)
+        {
+            settleRemaining = Mathf.Max(0, settleRemaining - Time.unscaledDeltaTime);
+            visualTransform.localPosition = settleOffset * Mathf.SmoothStep(0, 1, settleRemaining / settleDuration);
+            yield return null;
+        }
     }
 
     private void EnsureVisualTransform()
@@ -417,36 +388,8 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
         targetRoll = -normalizedX * maxRollAngle;
     }
 
-    private void StartDetailHoverCountdown()
-    {
-        StopDetailHoverCountdown();
-        detailHoverRoutine = StartCoroutine(ShowDetailAfterHoverDelay());
-    }
-
-    private void StopDetailHoverCountdown()
-    {
-        if (detailHoverRoutine == null)
-        {
-            return;
-        }
-
-        StopCoroutine(detailHoverRoutine);
-        detailHoverRoutine = null;
-    }
-
-    private IEnumerator ShowDetailAfterHoverDelay()
-    {
-        yield return new WaitForSecondsRealtime(detailHoverDelay);
-        detailHoverRoutine = null;
-        if (pointerHovered && showingBack)
-        {
-            controller.SetCardDetail(this, true);
-        }
-    }
-
     private void OnDisable()
     {
-        StopDetailHoverCountdown();
         pointerHovered = false;
         targetBack = false;
         targetTilt = Vector2.zero;
@@ -473,10 +416,6 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
         if (selectionGlow != null)
         {
             selectionGlow.SetActive(false);
-        }
-        if (controller != null)
-        {
-            controller.SetCardDetail(this, false);
         }
     }
 }

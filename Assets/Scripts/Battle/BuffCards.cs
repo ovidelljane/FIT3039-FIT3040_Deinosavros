@@ -21,6 +21,8 @@ public class BuffCards : MonoBehaviour, IPointerClickHandler, IPointerEnterHandl
     [SerializeField] private AudioSource audioSource;
     [SerializeField] private Image artworkImage;
     [SerializeField] private Image borderImage;
+    [Header("Cost Label")]
+    [SerializeField, Min(12)] private float costFontSize = 28f;
 
     [Header("Hand Hover")]
     [SerializeField] private float hoverScale = 1.04f;
@@ -41,6 +43,7 @@ public class BuffCards : MonoBehaviour, IPointerClickHandler, IPointerEnterHandl
     private Vector3 currentTilt;
     private Vector3 tiltVelocity;
     private PlayerStatusView statusView;
+    private bool played;
     public int Cost => Mathf.Max(0, elixirCost);
     public CardEffectValues Values => new CardEffectValues(stat, amount, Cost, effectDuration);
     public string Description => definition != null ? definition.GetCombatDescription(Values) : $"+{amount} {stat}";
@@ -220,14 +223,14 @@ public class BuffCards : MonoBehaviour, IPointerClickHandler, IPointerEnterHandl
             RectTransform rect = (RectTransform)costObject.transform;
             // Centre of the small circle in the top-left corner of every border sprite.
             rect.anchorMin = rect.anchorMax = new Vector2(0.209f, 0.855f);
-            rect.sizeDelta = new Vector2(26f, 26f);
+            rect.sizeDelta = new Vector2(34f, 38f);
 
             costText = costObject.AddComponent<TextMeshProUGUI>();
             GameFonts.Apply(costText, GameFontRole.Numeric);
             costText.alignment = TextAlignmentOptions.Center;
             costText.enableAutoSizing = true;
-            costText.fontSizeMin = 8f;
-            costText.fontSizeMax = 22f;
+            costText.fontSizeMin = 16f;
+            costText.fontSize = costText.fontSizeMax = costFontSize;
             costText.color = Color.white;
             costText.raycastTarget = false;
         }
@@ -236,9 +239,20 @@ public class BuffCards : MonoBehaviour, IPointerClickHandler, IPointerEnterHandl
 
     public void OnPointerClick(PointerEventData e)
     {
-        if (!enabled || player == null || player.health <= 0 || owner == null || !owner.CanPlay) return;
+        if (!isActiveAndEnabled || played || player == null || player.health <= 0 || owner == null || !owner.CanPlay) return;
         if (MeetsResourceRequirement)
         {
+            bool timed = stat == StatType.Damage || stat == StatType.AttackSpeed || stat == StatType.ExtraHits ||
+                stat == StatType.ElixirRegen || stat == StatType.EnemySlow;
+            if (timed && (effectPrefab == null || effectPrefab.GetComponent<Effect>() == null))
+            {
+                Debug.LogError("Assign a valid timed effect prefab before playing this card.", this);
+                return;
+            }
+            played = true;
+            ResetHover();
+            StatType resource = UsesHealthCost ? StatType.Heal : StatType.Elixir;
+            float beforeCost = CardEffectFeedback.Read(player, resource);
             if (!UsesHealthCost)
             {
                 player.elixir -= Cost;
@@ -248,7 +262,9 @@ public class BuffCards : MonoBehaviour, IPointerClickHandler, IPointerEnterHandl
                 player.health -= Cost;
             }
 
-            Debug.Log(player.elixir);
+            if (Cost > 0) CardEffectFeedback.Publish(new CardEffectFeedback(player, resource, beforeCost,
+                CardEffectFeedback.Read(player, resource), CardFeedbackPhase.Cost));
+            float beforeEffect = CardEffectFeedback.Read(player, stat);
             
             switch (stat)
             {
@@ -267,6 +283,9 @@ public class BuffCards : MonoBehaviour, IPointerClickHandler, IPointerEnterHandl
                 case StatType.Elixir: player.elixir = Mathf.Min(player.elixir + amount, player.maxElixir); break;
                 
             }
+            if (stat == StatType.Heal || stat == StatType.Shield || stat == StatType.Elixir)
+                CardEffectFeedback.Publish(new CardEffectFeedback(player, stat, beforeEffect,
+                    CardEffectFeedback.Read(player, stat), CardFeedbackPhase.Applied));
             if (owner != null) owner.OnCardPlayed(this, definition);
             else Destroy(gameObject);
         }

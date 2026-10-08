@@ -9,6 +9,11 @@ public sealed class PlayerStatusView : MonoBehaviour
     [Header("Scene References")]
     [SerializeField] private ResourceBarView health, elixir;
     [SerializeField] private TMP_Text shield, speed, damage;
+    [Header("Attack Speed Display")]
+    [Tooltip("Display seconds between attacks instead of attacks per second. This never changes combat timing.")]
+    [SerializeField] private bool displayAttackInterval;
+    [SerializeField] private bool showAttackSpeedUnit;
+    public bool DisplaysAttackInterval => displayAttackInterval;
     public ResourceBarView Health { get => health; private set => health = value; }
     public ResourceBarView Elixir { get => elixir; private set => elixir = value; }
     public bool IsReady => Health != null && Health.IsReady && Elixir != null && Elixir.IsReady &&
@@ -18,6 +23,10 @@ public sealed class PlayerStatusView : MonoBehaviour
     private RunSession session;
     private int oldShield=int.MinValue,oldDamage=int.MinValue;
     private float oldInterval=float.NaN;
+    private bool oldIntervalDisplay, oldSpeedUnit;
+    public TMP_Text ValueLabel(StatType stat) => stat == StatType.Damage ? damage :
+        stat == StatType.AttackSpeed ? speed : stat == StatType.Shield ? shield :
+        stat == StatType.Heal ? Health.Number : stat == StatType.Elixir ? Elixir.Number : null;
 
     public static PlayerStatusView Create(Transform parent,bool compact)
     {
@@ -29,11 +38,11 @@ public sealed class PlayerStatusView : MonoBehaviour
         var layout=root.gameObject.AddComponent<VerticalLayoutGroup>();
         layout.padding=new RectOffset(compact?12:18,compact?12:18,10,10); layout.spacing=compact?3:6;
         layout.childControlHeight=layout.childControlWidth=true; layout.childForceExpandHeight=false;
-        var title=Text(root,"Title",compact?"VITALS":"PLAYER",compact?17:20,GameFontRole.Heading);
-        Height(title.rectTransform,compact?22:28);
+        var title=Text(root,"Title",compact?"VITALS":"PLAYER",20,GameFontRole.Heading);
+        Height(title.rectTransform,28);
         view.Health=ResourceBarView.Create(root,"Health",StatusSymbol.Health,new Color(.68f,.21f,.19f),compact);
         view.Elixir=ResourceBarView.Create(root,"Elixir",StatusSymbol.Elixir,new Color(.49f,.34f,.73f),compact);
-        var stats=Rect("Attributes",root); Height(stats,compact?81:50);
+        var stats=Rect("Attributes",root); Height(stats,compact?91:50);
         if (compact)
         {
             var rows=stats.gameObject.AddComponent<VerticalLayoutGroup>(); rows.spacing=2;
@@ -73,20 +82,33 @@ public sealed class PlayerStatusView : MonoBehaviour
         float interval=combat?player.attackSpd:session.PlayerAttackSpeed;
         if (shieldValue!=oldShield) { oldShield=shieldValue; shield.text=Mathf.Max(0,shieldValue).ToString(); }
         if (damageValue!=oldDamage) { oldDamage=damageValue; damage.text=damageValue.ToString(); }
-        if (interval!=oldInterval) { oldInterval=interval; speed.text=$"{1f/Mathf.Max(.01f,interval):0.00}"; }
+        SetAttackSpeedDisplay(interval);
+    }
+    public void SetAttackSpeedDisplay(float interval)
+    {
+        if (speed != null && (interval!=oldInterval || oldIntervalDisplay!=displayAttackInterval || oldSpeedUnit!=showAttackSpeedUnit))
+        {
+            oldInterval=interval; oldIntervalDisplay=displayAttackInterval; oldSpeedUnit=showAttackSpeedUnit;
+            speed.text=FormatAttackSpeed(interval);
+        }
+    }
+    public string FormatAttackSpeed(float interval)
+    {
+        if (displayAttackInterval) return $"{Mathf.Max(.01f,interval):0.##}{(showAttackSpeedUnit ? "s" : "")}";
+        return $"{1f/Mathf.Max(.01f,interval):0.00}{(showAttackSpeedUnit ? "/s" : "")}";
     }
     private TMP_Text Stat(Transform parent,string title,StatusSymbol symbol,Color tint,bool compact)
     {
-        var row=Rect(title,parent); Height(row,compact?25:50); row.GetComponent<LayoutElement>().flexibleWidth=1;
+        var row=Rect(title,parent); Height(row,compact?29:50); row.GetComponent<LayoutElement>().flexibleWidth=1;
         var icon=Icon(row,symbol,tint);
         Place(icon.rectTransform,compact?new Vector2(0,.5f):new Vector2(.25f,.68f),compact?new Vector2(11,0):Vector2.zero,new Vector2(24,24));
-        var label=Text(row,"Label",title,13,GameFontRole.Heading);
+        var label=Text(row,"Label",title,compact?15:13,GameFontRole.Heading);
         Place(label.rectTransform,compact?new Vector2(0,.5f):new Vector2(.5f,0),compact?new Vector2(29,0):new Vector2(0,8),
-            new Vector2(compact?100:105,18),compact?new Vector2(0,.5f):new Vector2(.5f,.5f));
+            new Vector2(compact?100:105,compact?26:18),compact?new Vector2(0,.5f):new Vector2(.5f,.5f));
         label.alignment=compact?TextAlignmentOptions.Left:TextAlignmentOptions.Center;
-        var number=Text(row,"Value","--",compact?22:26,GameFontRole.Numeric);
+        var number=Text(row,"Value","--",compact?24:26,GameFontRole.Numeric);
         Place(number.rectTransform,compact?new Vector2(1,.5f):new Vector2(.7f,.68f),Vector2.zero,
-            new Vector2(compact?60:58,30),compact?new Vector2(1,.5f):new Vector2(.5f,.5f));
+            new Vector2(compact?60:58,compact?36:30),compact?new Vector2(1,.5f):new Vector2(.5f,.5f));
         number.alignment=compact?TextAlignmentOptions.Right:TextAlignmentOptions.Center; return number;
     }
     public static RectTransform Rect(string name,Transform parent)

@@ -129,6 +129,7 @@ public static class MapCardArtworkVerification
             yield return Delay(.8f);
             var reference = Field<Image>(views[0], "backArtwork");
             var referenceBounds = RectTransformUtility.CalculateRelativeRectTransformBounds(views[0].transform, reference.transform);
+            var overflow = new System.Collections.Generic.List<string>();
             foreach (var view in views)
             {
                 var back = Field<Image>(view, "backArtwork");
@@ -142,10 +143,18 @@ public static class MapCardArtworkVerification
                     Vector3.Distance(bounds.center, referenceBounds.center) < .01f,
                     view.Definition.name + ": inherited parent transforms do not change the displayed back size.");
                 var title = Field<TMPro.TMP_Text>(view, "titleText"); title.ForceMeshUpdate();
-                check(!title.isTextOverflowing, view.Definition.name + ": title fits within its shared area.");
-                check(Field<Button>(view, "sacrificeButton").interactable, view.Definition.name + ": sacrifice remains available.");
+                check(!title.isTextOverflowing && title.textInfo.lineCount <= 2, view.Definition.name + ": title fits within two lines.");
+                foreach (var label in Field<GameObject>(view, "backFace").GetComponentsInChildren<TMPro.TMP_Text>())
+                {
+                    label.ForceMeshUpdate();
+                    if (label.isTextOverflowing) overflow.Add(view.Definition.name + ": " + label.name +
+                        " (" + label.preferredHeight + "/" + label.rectTransform.rect.height + ")");
+                }
+                check(Field<Button>(view, "sacrificeButton") == null && Field<TMPro.TMP_Text>(view, "effectText").gameObject.activeSelf,
+                    view.Definition.name + ": the back shows the benefit and opens a stable inspector instead of a tiny sacrifice button.");
             }
             MapOpportunityVerification.CaptureCanvas(canvas, Camera.main, "card-backs");
+            check(overflow.Count == 0, "All offering back labels fit: " + string.Join("; ", overflow));
             foreach (var view in views) view.OnPointerExit(null);
             yield return Delay(.5f);
             check(views.All(v => Field<GameObject>(v, "frontFace").activeSelf), "Every card returns to its front after hover.");

@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 810a41e2d17b4e29a1b38d2dc731a196, type: 3}
   m_Name: RunBalance
   m_EditorClassIdentifier: Assembly-CSharp::RunBalance
-  startingMaxHealth: 100
+  startingMaxHealth: 200
   deckCapacity: 30
   recoveryPercent: 15
   minimumOfferingAttackInterval: 1
   scaleEnemyStatsByLayer: 1
   enemyHealthGrowthPercent: 30
-  enemyDamageGrowthPercent: 30
+  enemyDamageGrowthPercent: 40

@@ -12,6 +12,7 @@ public class TimeTickSystem : MonoBehaviour
     public float TickInterval => Mathf.Max(.01f, tickRateMax);
     public float TickDeltaSeconds { get; private set; }
     private double tickTimer;
+    public float SecondsSinceLastTick => Mathf.Clamp((float)tickTimer, 0, TickInterval);
     private bool isStarted = false;
 
     private void Awake() => Active = this;

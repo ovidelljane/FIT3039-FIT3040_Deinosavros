@@ -80,6 +80,48 @@ public static class RunIntegrationPlayVerification
         SessionState.SetBool(Key + ".feedbackOnly", true);
     }
 
+    [MenuItem("Tools/Battle/Verify Portrait Shadows")]
+    public static void RunCombatShadows()
+    {
+        StartVerification(false);
+        SessionState.SetBool(Key + ".shadowsOnly", true);
+    }
+
+    [MenuItem("Tools/Battle/Verify Card Feedback")]
+    public static void RunCardFeedback()
+    {
+        StartVerification(false);
+        SessionState.SetBool(Key + ".cardFeedbackOnly", true);
+    }
+
+    [MenuItem("Tools/Map/Verify Sacrifice Interface")]
+    public static void RunSacrifice()
+    {
+        StartVerification(false);
+        SessionState.SetBool(Key + ".sacrificeOnly", true);
+    }
+
+    [MenuItem("Tools/Map/Verify Status Panel")]
+    public static void RunMapStatus()
+    {
+        StartVerification(false);
+        SessionState.SetBool(Key + ".mapStatusOnly", true);
+    }
+
+    [MenuItem("Tools/Battle/Verify Attack Countdowns")]
+    public static void RunAttackCountdowns()
+    {
+        StartVerification(false);
+        SessionState.SetBool(Key + ".attackCountdownOnly", true);
+    }
+
+    [MenuItem("Tools/UI/Verify Animated Menu Background")]
+    public static void RunMenuEmbers()
+    {
+        StartVerification(false);
+        SessionState.SetBool(Key + ".menuEmbersOnly", true);
+    }
+
     [MenuItem("Tools/Map/Verify Card Artwork and Back Sizes")]
     public static void RunCardArtwork()
     {
@@ -96,9 +138,21 @@ public static class RunIntegrationPlayVerification
         errors = null; assertions = 0; routines.Clear();
         File.WriteAllText(ResultPath, "RUNNING: integrated production flow.\n");
         File.WriteAllText(RunIntegrationSetup.ResultDirectory + "/play-progress.txt", "Starting from MainMenu.\n");
+        // Compare difficulty against the actual authored lineup, not historical balance constants.
+        var combatBaseline = EditorSceneManager.OpenScene("Assets/Scenes/Deinosavros.unity");
+        var authoredEnemies = combatBaseline.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<BattleScript>(true))
+            .Where(actor => actor.isActiveAndEnabled && actor.CompareTag("Enemy")).OrderBy(actor => actor.transform.position.x).ToArray();
+        SessionState.SetInt(Key + ".enemyCount", authoredEnemies.Length);
+        for (int i = 0; i < authoredEnemies.Length; i++)
+        {
+            SessionState.SetInt(Key + ".enemyHp" + i, authoredEnemies[i].maxHealth);
+            SessionState.SetInt(Key + ".enemyDamage" + i, authoredEnemies[i].attackDmg);
+            SessionState.SetFloat(Key + ".enemyInterval" + i, authoredEnemies[i].attackSpd);
+        }
         EditorSceneManager.OpenScene("Assets/Scenes/MainMenu.unity");
         SessionState.SetInt(Key, 1);
         SessionState.SetBool(Key + ".opportunityOnly", opportunityOnly);
+        SessionState.SetBool(Key + ".menuEmbersOnly", false);
         SessionState.SetBool(Key + ".combatHoverOnly", false);
         SessionState.SetBool(Key + ".audioOnly", false);
         SessionState.SetBool(Key + ".playerLoopOnly", false);
@@ -106,7 +160,12 @@ public static class RunIntegrationPlayVerification
         SessionState.SetBool(Key + ".rewardOnly", false);
         SessionState.SetBool(Key + ".balanceOnly", false);
         SessionState.SetBool(Key + ".feedbackOnly", false);
+        SessionState.SetBool(Key + ".shadowsOnly", false);
+        SessionState.SetBool(Key + ".cardFeedbackOnly", false);
         SessionState.SetBool(Key + ".cardArtworkOnly", false);
+        SessionState.SetBool(Key + ".sacrificeOnly", false);
+        SessionState.SetBool(Key + ".mapStatusOnly", false);
+        SessionState.SetBool(Key + ".attackCountdownOnly", false);
         EditorApplication.isPlaying = true;
     }
 
@@ -137,7 +196,13 @@ public static class RunIntegrationPlayVerification
             if (routines.Count == 0)
             {
                 deadline = EditorApplication.timeSinceStartup + 360;
-                routines.Push(SessionState.GetBool(Key + ".cardArtworkOnly", false) ? MapCardArtworkVerification.Run(Check) :
+                routines.Push(SessionState.GetBool(Key + ".menuEmbersOnly", false) ? MenuBackgroundAuthoring.VerifyRuntime(Check) :
+                    SessionState.GetBool(Key + ".shadowsOnly", false) ? CombatShadowVerification.Run(Check) :
+                    SessionState.GetBool(Key + ".mapStatusOnly", false) ? MapStatusVerification.Run(Check) :
+                    SessionState.GetBool(Key + ".attackCountdownOnly", false) ? CombatAttackCountdownVerification.Run(Check) :
+                    SessionState.GetBool(Key + ".sacrificeOnly", false) ? MapSacrificeVerification.Run(Check) :
+                    SessionState.GetBool(Key + ".cardFeedbackOnly", false) ? CombatCardFeedbackVerification.Run(Check) :
+                    SessionState.GetBool(Key + ".cardArtworkOnly", false) ? MapCardArtworkVerification.Run(Check) :
                     SessionState.GetBool(Key + ".feedbackOnly", false) ? CombatFeedbackVerification.Run(Check) :
                     SessionState.GetBool(Key + ".balanceOnly", false) ? RunBalanceVerification.Run(Check) :
                     SessionState.GetBool(Key + ".rewardOnly", false) ? RewardPresentation() :
@@ -156,7 +221,19 @@ public static class RunIntegrationPlayVerification
                 if (current.Current is IEnumerator nested) { routines.Push(nested); continue; }
                 return;
             }
-            Finish("PASS: " + assertions + " runtime checks; " + (SessionState.GetBool(Key + ".cardArtworkOnly", false)
+            Finish("PASS: " + assertions + " runtime checks; " + (SessionState.GetBool(Key + ".menuEmbersOnly", false)
+                ? "live background flow, compiled UI shader, preserved artwork layers and unblocked menu actions.\n"
+                : SessionState.GetBool(Key + ".shadowsOnly", false)
+                ? "four silhouette shadows on the real ground, alpha clipping, shared animated meshes, recoil, saved bindings and three resolutions.\n"
+                : SessionState.GetBool(Key + ".mapStatusOnly", false)
+                ? "saved Map status, live values, explicit speed units, persistent styling, reload and three resolutions.\n"
+                : SessionState.GetBool(Key + ".attackCountdownOnly", false)
+                ? "four real attack clocks, reset, haste, slow, pause, death, finish, saved UI and three resolutions.\n"
+                : SessionState.GetBool(Key + ".sacrificeOnly", false)
+                ? "sacrifice previews, safe-area layouts, exact instances, repeat protection, pending feedback, authored styles and restart.\n"
+                : SessionState.GetBool(Key + ".cardFeedbackOnly", false)
+                ? "card deltas, live numbers, resource costs, independent stacks, rings, pause, cleanup, scene bindings and three resolutions.\n"
+                : SessionState.GetBool(Key + ".cardArtworkOnly", false)
                 ? "all eleven illustrations, single borders, uniform Map backs, titles, reversible hover, deck order, combat and rewards.\n"
                 : SessionState.GetBool(Key + ".feedbackOnly", false)
                 ? "damage and shield numbers, actor flash, recoil, attack lunge, shared frame properties, pooling, pause, cloud pixels and three resolutions.\n"
@@ -165,7 +242,7 @@ public static class RunIntegrationPlayVerification
                 : SessionState.GetBool(Key + ".rewardOnly", false)
                 ? "reward sizing, gray-brown theme, three resolutions, replacement scrolling, cancellation, atomic claim and unchanged shared prefab.\n"
                 : SessionState.GetBool(Key + ".playerLoopOnly", false)
-                ? "player frame cycle, breath, pinned feet, synchronized shadow, pause, mesh cleanup and unchanged combat state.\n"
+                ? "closed-mouth idle, attack-triggered bite, event filtering, pause, rapid attacks, shared shadows, mesh cleanup and unchanged combat rules.\n"
                 : SessionState.GetBool(Key + ".enemyLoopOnly", false)
                 ? "three enemy idle loops, independent timing, planted feet, unchanged UVs, matching shadows, pause, death, cleanup and unchanged gameplay.\n"
                 : SessionState.GetBool(Key + ".audioOnly", false)
@@ -404,6 +481,8 @@ public static class RunIntegrationPlayVerification
         Invoke(Find<MainMenuController>(), "StartRun");
         yield return PreparedBattle();
         yield return Until(() => !MapTravelCoordinator.Ensure(RunSession.Instance).IsBusy, "Player visible after arrival fade");
+        yield return Until(() => BattleHud.Find(SceneManager.GetActiveScene())?.Deck?.CanPlay == true, "Player hand ready");
+        TimeTickSystem.Active.StopTimer();
         var hud = BattleHud.Find(SceneManager.GetActiveScene());
         var player = hud.Deck.Player;
         var loop = player.GetComponent<PlayerIdleLoop>();
@@ -423,6 +502,12 @@ public static class RunIntegrationPlayVerification
         float interval = player.attackSpd, energy = player.elixir;
         var apply = typeof(PlayerIdleLoop).GetMethod("ApplyPose", BindingFlags.NonPublic | BindingFlags.Instance);
         float duration = Field<float>(loop, "loopDuration");
+        float biteDuration = Field<float>(loop, "attackDuration");
+        var advance = typeof(PlayerIdleLoop).GetMethod("AdvanceAnimation", BindingFlags.NonPublic | BindingFlags.Instance);
+        var opponent = Field<List<GameObject>>(player, "_OpponentList")[0].GetComponent<BattleScript>();
+        var attackHandler = typeof(PlayerIdleLoop).GetMethod("OnAttack", BindingFlags.NonPublic | BindingFlags.Instance);
+        var attackEvent = typeof(BattleScript).GetField("OnAttackPerformed", BindingFlags.Static | BindingFlags.NonPublic);
+        int Subscriptions() => ((Delegate)attackEvent.GetValue(null))?.GetInvocationList().Count(d => ReferenceEquals(d.Target, loop)) ?? 0;
         Time.timeScale = 0;
         var input = EventSystem.current.currentInputModule;
         if (input != null) input.enabled = false;
@@ -430,14 +515,14 @@ public static class RunIntegrationPlayVerification
         {
             Check(filters.Length == 2 && filters[1].sharedMesh == mesh && mesh != colliderMesh,
                 "Body and shadow share a private mesh, never the collision mesh.");
-            foreach (var sample in new[] { (0f, 2), (.70f, 1), (.77f, 0), (.84f, 1), (.96f, 2), (1f, 2), (2.77f, 0) })
+            foreach (float sample in new[] { 0f, .70f, .77f, .84f, .96f, 1f, 2.77f })
             {
-                apply.Invoke(loop, new object[] { sample.Item1 * duration });
-                Check(loop.CurrentFrameIndex == sample.Item2, "Ping-pong pose at cycle " + sample.Item1);
+                apply.Invoke(loop, new object[] { sample * duration });
+                Check(loop.CurrentFrameIndex == 2 && !loop.IsAttacking, "Idle never opens the mouth at cycle " + sample);
                 foreach (var filter in filters)
                 {
                     var block = new MaterialPropertyBlock(); filter.GetComponent<Renderer>().GetPropertyBlock(block);
-                    Check(block.GetTexture("_MainTex") == frames[sample.Item2] && block.GetTexture("_BaseMap") == frames[sample.Item2],
+                    Check(block.GetTexture("_MainTex") == frames[2] && block.GetTexture("_BaseMap") == frames[2],
                         "The visible pose and alpha shadow use the same original frame.");
                 }
                 var moved = mesh.vertices;
@@ -449,23 +534,74 @@ public static class RunIntegrationPlayVerification
             apply.Invoke(loop, new object[] { .7f });
             Check(mesh.vertices.Zip(rest, (a,b) => Vector3.Distance(a,b)).Max() > .015f,
                 "There is continuous visible secondary movement between texture changes.");
-            foreach (var sample in new[] { (0f, "closed"), (.70f, "half"), (.77f, "open") })
-            {
-                apply.Invoke(loop, new object[] { sample.Item1 * duration });
-                CapturePlayerFrame(hud.Canvas, Camera.main, sample.Item2);
-            }
+            CapturePlayerFrame(hud.Canvas, Camera.main, "idle");
             float time = Field<float>(loop, "playbackTime");
             yield return null;
             Check(Field<float>(loop, "playbackTime") == time, "Pausing freezes both the pose and secondary motion.");
             Check(player.health == hp && player.attackDmg == damage && player.shield == shield &&
                 player.attackSpd == interval && player.elixir == energy, "Animation does not mutate combat attributes.");
+
+            Time.timeScale = 1;
+            attackHandler.Invoke(loop, new object[] { opponent, player });
+            Check(!loop.IsAttacking, "An enemy attack cannot trigger the player's mouth animation.");
+            Check(Subscriptions() == 1, "Exactly one attack listener is registered.");
+            int targetHealth = opponent.health;
+            Invoke(player, "Attack");
+            Check(loop.IsAttacking && loop.CurrentFrameIndex == 1, "A real player attack immediately starts one bite.");
+            Check(opponent.health == targetHealth - player.attackDmg * Mathf.Max(1, player.hitsPerAttack),
+                "Damage still resolves immediately through the existing combat formula.");
+            Time.timeScale = 0;
+            CapturePlayerFrame(hud.Canvas, Camera.main, "attack-half");
+            float elapsed = 0;
+            foreach (var sample in new[] { (.35f, 0), (.7f, 1), (.92f, 2), (1.1f, 2) })
+            {
+                advance.Invoke(loop, new object[] { (sample.Item1 - elapsed) * biteDuration });
+                elapsed = sample.Item1;
+                Check(loop.CurrentFrameIndex == sample.Item2, "Attack mouth sequence at phase " + sample.Item1);
+                foreach (var filter in filters)
+                {
+                    var block = new MaterialPropertyBlock(); filter.GetComponent<Renderer>().GetPropertyBlock(block);
+                    Check(block.GetTexture("_MainTex") == frames[sample.Item2], "Attack art and silhouette use the same frame.");
+                }
+                if (sample.Item2 == 0)
+                {
+                    float held = Field<float>(loop, "attackElapsed");
+                    yield return null;
+                    Check(Field<float>(loop, "attackElapsed") == held && loop.CurrentFrameIndex == 0,
+                        "Pausing freezes the attack pose without skipping frames.");
+                    CapturePlayerFrame(hud.Canvas, Camera.main, "attack-open");
+                }
+            }
+            Check(!loop.IsAttacking, "A bite completes once and returns to closed-mouth idle.");
+
+            Time.timeScale = 1;
+            attackHandler.Invoke(loop, new object[] { player, opponent });
+            advance.Invoke(loop, new object[] { biteDuration * .4f });
+            attackHandler.Invoke(loop, new object[] { player, opponent });
+            Check(Field<float>(loop, "attackElapsed") == 0 && loop.CurrentFrameIndex == 1,
+                "A rapid new attack restarts one bite without queuing extra cycles.");
+            Time.timeScale = 0;
+            player.enabled = false;
+            yield return null;
+            Check(loop.IsAttacking, "Victory does not cut off the final bite when combat ticks stop.");
+            advance.Invoke(loop, new object[] { biteDuration });
+            Check(!loop.IsAttacking && loop.CurrentFrameIndex == 2, "The final bite settles to closed mouth after victory.");
+            Time.timeScale = 1;
+            player.enabled = true;
+            attackHandler.Invoke(loop, new object[] { player, opponent });
+            player.health = 0; Invoke(loop, "LateUpdate");
+            Check(!loop.IsAttacking && loop.CurrentFrameIndex == 2, "Death cancels the bite.");
+            player.health = hp;
+            Time.timeScale = 0;
             loop.enabled = false;
+            Check(Subscriptions() == 0, "Disabling unsubscribes the attack listener.");
             Check(filters.Select((f,i) => f.sharedMesh == originals[i]).All(value => value), "Disabling restores the source render meshes.");
             yield return null;
             Check(mesh == null, "The temporary mesh is released on disable.");
             loop.enabled = true;
             Check(loop.CurrentFrameIndex == 2 && filters[0].sharedMesh == filters[1].sharedMesh &&
                 filters[0].sharedMesh != colliderMesh, "Re-enabling safely rebuilds one shared visual mesh.");
+            Check(Subscriptions() == 1 && !loop.IsAttacking, "Re-enabling does not retain a bite or duplicate subscriptions.");
             var observedFrames = new HashSet<int>();
             Time.timeScale = 1;
             double until = EditorApplication.timeSinceStartup + duration + .2;
@@ -475,8 +611,23 @@ public static class RunIntegrationPlayVerification
                 yield return null;
             }
             Time.timeScale = 0;
-            Check(observedFrames.SetEquals(new[] { 0, 1, 2 }) && Field<float>(loop, "playbackTime") >= duration,
-                "Normal frame updates play all three poses and loop without manual sampling.");
+            Check(observedFrames.SetEquals(new[] { 2 }) && Field<float>(loop, "playbackTime") >= duration,
+                "Live idle remains closed across an entire previous mouth-loop duration.");
+            Time.timeScale = 1;
+            Invoke(player, "Attack");
+            observedFrames.Clear(); observedFrames.Add(loop.CurrentFrameIndex);
+            until = EditorApplication.timeSinceStartup + biteDuration + .2;
+            while (EditorApplication.timeSinceStartup < until)
+            {
+                observedFrames.Add(loop.CurrentFrameIndex);
+                yield return null;
+            }
+            Check(observedFrames.SetEquals(new[] { 0, 1, 2 }) && !loop.IsAttacking,
+                "A real attack plays all three frames and settles in normal frame updates.");
+            observedFrames.Clear();
+            until = EditorApplication.timeSinceStartup + biteDuration + .1;
+            while (EditorApplication.timeSinceStartup < until) { observedFrames.Add(loop.CurrentFrameIndex); yield return null; }
+            Check(observedFrames.SetEquals(new[] { 2 }), "No extra bite repeats after the attack.");
         }
         finally { Time.timeScale = 1; if (input != null) input.enabled = true; }
     }
@@ -862,7 +1013,7 @@ public static class RunIntegrationPlayVerification
             Check(player.elixir == 8 && player.health == 75 && Field<TMPro.TMP_Text>(view,"shield").text == "7" &&
                 Field<TMPro.TMP_Text>(view,"speed").text == "0.40", "Values track the live fighter and show attacks per second.");
             Canvas.ForceUpdateCanvases();
-            foreach (var icon in view.GetComponentsInChildren<StatusIcon>())
+            foreach (var icon in view.GetComponentsInChildren<StatusIcon>().Where(icon => icon.GetComponentInParent<CardBuffBadge>() == null))
             {
                 Check(icon.canvasRenderer != null, "Every status icon has a renderer.");
                 var mesh = icon.canvasRenderer.GetMesh();
@@ -907,6 +1058,7 @@ public static class RunIntegrationPlayVerification
         var session = RunSession.Instance;
         string firstRun = session.Progress.RunId;
         var hud = BattleHud.Find(SceneManager.GetActiveScene());
+        float authoredRegen = hud.Deck.Player.elixirRegen;
         Check(session.Progress.CurrentEncounter.NodeId == "level_01_01" && session.Progress.CompletedCount == 0,
             "Introductory battle is the uncompleted entrance encounter.");
         Check(session.DeckCapacity == 22 && session.GetActiveDeck().Count == 6 && hud.Deck.Hand.Count == 5,
@@ -957,8 +1109,9 @@ public static class RunIntegrationPlayVerification
         var view = map.GetComponentsInChildren<MapCardView>(true).FirstOrDefault(card => card.InstanceId == offering.instanceId);
         if (view == null) view = UnityEngine.Object.FindObjectsByType<MapCardView>(FindObjectsSortMode.None).First(card => card.InstanceId == offering.instanceId);
         expectedCapacity = session.DeckCapacity - offering.definition.capacityCost;
-        map.RequestSacrifice(view); Field<Button>(map, "confirmSacrificeButton").onClick.Invoke();
+        map.RequestSacrifice(view); map.SacrificePanel.confirm.onClick.Invoke();
         Check(session.DeckCapacity == expectedCapacity && session.HasPendingModifier && session.SacrificeUsed, "Map sacrifice confirmation removes the exact card.");
+        yield return Until(() => map.CanInteract, "Offering feedback finished");
         session.SetNextOpportunityForTesting(MapOpportunityOutcome.Battle);
         Select("level_02_01");
         yield return Until(() => Find<MapOpportunityController>()?.IsRevealed == true, "Opportunity revealed");
@@ -1006,7 +1159,7 @@ public static class RunIntegrationPlayVerification
         yield return PreparedBattle();
         hud = BattleHud.Find(SceneManager.GetActiveScene()); player = hud.Deck.Player;
         Check(player.health == 75 && player.shield == 0 && player.attackDmg == 9 && player.attackSpd == 5 &&
-            player.elixir == 10 && player.maxElixir == 10 && player.hitsPerAttack == 1 && Mathf.Approximately(player.elixirRegen, .5f),
+            player.elixir == 10 && player.maxElixir == 10 && player.hitsPerAttack == 1 && Mathf.Approximately(player.elixirRegen, authoredRegen),
             "Next battle resets resources and retains no ambush shield.");
         Check(!session.HasPendingModifier, "The confirmed combat consumes the offering.");
         yield return Until(() => TimeTickSystem.Active.IsStarted, "Second combat countdown");
@@ -1019,14 +1172,15 @@ public static class RunIntegrationPlayVerification
         yield return Until(() => recovery.ContinueButton.interactable, "Recovery presentation completed");
         VerifyAuthoredEncounter(recovery);
         MapOpportunityVerification.CaptureCanvas(recovery.Panel.GetComponentInParent<Canvas>(), Camera.main, "recovery-hierarchy", recovery.Panel);
-        Check(recovery.Receipt.HealthBefore == 75 && recovery.Receipt.HealthAfter == 90 && session.PlayerHealth == 90,
-            "The authored recovery restores fifteen HP.");
+        int recoveredHealth = Mathf.Min(session.PlayerMaxHealth, 75 + Mathf.CeilToInt(session.PlayerMaxHealth * session.RecoveryPercent / 100f));
+        Check(recovery.Receipt.HealthBefore == 75 && recovery.Receipt.HealthAfter == recoveredHealth && session.PlayerHealth == recoveredHealth,
+            "The authored recovery follows the current maximum-health and recovery configuration.");
         session.TryResolveRecovery(recovery.EncounterId, out _);
-        Check(session.PlayerHealth == 90, "Recovery cannot be applied twice.");
+        Check(session.PlayerHealth == recoveredHealth, "Recovery cannot be applied twice.");
         recovery.ContinueButton.onClick.Invoke(); yield return ReadyMap();
         Select("level_05_01"); yield return PreparedBattle();
         hud = BattleHud.Find(SceneManager.GetActiveScene());
-        Check(hud.Deck.Player.health == 90 && hud.Deck.Player.shield == 0 && hud.Deck.Player.elixir == 10,
+        Check(hud.Deck.Player.health == recoveredHealth && hud.Deck.Player.shield == 0 && hud.Deck.Player.elixir == 10,
             "Recovered HP, but no previous shield, enters the next battle.");
         yield return Until(() => TimeTickSystem.Active.IsStarted, "Fifth-layer countdown");
         KillEnemies(); yield return SkipReward(); yield return ReadyMap();
@@ -1043,7 +1197,7 @@ public static class RunIntegrationPlayVerification
         Invoke(Find<MainMenuController>(), "StartRun"); yield return PreparedBattle();
         session = RunSession.Instance;
         Check(session.Progress.RunId != firstRun && session.Progress.CompletedCount == 0 && session.DeckCapacity == 22 &&
-            session.GetActiveDeck().Count == 6 && session.PlayerHealth == 100 && !session.HasPendingModifier && !session.SacrificeUsed,
+            session.GetActiveDeck().Count == 6 && session.PlayerHealth == session.PlayerMaxHealth && !session.HasPendingModifier && !session.SacrificeUsed,
             "Restart restores the six-card, full-health run with room for rewards.");
         var defeated = BattleHud.Find(SceneManager.GetActiveScene()).Deck.Player;
         defeated.TakeDamage(10000);
@@ -1069,15 +1223,16 @@ public static class RunIntegrationPlayVerification
         var detailView = UnityEngine.Object.Instantiate(template, template.transform.parent);
         foreach (var definition in AssetDatabase.LoadAssetAtPath<CardPool>("Assets/Data/CardPool.asset").Cards)
         {
-            detailView.Initialize(map, definition); map.SetCardDetail(detailView, true);
-            Check(Field<Image>(map, "cardDetailBackground").sprite == null &&
-                Field<Image>(map, "cardDetailBorder").sprite == definition.backArtwork,
-                "The detail uses one back frame and a plain inset for " + definition.name);
+            detailView.Initialize(map, definition); map.RequestSacrifice(detailView);
+            Check(map.SacrificePanel.frame.sprite == definition.frontBorder &&
+                map.SacrificePanel.illustration.sprite == definition.FrontIllustration,
+                "The offering uses one front frame and one illustration for " + definition.name);
             if (definition.cardId == "violet_velocity")
-                MapOpportunityVerification.CaptureCanvas(Field<Image>(map, "cardDetailBorder").canvas.rootCanvas,
+                MapOpportunityVerification.CaptureCanvas(map.SacrificePanel.frame.canvas.rootCanvas,
                     Camera.main, "map-card-detail");
+            map.SacrificePanel.Close(); yield return Until(() => map.CanInteract, "Offering inspector closed");
         }
-        map.SetCardDetail(detailView, false); UnityEngine.Object.Destroy(detailView);
+        UnityEngine.Object.Destroy(detailView.gameObject);
         Check(map.TryStartTestEncounter("level_02_01", 37, out _, MapOpportunityOutcome.Recovery), "Monitor can force recovery.");
         yield return VerifyOpportunitySpin(MapOpportunityOutcome.Recovery, true);
         yield return ReadyOpportunity();
@@ -1085,7 +1240,8 @@ public static class RunIntegrationPlayVerification
         VerifyAuthoredEncounter(chance);
         MapOpportunityVerification.CaptureLayouts(chance, "recovery");
         string id = chance.EncounterId;
-        Check(session.PlayerHealth == 52 && chance.Receipt.Recovered == 15, "Opportunity heals fifteen HP.");
+        int eventHealth = Mathf.Min(session.PlayerMaxHealth, 37 + Mathf.CeilToInt(session.PlayerMaxHealth * session.RecoveryPercent / 100f));
+        Check(session.PlayerHealth == eventHealth && chance.Receipt.Recovered == eventHealth - 37, "Opportunity heals the configured percentage of maximum HP.");
         var reload = SceneManager.LoadSceneAsync("MapOpportunity");
         yield return Until(() => reload.isDone, "Recovery scene reloaded");
         while (Find<MapOpportunityController>()?.IsRevealed != true)
@@ -1095,11 +1251,11 @@ public static class RunIntegrationPlayVerification
         }
         yield return ReadyOpportunity();
         chance = Find<MapOpportunityController>();
-        Check(chance.EncounterId == id && session.PlayerHealth == 52, "Reloaded recovery does not heal twice.");
+        Check(chance.EncounterId == id && session.PlayerHealth == eventHealth, "Reloaded recovery does not heal twice.");
         chance.ContinueButton.onClick.Invoke(); yield return ReadyMap();
-        Check(Find<MapController>().TryStartTestEncounter("level_02_01", 100, out _, MapOpportunityOutcome.Recovery), "Full-health event test starts.");
+        Check(Find<MapController>().TryStartTestEncounter("level_02_01", session.PlayerMaxHealth, out _, MapOpportunityOutcome.Recovery), "Full-health event test starts.");
         yield return ReadyOpportunity(); chance = Find<MapOpportunityController>();
-        Check(chance.Receipt.Recovered == 0 && session.PlayerHealth == 100, "Full health still allows recovery result.");
+        Check(chance.Receipt.Recovered == 0 && session.PlayerHealth == session.PlayerMaxHealth, "Full health still allows recovery result.");
         chance.ContinueButton.onClick.Invoke(); yield return ReadyMap();
         // Only this disposable fixture starts full, so replacement UI still receives coverage.
         var starterField = typeof(RunSession).GetField("startingDeck", BindingFlags.NonPublic | BindingFlags.Instance);
@@ -1107,11 +1263,19 @@ public static class RunIntegrationPlayVerification
         try
         {
             var pool = AssetDatabase.LoadAssetAtPath<CardPool>("Assets/Data/CardPool.asset");
-            starterField.SetValue(session, authoredStarter.Concat(new[]
-            {
-                pool.Cards.Single(card => card.cardId == "battleborn"),
-                pool.Cards.Single(card => card.cardId == "radiant_ward")
-            }).ToArray());
+            int remaining = session.DeckCapacityLimit - authoredStarter.Sum(card => card.capacityCost);
+            Check(remaining >= 0, "The authored starter fits the configured capacity.");
+            var additions = new CardDefinition[remaining + 1][];
+            additions[0] = Array.Empty<CardDefinition>();
+            for (int total = 1; total <= remaining; total++)
+                foreach (var card in pool.Cards.Where(card => card.capacityCost > 0))
+                    if (card.capacityCost <= total && additions[total - card.capacityCost] != null)
+                    {
+                        additions[total] = additions[total - card.capacityCost].Concat(new[] { card }).ToArray();
+                        break;
+                    }
+            Check(additions[remaining] != null, "A full-capacity fixture can be built from the current card costs.");
+            starterField.SetValue(session, authoredStarter.Concat(additions[remaining]).ToArray());
             Check(Find<MapController>().TryStartTestEncounter("level_02_01", 80, out _, MapOpportunityOutcome.Card), "Monitor can force one card.");
         }
         finally { starterField.SetValue(session, authoredStarter); }
@@ -1262,9 +1426,11 @@ public static class RunIntegrationPlayVerification
             "Combat receiver ready");
         var session = RunSession.Instance;
         int layer = session.Progress.CurrentEncounterLayer;
-        var enemies = BattleScript.FindFighters("Enemy");
-        Check(enemies.Count == 3 && enemies.All(e => e.maxHealth == session.Rules.EnemyMaxHealthAtLayer(20, layer) &&
-            e.attackDmg == session.Rules.EnemyDamageAtLayer(2, layer) && Mathf.Approximately(e.attackSpd, 5)),
+        var enemies = BattleScript.FindFighters("Enemy").OrderBy(enemy => enemy.transform.position.x).ToArray();
+        Check(enemies.Length == SessionState.GetInt(Key + ".enemyCount", 0) && Enumerable.Range(0, enemies.Length).All(i =>
+            enemies[i].maxHealth == session.Rules.EnemyMaxHealthAtLayer(SessionState.GetInt(Key + ".enemyHp" + i, 0), layer) &&
+            enemies[i].attackDmg == session.Rules.EnemyDamageAtLayer(SessionState.GetInt(Key + ".enemyDamage" + i, 0), layer) &&
+            Mathf.Approximately(enemies[i].attackSpd, SessionState.GetFloat(Key + ".enemyInterval" + i, 0))),
             "The confirmed receiver applies layer difficulty before countdown, keeping enemy count and attack intervals.");
         Check(!session.GetComponent<BattleRunBridge>().InitializeConfirmedEncounter(session.Progress.CurrentEncounter.EncounterId,
             BattleHud.Find(SceneManager.GetActiveScene()).Deck.Player), "Duplicate confirmed entry is rejected.");
