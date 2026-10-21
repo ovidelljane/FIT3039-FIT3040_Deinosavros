@@ -231,6 +231,7 @@ public sealed class RunSession : MonoBehaviour
             sourceCardId = definition.cardId,
             effectType = definition.overworldEffect.effectType,
             magnitude = definition.overworldEffect.magnitude,
+            triggerEvery = definition.overworldEffect.triggerEvery,
             isValid = true
         };
         DeckChanged?.Invoke();

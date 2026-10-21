@@ -40,7 +40,7 @@ public sealed class BattleRunBridge : MonoBehaviour
     {
         foreach (var enemy in BattleScript.FindFighters("Enemy"))
         {
-            if (enemy.gameObject.scene != player.gameObject.scene || enemy.health <= 0) continue;
+            if (enemy.gameObject.scene != player.gameObject.scene || enemy.health <= 0 || enemy.GetComponent<BossCombat>() != null) continue;
             int baseMaxHealth = Mathf.Max(1, enemy.maxHealth);
             float healthFraction = Mathf.Clamp01((float)enemy.health / baseMaxHealth);
             enemy.maxHealth = rules.EnemyMaxHealthAtLayer(baseMaxHealth, layer);
@@ -53,6 +53,16 @@ public sealed class BattleRunBridge : MonoBehaviour
     {
         switch (modifier.effectType)
         {
+            case OverworldEffectType.DivinePunishment:
+                var passive = player.GetComponent<DivinePunishment>() ?? player.gameObject.AddComponent<DivinePunishment>();
+                passive.damageInstancesPerStrike = Mathf.Max(1, modifier.triggerEvery);
+                passive.strikeDamage = Mathf.Max(0, Mathf.RoundToInt(modifier.magnitude));
+                break;
+            case OverworldEffectType.ReduceEnemyAttackFrequency:
+                foreach (var enemy in BattleScript.FindFighters("Enemy"))
+                    if (enemy.gameObject.scene == player.gameObject.scene)
+                        enemy.encounterAttackFrequency *= Mathf.Clamp(1 - modifier.magnitude / 100f, .01f, 1);
+                break;
             case OverworldEffectType.ReduceEnemyStartingHealth:
                 foreach (var enemy in BattleScript.FindFighters("Enemy"))
                     if (enemy.gameObject.scene == player.gameObject.scene)
@@ -62,7 +72,7 @@ public sealed class BattleRunBridge : MonoBehaviour
                 player.attackSpd = Mathf.Max(owner.MinimumOfferingAttackInterval, player.attackSpd - modifier.magnitude);
                 break;
             case OverworldEffectType.GrantStartingShield:
-                player.shield += modifier.magnitude;
+                player.shield += Mathf.RoundToInt(modifier.magnitude);
                 break;
             case OverworldEffectType.IncreaseStartingElixir:
                 player.maxElixir += modifier.magnitude;
