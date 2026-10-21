@@ -56,7 +56,8 @@ public sealed class CardBuffBadge : MonoBehaviour, IPointerEnterHandler, IPointe
         if (count == 0) owner.HideTooltip(this);
     }
 
-    public bool Matches(Effect effect) => effect != null && effect.IsApplied && effect.target == actor && effect.effectType == stat;
+    public bool Matches(Effect effect) => effect != null && effect.IsApplied && effect.target == actor &&
+        (effect.effectType == stat || (stat == StatType.EnemySlow && effect.effectType == StatType.FrequencySlow));
     public void OnPointerEnter(PointerEventData data) { if (StackCount > 0) owner.ShowTooltip(this); }
     public void OnPointerExit(PointerEventData data) => owner.HideTooltip(this);
     public void Clear()

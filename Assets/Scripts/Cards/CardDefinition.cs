@@ -3,13 +3,14 @@ using System.Globalization;
 using UnityEngine;
 
 public enum MapCardType { Attack, Buff, Defense, Elixir, Debuff }
-public enum OverworldEffectType { ReduceEnemyStartingHealth, ImprovePlayerAttackSpeed, GrantStartingShield, IncreaseStartingElixir }
+public enum OverworldEffectType { ReduceEnemyStartingHealth, ImprovePlayerAttackSpeed, GrantStartingShield, IncreaseStartingElixir, DivinePunishment, ReduceEnemyAttackFrequency }
 
 [Serializable]
 public struct OverworldEffectDefinition
 {
     public OverworldEffectType effectType;
-    public int magnitude;
+    public float magnitude;
+    [Min(1)] public int triggerEvery;
     public string title;
     [TextArea] public string description;
     public string scopeLabel;
@@ -82,7 +83,9 @@ public sealed class CardDefinition : ScriptableObject
     {
         var baseline = BaseValues;
         var values = current ?? baseline;
-        return (combatEffectText ?? "")
+        string text = combatEffectText ?? "";
+        if (combatPrefab != null && combatPrefab.TryGetComponent<AdvancedCardRules>(out var advanced)) text = advanced.Expand(text);
+        return text
             .Replace("{amount}", Number(values.Amount, baseline.Amount))
             .Replace("{duration}", Number(values.Duration, baseline.Duration))
             .Replace("{cost}", Number(values.Cost, baseline.Cost, true))
@@ -96,6 +99,7 @@ public sealed class CardDefinition : ScriptableObject
             Mathf.Max(.01f, RunBalance.Default.minimumOfferingAttackInterval);
         return (overworldEffect.description ?? "")
             .Replace("{magnitude}", Number(overworldEffect.magnitude, overworldEffect.magnitude))
+            .Replace("{triggerEvery}", Mathf.Max(1, overworldEffect.triggerEvery).ToString())
             .Replace("{minInterval}", Number(minimum, minimum));
     }
 
@@ -135,6 +139,7 @@ public struct PendingEncounterModifier
 {
     public string sourceCardId;
     public OverworldEffectType effectType;
-    public int magnitude;
+    public float magnitude;
+    public int triggerEvery;
     public bool isValid;
 }

@@ -17,5 +17,5 @@ MonoBehaviour:
   recoveryPercent: 15
   minimumOfferingAttackInterval: 1
   scaleEnemyStatsByLayer: 1
-  enemyHealthGrowthPercent: 30
-  enemyDamageGrowthPercent: 40
+  enemyHealthGrowthPercent: 28
+  enemyDamageGrowthPercent: 37

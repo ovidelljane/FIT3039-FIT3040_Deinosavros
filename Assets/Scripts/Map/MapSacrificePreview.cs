@@ -20,11 +20,25 @@ public sealed class MapSacrificePreview
         var view = new MapSacrificePreview { Card = card, InstanceId = instanceId };
         if (card == null) { view.Reason = "This card is no longer available."; return view; }
         var effect = card.overworldEffect;
-        if (prepared.HasValue) { effect.effectType = prepared.Value.effectType; effect.magnitude = prepared.Value.magnitude; }
+        if (prepared.HasValue) { effect.effectType = prepared.Value.effectType; effect.magnitude = prepared.Value.magnitude; effect.triggerEvery = prepared.Value.triggerEvery; }
         float amount = effect.magnitude;
         string n = Number(amount);
         switch (effect.effectType)
         {
+            case OverworldEffectType.DivinePunishment:
+                view.Title = "Divine Punishment"; view.Value = n + " Divine Damage";
+                view.Details = "Every " + Mathf.Max(1, effect.triggerEvery) + " damage instances you deal, strike a random enemy.";
+                view.Limit = "Punishment does not charge itself. Next battle only.";
+                view.Compact = n + " damage every " + Mathf.Max(1, effect.triggerEvery) + " hits";
+                view.Symbol = StatusSymbol.Damage; view.Accent = new Color(.92f, .74f, .40f);
+                break;
+            case OverworldEffectType.ReduceEnemyAttackFrequency:
+                view.Title = "Slowed Foes"; view.Value = "Enemy Attack Rate -" + n + "%";
+                view.Details = "Enemies attack " + n + "% less frequently for the entire next battle.";
+                view.Limit = "Includes the Boss. Does not carry into later battles.";
+                view.Compact = "Enemy attack rate -" + n + "%";
+                view.Symbol = StatusSymbol.Speed; view.Accent = new Color(.73f, .60f, .88f);
+                break;
             case OverworldEffectType.ImprovePlayerAttackSpeed:
                 float minimum = session != null ? session.MinimumOfferingAttackInterval : RunBalance.Default.minimumOfferingAttackInterval;
                 float before = session != null ? session.PlayerAttackSpeed : 5f;
@@ -58,8 +72,13 @@ public sealed class MapSacrificePreview
                 view.Symbol = StatusSymbol.Elixir; view.Accent = new Color(.73f, .60f, .88f);
                 break;
         }
-        view.BackValue = effect.effectType == OverworldEffectType.IncreaseStartingElixir
-            ? "+" + n + " Max Elixir\nRestore " + n : view.Value;
+        view.BackValue = effect.effectType switch
+        {
+            OverworldEffectType.IncreaseStartingElixir => "+" + n + " Max Elixir\nRestore " + n,
+            OverworldEffectType.DivinePunishment => n + " Damage\nEvery " + Mathf.Max(1, effect.triggerEvery) + " hits",
+            OverworldEffectType.ReduceEnemyAttackFrequency => "Enemy Attack Rate\n-" + n + "%",
+            _ => view.Value
+        };
         view.CapacityBefore = session != null ? session.DeckCapacity : 0;
         view.CapacityLimit = session != null ? session.DeckCapacityLimit : RunBalance.Default.deckCapacity;
         view.FreedCapacity = Mathf.Max(0, card.capacityCost);

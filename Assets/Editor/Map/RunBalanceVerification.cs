@@ -11,6 +11,93 @@ using Object = UnityEngine.Object;
 // All changed values belong to disposable Play Mode objects, never the authored assets.
 public static class RunBalanceVerification
 {
+    [MenuItem("Tools/Map/Verify Card Tuning")]
+    public static void VerifyCardTuning()
+    {
+        if (EditorApplication.isPlayingOrWillChangePlaymode)
+            throw new InvalidOperationException("Stop Play Mode before verifying card tuning.");
+        var preview = UnityEditor.SceneManagement.EditorSceneManager.NewPreviewScene();
+        var existingSession = RunSession.Instance;
+        var rules = Object.Instantiate(RunBalance.Default);
+        rules.minimumOfferingAttackInterval = 1f;
+        int checks = 0;
+        void Check(bool condition, string message)
+        {
+            if (!condition) throw new InvalidOperationException(message);
+            checks++;
+        }
+        CardDefinition Card(string name) => AssetDatabase.LoadAssetAtPath<CardDefinition>("Assets/Data/Cards/" + name + ".asset");
+        try
+        {
+            var expected = new (string name, int cost, float amount, float duration, float offering)[]
+            {
+                ("Battleborn", 6, 2, 6, 1.5f), ("VioletVelocity", 3, 2, 6, 2),
+                ("TridentStrike", 4, 10, 6, 65), ("CloudedMinds", 3, 2, 6, 85),
+                ("SolarShield", 2, 6, 0, 5), ("RadiantWard", 4, 14, 0, 10),
+                ("FleetFootwork", 2, 1, 6, 1), ("TidalWave", 2, 4, 6, 90),
+                ("Thunderbolt", 5, 8, 0, 70), ("UncertainFates", 4, 4, 0, 2),
+                ("CrossroadsOfDestiny", 3, 1, 6, 4), ("JudgementDay", 8, 50, 8, 70),
+                ("Cataclysm", 3, 0, 10, 25)
+            };
+            foreach (var value in expected)
+            {
+                var card = Card(value.name);
+                Check(card != null && card.combatPrefab != null, "Missing authored card: " + value.name);
+                Check(card.BaseValues.Cost == value.cost && Mathf.Approximately(card.BaseValues.Amount, value.amount),
+                    "Incorrect cost or play amount: " + value.name);
+                Check(Mathf.Approximately(card.BaseValues.Duration, value.duration), "Duration changed: " + value.name);
+                Check(Mathf.Approximately(card.overworldEffect.magnitude, value.offering), "Incorrect sacrifice: " + value.name);
+                Check(!card.GetCombatDescription().Contains("{") && !card.GetSacrificeDescription().Contains("{"),
+                    "Unresolved description: " + value.name);
+            }
+
+            var root = new GameObject("Card Tuning Fixture");
+            root.SetActive(false);
+            SceneManager.MoveGameObjectToScene(root, preview);
+            var session = root.AddComponent<RunSession>();
+            Set(session, "balance", rules);
+            var bridge = root.AddComponent<BattleRunBridge>();
+            Set(bridge, "owner", session);
+            var player = root.AddComponent<BattleScript>();
+            var battleborn = Card("Battleborn");
+            Check(session.TryAddCard(battleborn, out var first) && session.TryAddCard(battleborn, out _),
+                "Same-name test instances can be added.");
+            var view = MapSacrificePreview.For(session, battleborn, first.instanceId);
+            Check(view.CanConfirm && view.Value == "-1.5s Attack Interval" && view.Details.Contains("3.5s") &&
+                battleborn.GetSacrificeDescription(session).Contains("-1.5s"), "Preview preserves the fractional reduction.");
+            Check(session.TrySacrificeInstance(first.instanceId) && !session.TrySacrificeInstance(first.instanceId) &&
+                session.RunDeck.Count(card => card.sacrificed) == 1, "Sacrifice affects one instance only, once.");
+            var pending = session.PendingModifier;
+            Check(pending.magnitude == 1.5f && MapSacrificePreview.Pending(session).Compact == "-1.5s attack interval",
+                "The pending snapshot and display retain 1.5 seconds.");
+            pending = JsonUtility.FromJson<PendingEncounterModifier>(JsonUtility.ToJson(pending));
+            Check(pending.magnitude == 1.5f && pending.sourceCardId == battleborn.cardId,
+                "Serialization preserves the fractional modifier.");
+            Check(session.TryConsumePendingModifier(out var consumed) && consumed.magnitude == 1.5f &&
+                !session.TryConsumePendingModifier(out _), "Consumption preserves the fraction and cannot repeat.");
+            player.attackSpd = 5;
+            Call(bridge, "ApplyModifier", pending, player);
+            Check(player.attackSpd == 3.5f && player.AttackIntervalSeconds == 3.5f,
+                "Battleborn changes the actual five-second interval to 3.5 seconds.");
+            player.attackSpd = 2;
+            Call(bridge, "ApplyModifier", pending, player);
+            Check(player.attackSpd == 1, "The existing minimum interval is respected.");
+            player.shield = 3;
+            Call(bridge, "ApplyModifier", new PendingEncounterModifier
+                { effectType = OverworldEffectType.GrantStartingShield, magnitude = 5, isValid = true }, player);
+            Check(player.shield == 8, "Integer shield offerings still add to existing shield.");
+            Check(RunSession.Instance == existingSession, "Verification does not replace the live session.");
+            System.IO.Directory.CreateDirectory(RunIntegrationSetup.ResultDirectory);
+            System.IO.File.WriteAllText(RunIntegrationSetup.ResultDirectory + "/card-tuning.txt",
+                "PASS: " + checks + " checks; 13 cards, unchanged durations, fractional offering preview, serialization, instance selection, consumption and combat application. No scene or prefab saved.\n");
+        }
+        finally
+        {
+            UnityEditor.SceneManagement.EditorSceneManager.ClosePreviewScene(preview);
+            Object.DestroyImmediate(rules);
+        }
+    }
+
     private static readonly BindingFlags Fields = BindingFlags.NonPublic | BindingFlags.Instance;
     private static void Set(object target, string name, object value) => target.GetType().GetField(name, Fields).SetValue(target, value);
     private static T Get<T>(object target, string name) => (T)target.GetType().GetField(name, Fields).GetValue(target);

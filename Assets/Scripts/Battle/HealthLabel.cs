@@ -65,11 +65,11 @@ public class HealthLabel : MonoBehaviour
             enemyFill.rectTransform.anchorMax = new Vector2(maximum > 0 ? (float)current / maximum : 0, 1);
             label.text = $"{current} / {maximum}";
         }
-        if (shownAttack != hp.attackDmg)
+        if (shownAttack != hp.AttackDamage)
         {
-            shownAttack = hp.attackDmg;
+            shownAttack = hp.AttackDamage;
             // Per-hit attack, not attack speed or multi-hit total damage.
-            attackText.text = Mathf.Max(0, hp.attackDmg).ToString();
+            attackText.text = hp.AttackDamage.ToString();
         }
     }
 
@@ -89,7 +89,7 @@ public class HealthLabel : MonoBehaviour
         else label.text = $"{displayName}: {Mathf.Max(0, hp.health)}/{hp.maxHealth}";
     }
 
-    private void SetVisible(bool visible)
+    public void SetVisible(bool visible)
     {
         if (enemyPanel != null) enemyPanel.gameObject.SetActive(visible);
         else if (label != null) label.gameObject.SetActive(visible);

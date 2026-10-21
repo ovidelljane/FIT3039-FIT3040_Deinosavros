@@ -78,8 +78,8 @@ public sealed class PlayerStatusView : MonoBehaviour
         Elixir.SetValue(energy,maxEnergy,cost,preview && !healthCost,affordable);
         if (healthCost && !affordable) Health.Hint.text=$"Requires {cost} Health to play";
         else if (healthCost && hp <= cost) Health.Hint.text=$"-{cost} Health  |  Lethal cost";
-        int shieldValue=combat?player.shield:session.PlayerShield, damageValue=combat?player.attackDmg:session.PlayerDamage;
-        float interval=combat?player.attackSpd:session.PlayerAttackSpeed;
+        int shieldValue=combat?player.shield:session.PlayerShield, damageValue=combat?player.AttackDamage:session.PlayerDamage;
+        float interval=combat?player.AttackIntervalSeconds:session.PlayerAttackSpeed;
         if (shieldValue!=oldShield) { oldShield=shieldValue; shield.text=Mathf.Max(0,shieldValue).ToString(); }
         if (damageValue!=oldDamage) { oldDamage=damageValue; damage.text=damageValue.ToString(); }
         SetAttackSpeedDisplay(interval);

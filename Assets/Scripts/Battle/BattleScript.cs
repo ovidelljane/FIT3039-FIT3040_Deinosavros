@@ -24,7 +24,10 @@ public class BattleScript : MonoBehaviour
 
     private double attackElapsed;
     // Read-only presentation values; the tick loop remains the only attack scheduler.
-    public float AttackIntervalSeconds => Mathf.Max(.01f, attackSpd);
+    [NonSerialized] public float encounterAttackFrequency = 1f;
+    public int AttackDamage => Mathf.Max(0, Mathf.RoundToInt(attackDmg * Effect.DamageMultiplier(this)));
+    public float AttackIntervalSeconds => Mathf.Max(.01f, attackSpd) /
+        Mathf.Max(.01f, encounterAttackFrequency * Effect.FrequencyMultiplier(this));
     public float SecondsUntilNextAttack => Mathf.Max(0, AttackIntervalSeconds - (float)attackElapsed);
     private bool _victoryFired;
     
@@ -37,8 +40,16 @@ public class BattleScript : MonoBehaviour
 
     private void Start()
     {
+        RefreshOpponents();
         if (CompareTag("Player") && RunSession.Instance == null)
             health = maxHealth = Mathf.Max(1, RunSettings.ForScene(gameObject.scene).startingMaxHealth);
+    }
+
+    public void RefreshOpponents()
+    {
+        _OpponentList = FindFighters(CompareTag("Player") ? "Enemy" : "Player")
+            .Where(actor => actor.gameObject.scene == gameObject.scene && actor.health > 0)
+            .Select(actor => actor.gameObject).ToList();
     }
     
     
@@ -84,9 +95,9 @@ public class BattleScript : MonoBehaviour
         attackElapsed += seconds;
         elixir = Mathf.Min(elixir + elixirRegen * seconds, maxElixir);
 
-        while (attackElapsed + .000001f >= Mathf.Max(.01f, attackSpd) && enemyListManager() > 0)
+        while (attackElapsed + .000001f >= AttackIntervalSeconds && enemyListManager() > 0)
         {
-            attackElapsed = Math.Max(0, attackElapsed - Mathf.Max(.01f, attackSpd));
+            attackElapsed = Math.Max(0, attackElapsed - AttackIntervalSeconds);
             Attack();
             if (!CombatFeedback.IsPresent(gameObject.scene)) StartCoroutine(Bounce());
             if (audioSource != null) audioSource.Play();
@@ -136,11 +147,22 @@ public class BattleScript : MonoBehaviour
     {
         GameObject opponent = _OpponentList[0];
         opponentScript = opponent.GetComponent<BattleScript>();
+        var boss = GetComponent<BossCombat>();
+        int hits = boss != null ? boss.PrepareAttack() : Mathf.Max(1, hitsPerAttack);
         OnAttackPerformed?.Invoke(this, opponentScript);
-        for (int i = 0; i < Mathf.Max(1, hitsPerAttack); i++)
+        for (int i = 0; i < hits && opponentScript.health > 0; i++)
         {
-            opponentScript.TakeDamage(attackDmg, this);
+            opponentScript.TakeDamage(AttackDamage, this);
         }
+    }
+
+    // Direct health loss deliberately bypasses shield (Judgement Day's player outcome).
+    public void LoseHealth(int amount, BattleScript source)
+    {
+        int before = Mathf.Max(0, health);
+        health = Mathf.Max(0, health - Mathf.Max(0, amount));
+        if (before > health) OnDamageReceived?.Invoke(this, source, before - health, 0);
+        if (health <= 0) FinishDeath();
     }
 
     public void TakeDamage(int damage) => TakeDamage(damage, null);
