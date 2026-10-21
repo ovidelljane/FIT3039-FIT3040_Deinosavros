@@ -31,6 +31,8 @@ public class BuffCards : MonoBehaviour, IPointerClickHandler, IPointerEnterHandl
     [SerializeField] private float maxYawAngle = 8f;
     [SerializeField] private float maxRollAngle = 1.5f;
     [SerializeField] private float tiltSmoothTime = 0.07f;
+    [Tooltip("How far the face rises out of the fanned hand while hovered. The hit area stays put.")]
+    [SerializeField] private float hoverLift = 80f;
 
     private DeckManager owner;
     private CardDefinition definition;
@@ -49,6 +51,7 @@ public class BuffCards : MonoBehaviour, IPointerClickHandler, IPointerEnterHandl
     public string Description => definition != null ? definition.GetCombatDescription(Values) : $"+{amount} {stat}";
     public AudioClip LegacyPlayClip => audioSource != null ? audioSource.clip : null;
     public bool UsesHealthCost => stat == StatType.Elixir;
+    public bool IsHovered => pointerHovered;
     public bool MeetsResourceRequirement => owner != null && owner.Player != null &&
         (UsesHealthCost ? owner.Player.health >= Cost : owner.Player.elixir >= Cost);
 
@@ -75,6 +78,8 @@ public class BuffCards : MonoBehaviour, IPointerClickHandler, IPointerEnterHandl
         float blend = 1f - Mathf.Exp(-hoverAnimationSpeed * deltaTime);
         visualTransform.localScale = Vector3.Lerp(visualTransform.localScale,
             Vector3.one * (pointerHovered ? hoverScale : 1f), blend);
+        visualTransform.anchoredPosition = Vector2.Lerp(visualTransform.anchoredPosition,
+            new Vector2(0f, pointerHovered ? hoverLift : 0f), blend);
     }
 
     public void OnPointerEnter(PointerEventData e)
@@ -110,6 +115,7 @@ public class BuffCards : MonoBehaviour, IPointerClickHandler, IPointerEnterHandl
         {
             visualTransform.localRotation = Quaternion.identity;
             visualTransform.localScale = Vector3.one;
+            visualTransform.anchoredPosition = Vector2.zero;
         }
         CardInfoPanel.Hide(this);
     }
@@ -170,6 +176,16 @@ public class BuffCards : MonoBehaviour, IPointerClickHandler, IPointerEnterHandl
             background.preserveAspect = rootImage.preserveAspect;
             background.enabled = rootImage.enabled;
             rootImage.color = Color.clear;
+        }
+
+        // RectMask2D only clips axis-aligned rects, so the art slides out of frame once the hand
+        // fans the card. A stencil Mask follows the rotation.
+        foreach (var rectMask in visualTransform.GetComponentsInChildren<RectMask2D>(true))
+        {
+            GameObject maskObject = rectMask.gameObject;
+            DestroyImmediate(rectMask);
+            if (!maskObject.TryGetComponent<Graphic>(out _)) maskObject.AddComponent<Image>().color = Color.white;
+            maskObject.AddComponent<Mask>().showMaskGraphic = false;
         }
 
         foreach (var graphic in visualTransform.GetComponentsInChildren<Graphic>(true))
