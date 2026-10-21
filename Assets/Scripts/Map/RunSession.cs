@@ -364,7 +364,20 @@ public sealed class RunSession : MonoBehaviour
         var receipt = NewReceipt(); receipt.Pool = pool; receipt.Outcome = outcome;
         receipt.RecoveryPercent = profile.recoveryPercent;
         if (outcome == MapOpportunityOutcome.Card)
-            receipt.Offers = System.Array.AsReadOnly(new[] { candidates[Random.Range(0, candidates.Count)] });
+        {
+            // Draw without replacement once; scene reloads reuse this encounter's receipt.
+            int count = Mathf.Min(profile.cardOptionCount, candidates.Count);
+            var offers = new List<CardDefinition>(count);
+            for (int i = 0; i < count; i++)
+            {
+                int selected = Random.Range(i, candidates.Count);
+                var card = candidates[selected];
+                candidates[selected] = candidates[i];
+                candidates[i] = card;
+                offers.Add(card);
+            }
+            receipt.Offers = offers.AsReadOnly();
+        }
         return true;
     }
     public bool TryResolveRecovery(string id, out MapNonCombatReceipt receipt)

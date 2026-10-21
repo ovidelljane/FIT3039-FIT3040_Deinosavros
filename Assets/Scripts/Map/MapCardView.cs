@@ -152,7 +152,7 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
         effectText.color = owner != null && owner.SacrificePanel != null ? owner.SacrificePanel.EffectColor(preview.Symbol) : preview.Accent;
         effectText.gameObject.SetActive(true);
         scopeText.text = "Next battle";
-        if (offeringIcon != null) { offeringIcon.symbol = preview.Symbol; offeringIcon.color = effectText.color; offeringIcon.SetVerticesDirty(); }
+        if (offeringIcon != null) offeringIcon.SetSymbol(preview.Symbol, effectText.color);
         if (brokenHeartCut != null) brokenHeartCut.enabled = preview.Symbol == StatusSymbol.Health;
         frontFace.SetActive(true);
         backFace.SetActive(false);

@@ -250,7 +250,6 @@ public class BuffCards : MonoBehaviour, IPointerClickHandler, IPointerEnterHandl
                 return;
             }
             played = true;
-            ResetHover();
             StatType resource = UsesHealthCost ? StatType.Heal : StatType.Elixir;
             float beforeCost = CardEffectFeedback.Read(player, resource);
             if (!UsesHealthCost)
@@ -288,6 +287,7 @@ public class BuffCards : MonoBehaviour, IPointerClickHandler, IPointerEnterHandl
                     CardEffectFeedback.Read(player, stat), CardFeedbackPhase.Applied));
             if (owner != null) owner.OnCardPlayed(this, definition);
             else Destroy(gameObject);
+            ResetHover();
         }
     }
 

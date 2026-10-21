@@ -951,6 +951,8 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   symbol: 0
+  elixirArtwork: {fileID: 21300000, guid: 8c3076be160278f44ab22ef838b78f0c, type: 3}
+  shieldArtwork: {fileID: 21300000, guid: 2c78c981599021a47a8a4501dfccf39b, type: 3}
 --- !u!1 &5776360121186486584
 GameObject:
   m_ObjectHideFlags: 0

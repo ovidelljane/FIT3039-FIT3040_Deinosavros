@@ -20,6 +20,101 @@ public static class MapEncounterSceneAuthoring
     private static readonly Color Green = new Color(.48f, .69f, .43f);
     private static readonly Color Muted = new Color(.77f, .73f, .64f);
 
+    [MenuItem("Tools/Map/Author Opportunity Reward Choices")]
+    public static void ApplyOpportunityChoices()
+    {
+        Require(!EditorApplication.isPlayingOrWillChangePlaymode, "Stop Play Mode before authoring reward choices.");
+        const string path = "Assets/Scenes/MapOpportunity.unity";
+        var active = SceneManager.GetActiveScene();
+        var scene = SceneManager.GetSceneByPath(path);
+        bool alreadyLoaded = scene.IsValid() && scene.isLoaded;
+        Require(!alreadyLoaded || !scene.isDirty, "Save changes in MapOpportunity before authoring reward choices.");
+        try
+        {
+            if (!alreadyLoaded) scene = EditorSceneManager.OpenScene(path, OpenSceneMode.Additive);
+            var controller = Components<MapOpportunityController>(scene).Single();
+            if (AuthorRewardChoices(controller))
+            {
+                EditorSceneManager.MarkSceneDirty(scene);
+                Require(EditorSceneManager.SaveScene(scene), "Could not save the opportunity choices.");
+            }
+            EditorSceneManager.CloseScene(scene, true);
+            scene = EditorSceneManager.OpenScene(path, OpenSceneMode.Additive);
+            Validate(scene);
+            Require(!AuthorRewardChoices(Components<MapOpportunityController>(scene).Single()),
+                "Repeated authoring must preserve the saved choices.");
+            Directory.CreateDirectory(RunIntegrationSetup.ResultDirectory);
+            MapOpportunityVerification.CaptureCanvas(Components<Canvas>(scene).Single(), Components<Camera>(scene).Single(),
+                "opportunity-choices-authored", Components<MapOpportunityController>(scene).Single().Panel);
+            File.WriteAllText(RunIntegrationSetup.ResultDirectory + "/opportunity-choices-hierarchy.txt",
+                "PASS: three saved choices and one replacement template; reopened and repeated without changes.\n");
+        }
+        finally
+        {
+            if (active.IsValid() && active.isLoaded) SceneManager.SetActiveScene(active);
+            if (!alreadyLoaded && scene.IsValid() && scene.isLoaded) EditorSceneManager.CloseScene(scene, true);
+        }
+    }
+
+    private static bool AuthorRewardChoices(MapOpportunityController controller)
+    {
+        using var data = new SerializedObject(controller);
+        var choices = data.FindProperty("rewardChoices");
+        if (choices.arraySize == 3 && Enumerable.Range(0, 3).All(i => choices.GetArrayElementAtIndex(i).objectReferenceValue != null))
+        {
+            bool repaired = false;
+            foreach (int i in Enumerable.Range(0, choices.arraySize))
+            {
+                var view = (RewardCardView)choices.GetArrayElementAtIndex(i).objectReferenceValue;
+                using var viewData = new SerializedObject(view);
+                var artwork = (UnityEngine.UI.Image)viewData.FindProperty("artwork").objectReferenceValue;
+                if (artwork.sprite != null) continue;
+                view.Initialize(SavedPreviewCards()[i], null, true);
+                repaired = true;
+            }
+            return repaired;
+        }
+        var previous = (GameObject)data.FindProperty("rewardRoot").objectReferenceValue;
+        Require(previous != null && previous.GetComponent<RewardCardView>() != null,
+            "The existing offer must be present before migrating to three choices.");
+        var first = previous.GetComponent<RewardCardView>();
+        var surface = first.GetComponent<UnityEngine.UI.Image>().color;
+        using var firstData = new SerializedObject(first);
+        var accent = ((TMP_Text)firstData.FindProperty("nameText").objectReferenceValue).color;
+        var row = Rect("Offers", previous.transform.parent, new Vector2(0, 18), new Vector2(1060, 490));
+        row.SetSiblingIndex(previous.transform.GetSiblingIndex());
+        var layout = row.gameObject.AddComponent<UnityEngine.UI.HorizontalLayoutGroup>();
+        layout.childAlignment = TextAnchor.MiddleCenter; layout.spacing = 24;
+        layout.childControlWidth = layout.childControlHeight = layout.childForceExpandWidth = layout.childForceExpandHeight = false;
+        previous.transform.SetParent(row, false);
+        var views = new[] { first, Object.Instantiate(first, row), Object.Instantiate(first, row) };
+        var previews = SavedPreviewCards();
+        choices.arraySize = views.Length;
+        for (int i = 0; i < views.Length; i++)
+        {
+            var view = views[i]; view.name = $"C{i + 1:00}";
+            view.transform.localScale = Vector3.one;
+            view.SetPresentation(new Vector2(320, 490), surface, accent);
+            view.GetComponent<UnityEngine.UI.Button>().interactable = true;
+            view.GetComponent<UnityEngine.UI.Button>().transition = Selectable.Transition.ColorTint;
+            if (i < previews.Length) view.Initialize(previews[i], null, true);
+            choices.GetArrayElementAtIndex(i).objectReferenceValue = view;
+        }
+        Bind(data, "rewardRoot", row.gameObject);
+        var replacement = (GameObject)data.FindProperty("replacementRoot").objectReferenceValue;
+        Bind(data, "replacementLabel", replacement.transform.Find("Instruction").GetComponent<TMP_Text>());
+        var body = (TMP_Text)data.FindProperty("cardContent").FindPropertyRelative("body").objectReferenceValue;
+        body.rectTransform.anchoredPosition = new Vector2(0, -254);
+        body.rectTransform.sizeDelta = new Vector2(840, 34); body.text = "Choose one card";
+        ((UnityEngine.UI.Button)data.FindProperty("continueButton").objectReferenceValue).gameObject.SetActive(false);
+        data.ApplyModifiedPropertiesWithoutUndo();
+        Canvas.ForceUpdateCanvases();
+        return true;
+    }
+
+    private static CardDefinition[] SavedPreviewCards() => AssetDatabase.LoadAssetAtPath<CardPool>("Assets/Data/CardPool.asset").Cards
+        .Where(card => card != null && card.FrontIllustration != null && AssetDatabase.Contains(card.FrontIllustration)).Take(3).ToArray();
+
     [MenuItem("Tools/Map/Author Encounter Scene UI")]
     public static void Apply()
     {
@@ -71,13 +166,19 @@ public static class MapEncounterSceneAuthoring
                 Require(data.FindProperty(name).objectReferenceValue != null, "Missing scene binding: " + name);
             if (controller is MapOpportunityController)
             {
-                foreach (string name in new[] { "secondaryButton", "secondaryText", "recoveryDetail", "icon", "revealPose", "rewardRoot",
+                foreach (string name in new[] { "secondaryButton", "secondaryText", "recoveryDetail", "replacementLabel", "icon", "revealPose", "rewardRoot",
                     "replacementRoot", "replacementContent", "replacementTemplate", "controls" })
                     Require(data.FindProperty(name).objectReferenceValue != null, "Missing opportunity binding: " + name);
                 foreach (string group in new[] { "cardContent", "recoveryContent", "battleContent" })
                     foreach (string member in new[] { "root", "value", "body" })
                         Require(data.FindProperty(group).FindPropertyRelative(member).objectReferenceValue != null, "Missing outcome binding: " + group + "." + member);
-                Require(Components<RewardCardView>(scene).Count() == 2, "Offer and replacement template must both exist before Play Mode.");
+                var choices = data.FindProperty("rewardChoices");
+                Require(choices.arraySize == 3, "Three reward choices must be authored before Play Mode.");
+                var views = Enumerable.Range(0, choices.arraySize)
+                    .Select(i => choices.GetArrayElementAtIndex(i).objectReferenceValue as RewardCardView).ToArray();
+                var root = (GameObject)data.FindProperty("rewardRoot").objectReferenceValue;
+                Require(views.All(view => view != null && view.transform.IsChildOf(root.transform)) && views.Distinct().Count() == 3,
+                    "Reward choices must reference three distinct scene objects under Offers.");
             }
         }
         foreach (var text in Components<TMP_Text>(scene))
@@ -181,6 +282,7 @@ public static class MapEncounterSceneAuthoring
             nextText.text = "Take Card";
         }
         data.ApplyModifiedPropertiesWithoutUndo();
+        if (opportunity) AuthorRewardChoices((MapOpportunityController)controller);
         Canvas.ForceUpdateCanvases();
     }
 

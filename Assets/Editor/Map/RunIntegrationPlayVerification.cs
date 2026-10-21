@@ -94,6 +94,13 @@ public static class RunIntegrationPlayVerification
         SessionState.SetBool(Key + ".cardFeedbackOnly", true);
     }
 
+    [MenuItem("Tools/Battle/Verify Gold Leaf Card Departure")]
+    public static void RunCardDeparture()
+    {
+        StartVerification(false);
+        SessionState.SetBool(Key + ".cardDepartureOnly", true);
+    }
+
     [MenuItem("Tools/Map/Verify Sacrifice Interface")]
     public static void RunSacrifice()
     {
@@ -132,24 +139,37 @@ public static class RunIntegrationPlayVerification
     private static void StartVerification(bool opportunityOnly)
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode) throw new InvalidOperationException("Stop Play Mode before verification.");
-        for (int i = 0; i < SceneManager.sceneCount; i++)
-            if (SceneManager.GetSceneAt(i).isDirty) throw new InvalidOperationException("Save your scene changes first.");
+        if (!opportunityOnly)
+            for (int i = 0; i < SceneManager.sceneCount; i++)
+                if (SceneManager.GetSceneAt(i).isDirty) throw new InvalidOperationException("Save your scene changes first.");
         Directory.CreateDirectory(RunIntegrationSetup.ResultDirectory);
         errors = null; assertions = 0; routines.Clear();
         File.WriteAllText(ResultPath, "RUNNING: integrated production flow.\n");
         File.WriteAllText(RunIntegrationSetup.ResultDirectory + "/play-progress.txt", "Starting from MainMenu.\n");
         // Compare difficulty against the actual authored lineup, not historical balance constants.
-        var combatBaseline = EditorSceneManager.OpenScene("Assets/Scenes/Deinosavros.unity");
-        var authoredEnemies = combatBaseline.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<BattleScript>(true))
-            .Where(actor => actor.isActiveAndEnabled && actor.CompareTag("Enemy")).OrderBy(actor => actor.transform.position.x).ToArray();
-        SessionState.SetInt(Key + ".enemyCount", authoredEnemies.Length);
-        for (int i = 0; i < authoredEnemies.Length; i++)
+        var combatBaseline = opportunityOnly ? EditorSceneManager.OpenPreviewScene("Assets/Scenes/Deinosavros.unity") :
+            EditorSceneManager.OpenScene("Assets/Scenes/Deinosavros.unity");
+        try
         {
-            SessionState.SetInt(Key + ".enemyHp" + i, authoredEnemies[i].maxHealth);
-            SessionState.SetInt(Key + ".enemyDamage" + i, authoredEnemies[i].attackDmg);
-            SessionState.SetFloat(Key + ".enemyInterval" + i, authoredEnemies[i].attackSpd);
+            var authoredEnemies = combatBaseline.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<BattleScript>(true))
+                .Where(actor => actor.isActiveAndEnabled && actor.CompareTag("Enemy")).OrderBy(actor => actor.transform.position.x).ToArray();
+            SessionState.SetInt(Key + ".enemyCount", authoredEnemies.Length);
+            for (int i = 0; i < authoredEnemies.Length; i++)
+            {
+                SessionState.SetInt(Key + ".enemyHp" + i, authoredEnemies[i].maxHealth);
+                SessionState.SetInt(Key + ".enemyDamage" + i, authoredEnemies[i].attackDmg);
+                SessionState.SetFloat(Key + ".enemyInterval" + i, authoredEnemies[i].attackSpd);
+            }
         }
-        EditorSceneManager.OpenScene("Assets/Scenes/MainMenu.unity");
+        finally { if (opportunityOnly) EditorSceneManager.ClosePreviewScene(combatBaseline); }
+        // A temporary Play Mode entry scene preserves unsaved Map edits in Unity's normal scene backup.
+        if (opportunityOnly)
+        {
+            SessionState.SetString(Key + ".previousStartScene", AssetDatabase.GetAssetPath(EditorSceneManager.playModeStartScene));
+            SessionState.SetBool(Key + ".restoreStartScene", true);
+            EditorSceneManager.playModeStartScene = AssetDatabase.LoadAssetAtPath<SceneAsset>("Assets/Scenes/MainMenu.unity");
+        }
+        else EditorSceneManager.OpenScene("Assets/Scenes/MainMenu.unity");
         SessionState.SetInt(Key, 1);
         SessionState.SetBool(Key + ".opportunityOnly", opportunityOnly);
         SessionState.SetBool(Key + ".menuEmbersOnly", false);
@@ -162,6 +182,7 @@ public static class RunIntegrationPlayVerification
         SessionState.SetBool(Key + ".feedbackOnly", false);
         SessionState.SetBool(Key + ".shadowsOnly", false);
         SessionState.SetBool(Key + ".cardFeedbackOnly", false);
+        SessionState.SetBool(Key + ".cardDepartureOnly", false);
         SessionState.SetBool(Key + ".cardArtworkOnly", false);
         SessionState.SetBool(Key + ".sacrificeOnly", false);
         SessionState.SetBool(Key + ".mapStatusOnly", false);
@@ -183,12 +204,26 @@ public static class RunIntegrationPlayVerification
         if (state == 2)
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode) return;
+            if (SessionState.GetBool(Key + ".restoreStartScene", false))
+            {
+                string path = SessionState.GetString(Key + ".previousStartScene", "");
+                EditorSceneManager.playModeStartScene = string.IsNullOrEmpty(path) ? null : AssetDatabase.LoadAssetAtPath<SceneAsset>(path);
+                SessionState.SetBool(Key + ".restoreStartScene", false);
+            }
             SessionState.SetInt(Key, 0);
             if (Application.isBatchMode || Environment.GetCommandLineArgs().Contains("-audio-verification-exit"))
                 EditorApplication.Exit(File.ReadAllText(ResultPath).StartsWith("PASS:") ? 0 : 1);
             return;
         }
-        if (!EditorApplication.isPlaying) return;
+        if (!EditorApplication.isPlaying)
+        {
+            if (!EditorApplication.isPlayingOrWillChangePlaymode && SessionState.GetBool(Key + ".restoreStartScene", false))
+            {
+                File.WriteAllText(ResultPath, "STOPPED: opportunity verification was interrupted.\n");
+                routines.Clear(); SessionState.SetInt(Key, 2);
+            }
+            return;
+        }
         Application.runInBackground = true;
         EditorApplication.QueuePlayerLoopUpdate();
         try
@@ -197,6 +232,7 @@ public static class RunIntegrationPlayVerification
             {
                 deadline = EditorApplication.timeSinceStartup + 360;
                 routines.Push(SessionState.GetBool(Key + ".menuEmbersOnly", false) ? MenuBackgroundAuthoring.VerifyRuntime(Check) :
+                    SessionState.GetBool(Key + ".cardDepartureOnly", false) ? CardUseEffectAuthoring.Verify(Check) :
                     SessionState.GetBool(Key + ".shadowsOnly", false) ? CombatShadowVerification.Run(Check) :
                     SessionState.GetBool(Key + ".mapStatusOnly", false) ? MapStatusVerification.Run(Check) :
                     SessionState.GetBool(Key + ".attackCountdownOnly", false) ? CombatAttackCountdownVerification.Run(Check) :
@@ -223,6 +259,8 @@ public static class RunIntegrationPlayVerification
             }
             Finish("PASS: " + assertions + " runtime checks; " + (SessionState.GetBool(Key + ".menuEmbersOnly", false)
                 ? "live background flow, compiled UI shader, preserved artwork layers and unblocked menu actions.\n"
+                : SessionState.GetBool(Key + ".cardDepartureOnly", false)
+                ? "gold leaf card departure, composed text and artwork, bounded pool, immediate gameplay, input safety, pause, cleanup and three resolutions.\n"
                 : SessionState.GetBool(Key + ".shadowsOnly", false)
                 ? "four silhouette shadows on the real ground, alpha clipping, shared animated meshes, recoil, saved bindings and three resolutions.\n"
                 : SessionState.GetBool(Key + ".mapStatusOnly", false)
@@ -1212,11 +1250,7 @@ public static class RunIntegrationPlayVerification
     private static IEnumerator OpportunityPages()
     {
         yield return Until(() => Find<MainMenuController>() != null, "Main menu ready for presentation check");
-        var menuCanvas = Find<Canvas>();
-        var background = menuCanvas.transform.Find("Background").GetComponent<Image>();
-        Check(background.sprite != null && AssetDatabase.GetAssetPath(background.sprite) == "Assets/UI/MainMenu.png",
-            "The menu background resolves to the existing authored image.");
-        MapOpportunityVerification.CaptureCanvas(menuCanvas, Camera.main, "main-menu");
+        // Menu artwork has its own verification; this fixture exercises opportunity rewards.
         SceneManager.LoadSceneAsync("Map"); yield return ReadyMap();
         var map = Find<MapController>();
         var template = UnityEngine.Object.FindObjectsByType<MapCardView>(FindObjectsSortMode.None).First();
@@ -1276,15 +1310,28 @@ public static class RunIntegrationPlayVerification
                     }
             Check(additions[remaining] != null, "A full-capacity fixture can be built from the current card costs.");
             starterField.SetValue(session, authoredStarter.Concat(additions[remaining]).ToArray());
-            Check(Find<MapController>().TryStartTestEncounter("level_02_01", 80, out _, MapOpportunityOutcome.Card), "Monitor can force one card.");
+            Check(Find<MapController>().TryStartTestEncounter("level_02_01", 80, out _, MapOpportunityOutcome.Card), "Monitor can force a three-choice card reward.");
         }
         finally { starterField.SetValue(session, authoredStarter); }
         yield return VerifyOpportunitySpin(MapOpportunityOutcome.Card, false);
         yield return ReadyOpportunity(); chance = Find<MapOpportunityController>(); id = chance.EncounterId;
-        var offered = chance.Receipt.Offers.Single();
+        var offeredCards = chance.Receipt.Offers.ToArray();
+        Check(offeredCards.Length == 3 && offeredCards.Distinct().Count() == 3, "Three distinct reward candidates are shown.");
+        var offerViews = Field<RewardCardView[]>(chance, "rewardChoices");
+        Check(offerViews.Length == 3 && offerViews.All(view => view.gameObject.activeInHierarchy && view.GetComponent<Button>().interactable),
+            "All three authored choices are visible and clickable.");
+        for (int i = 0; i < offerViews.Length; i++)
+        {
+            Check(Field<Image>(offerViews[i], "artwork").sprite == offeredCards[i].FrontIllustration,
+                "Each choice displays its own offered card.");
+            Check(offerViews[i].GetComponent<Image>().color.maxColorComponent < .5f,
+                "Reward choices retain the saved dark surface rather than the white placeholder.");
+        }
+        Check(!chance.ContinueButton.gameObject.activeSelf, "No action can implicitly claim the first candidate.");
+        var offered = offeredCards[1];
         MapOpportunityVerification.CaptureLayouts(chance, "card");
         Check(session.DeckCapacity == RunSession.CapacityLimit, "Full capacity retained.");
-        chance.ContinueButton.onClick.Invoke();
+        ClickReward(offerViews[1]);
         Check(chance.IsReplacing, "Reward opens replacement choices.");
         var replacementRoot = Field<GameObject>(chance, "replacementRoot");
         var replacementTemplate = Field<RewardCardView>(chance, "replacementTemplate");
@@ -1293,9 +1340,9 @@ public static class RunIntegrationPlayVerification
             "The inactive authored template generates exactly one view per active card.");
         MapOpportunityVerification.CaptureLayouts(chance, "replacement");
         chance.SecondaryButton.onClick.Invoke();
-        Check(!chance.IsReplacing && !chance.Receipt.Resolved && chance.Receipt.Offers.Single() == offered,
-            "Cancel replacement retains the offered card.");
-        chance.ContinueButton.onClick.Invoke();
+        Check(!chance.IsReplacing && !chance.Receipt.Resolved && chance.Receipt.Offers.SequenceEqual(offeredCards),
+            "Cancel replacement retains all three candidates.");
+        ClickReward(offerViews[2]);
         Check(replacementRoot == Field<GameObject>(chance, "replacementRoot") &&
             firstChoices.SequenceEqual(replacementRoot.GetComponentsInChildren<RewardCardView>()),
             "Reopening replacement preserves the authored root and reuses the existing card views.");
@@ -1303,30 +1350,46 @@ public static class RunIntegrationPlayVerification
         reload = SceneManager.LoadSceneAsync("MapOpportunity");
         yield return Until(() => reload.isDone, "Card event scene reloaded"); yield return ReadyOpportunity();
         chance = Find<MapOpportunityController>();
-        Check(chance.EncounterId == id && chance.Receipt.Offers.Single() == offered, "Reload does not reroll the offered card.");
-        chance.ContinueButton.onClick.Invoke();
+        Check(chance.EncounterId == id && chance.Receipt.Offers.SequenceEqual(offeredCards), "Reload does not reroll any offered card.");
+        ClickReward(Field<RewardCardView[]>(chance, "rewardChoices")[1]);
         var active = session.RunDeck.Where(c => !c.sacrificed).ToArray();
         int replacementIndex = Array.FindIndex(active, c => c.definition.capacityCost >= offered.capacityCost);
         Check(replacementIndex >= 0, "At least one starter can be exchanged for the offered capacity tier.");
         string removed = active[replacementIndex].instanceId;
         int expectedCapacity = session.DeckCapacity - active[replacementIndex].definition.capacityCost + offered.capacityCost;
         var choices = Field<GameObject>(chance, "replacementRoot").GetComponentsInChildren<RewardCardView>();
-        ClickReward(choices[replacementIndex]);
-        Check(chance.Receipt.Resolved && session.DeckCapacity == expectedCapacity && !session.RunDeck.Any(c => c.instanceId == removed),
-            "Replacement UI commits only one chosen instance.");
         var coordinator = MapTravelCoordinator.Ensure(session);
         var mapSceneField = typeof(MapTravelCoordinator).GetField("mapScene", BindingFlags.NonPublic | BindingFlags.Instance);
         string mapScene = (string)mapSceneField.GetValue(coordinator);
         try
         {
             mapSceneField.SetValue(coordinator, "MissingTestMap");
-            chance.ContinueButton.onClick.Invoke();
+            ClickReward(choices[replacementIndex]);
+            Check(chance.Receipt.Resolved && chance.Receipt.GrantedCard.definition == offered &&
+                session.DeckCapacity == expectedCapacity && !session.RunDeck.Any(c => c.instanceId == removed),
+                "Replacement grants the selected second candidate and removes only the chosen deck instance.");
+            ClickReward(Field<RewardCardView[]>(chance, "rewardChoices")[2]);
+            Check(chance.Receipt.GrantedCard.definition == offered && session.DeckCapacity == expectedCapacity,
+                "A second click cannot claim another candidate after settlement.");
             yield return Until(() => !coordinator.IsBusy, "Failed map return retained settled reward");
             Check(chance.Receipt.Completed && session.DeckCapacity == expectedCapacity && SceneManager.GetActiveScene().name == "MapOpportunity",
                 "A failed return neither rerolls nor grants again.");
         }
         finally { mapSceneField.SetValue(coordinator, mapScene); }
         chance.ContinueButton.onClick.Invoke(); yield return ReadyMap();
+        Check(Find<MapController>().TryStartTestEncounter("level_02_01", 80, out _, MapOpportunityOutcome.Card), "Free-capacity choice test starts.");
+        yield return ReadyOpportunity(); chance = Find<MapOpportunityController>();
+        var directReceipt = chance.Receipt;
+        int directIndex = Enumerable.Range(0, directReceipt.Offers.Count).Last(index => session.CanAddCard(directReceipt.Offers[index]));
+        var directCard = directReceipt.Offers[directIndex];
+        int directCapacity = session.DeckCapacity + directCard.capacityCost;
+        int deckCount = session.GetActiveDeck().Count;
+        var directChoices = Field<RewardCardView[]>(chance, "rewardChoices");
+        ClickReward(directChoices[directIndex]); ClickReward(directChoices[directIndex]);
+        yield return ReadyMap();
+        Check(directReceipt.GrantedCard?.definition == directCard && session.DeckCapacity == directCapacity &&
+            session.GetActiveDeck().Count == deckCount + 1,
+            "Clicking a candidate grants exactly that card once and returns to the map.");
         Check(Find<MapController>().TryStartTestEncounter("level_02_01", 80, out _, MapOpportunityOutcome.Card), "Skip test starts.");
         yield return ReadyOpportunity(); chance = Find<MapOpportunityController>();
         string[] original = session.RunDeck.Select(c => c.instanceId).ToArray();

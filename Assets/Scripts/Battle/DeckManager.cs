@@ -8,6 +8,7 @@ public sealed class DeckManager : MonoBehaviour
     [SerializeField] private Transform handContainer;
     [SerializeField] private GameObject fallbackCardPrefab;
     [SerializeField] private CardDefinition[] testDeck;
+    [SerializeField] private CardUseEffect cardUseEffect;
 
     private readonly List<CardDefinition> drawPile = new();
     private readonly List<CardDefinition> discardPile = new();
@@ -22,7 +23,11 @@ public sealed class DeckManager : MonoBehaviour
     public IReadOnlyList<BuffCards> Hand => hand;
     public bool CanPlay => IsReady && CombatEnabled && Player != null && Player.health > 0 &&
         TimeTickSystem.Active != null && TimeTickSystem.Active.IsStarted;
-    public void SetCombatEnabled(bool value) => CombatEnabled = value;
+    public void SetCombatEnabled(bool value)
+    {
+        CombatEnabled = value;
+        if (!value && cardUseEffect != null) cardUseEffect.Clear();
+    }
 
     private void OnEnable()
     {
@@ -97,6 +102,8 @@ public sealed class DeckManager : MonoBehaviour
         GameAudio.PlayCard(definition, playedView.LegacyPlayClip);
         if (definition != null) discardPile.Add(definition);
         hand.Remove(playedView);
+        if (CombatEnabled && cardUseEffect != null)
+            cardUseEffect.Play(playedView, discardPileDisplay != null ? (RectTransform)discardPileDisplay.transform : null);
         Destroy(playedView.gameObject);
 
         if (hand.Count + pendingDrawSecondsRemaining.Count < maxHandSize)

@@ -62,25 +62,25 @@ Material:
     m_Ints: []
     m_Floats:
     - _Cull: 2
-    - _GroundBlendStrength: 0
-    - _GroundDetailStrength: 0.6
+    - _GroundBlendStrength: 0.466
+    - _GroundDetailStrength: 0.838
     - _LayeredGround: 0
-    - _MacroMeters: 7
-    - _MacroVariation: 0.035
-    - _MossAmount: 0
+    - _MacroMeters: 9.3
+    - _MacroVariation: 0.043
+    - _MossAmount: 0.117
     - _MossUpwardBias: 0.75
-    - _NormalStrength: 0.2
-    - _ReferenceRoughness: 0.82
-    - _RoughnessVariation: 0.35
+    - _NormalStrength: 1
+    - _ReferenceRoughness: 0.5
+    - _RoughnessVariation: 0.204
     - _Smoothness: 0.18
-    - _TileMeters: 2.6
+    - _TileMeters: 3.14
     - _UseTextures: 1
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
-    - _ExposedRockColor: {r: 0.54999995, g: 0.50999993, b: 0.42999998, a: 1}
-    - _GroundReferenceColor: {r: 0.42999998, g: 0.37999994, b: 0.29999998, a: 1}
+    - _ExposedRockColor: {r: 0.2578616, g: 0.2532666, b: 0.24407655, a: 1}
+    - _GroundReferenceColor: {r: 0.2578616, g: 0.25321093, b: 0.24569832, a: 1}
     - _MossColor: {r: 0.23999995, g: 0.29999998, b: 0.13999996, a: 1}
     - _MossHeightRange: {r: -1, g: 2, b: 0, a: 0}
-    - _SoilColor: {r: 0.42999998, g: 0.37999994, b: 0.29999998, a: 1}
+    - _SoilColor: {r: 0.20754719, g: 0.18334103, b: 0.14423876, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

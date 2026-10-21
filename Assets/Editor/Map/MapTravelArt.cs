@@ -20,7 +20,8 @@ public static class MapTravelArt
         Directory.CreateDirectory(Root + "/Materials");
         string image = Root + "/Textures/TravelSymbols.png";
         var existingImporter = AssetImporter.GetAtPath(image) as TextureImporter;
-        if (!File.Exists(image) || existingImporter == null || existingImporter.userData != "MapTravelSymbols v4")
+        bool handPainted = existingImporter != null && existingImporter.userData == "MapTravelSymbols Krita";
+        if (!handPainted && (!File.Exists(image) || existingImporter == null || existingImporter.userData != "MapTravelSymbols v4"))
         {
             pixels = new Color[Width * Height];
             DrawCore(); DrawLeaf(); DrawDiamond(); DrawMeander(); DrawSeal(); DrawCompleted(); DrawHalo(); DrawPassed();
@@ -31,10 +32,14 @@ public static class MapTravelArt
         }
         AssetDatabase.ImportAsset(image, ImportAssetOptions.ForceSynchronousImport);
         var importer = (TextureImporter)AssetImporter.GetAtPath(image);
-        importer.textureType = TextureImporterType.Default; importer.alphaIsTransparency = true; importer.sRGBTexture = true;
-        importer.mipmapEnabled = true; importer.wrapMode = TextureWrapMode.Clamp; importer.filterMode = FilterMode.Trilinear;
-        importer.textureCompression = TextureImporterCompression.Uncompressed; importer.maxTextureSize = 1024; importer.SaveAndReimport();
-        importer.userData = "MapTravelSymbols v4"; importer.SaveAndReimport();
+        // Preserve the native Krita atlas and its authored import settings on subsequent integrations.
+        if (!handPainted)
+        {
+            importer.textureType = TextureImporterType.Default; importer.alphaIsTransparency = true; importer.sRGBTexture = true;
+            importer.mipmapEnabled = true; importer.wrapMode = TextureWrapMode.Clamp; importer.filterMode = FilterMode.Trilinear;
+            importer.textureCompression = TextureImporterCompression.Uncompressed; importer.maxTextureSize = 1024;
+            importer.userData = "MapTravelSymbols v4"; importer.SaveAndReimport();
+        }
         var atlas = AssetDatabase.LoadAssetAtPath<Texture2D>(image);
         var shader = Shader.Find("Map/Travel Symbols");
         if (shader == null) throw new InvalidOperationException("Travel shader has not compiled.");

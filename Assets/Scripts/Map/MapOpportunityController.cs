@@ -23,10 +23,11 @@ public sealed class MapOpportunityController : MapNonCombatController
     [Header("Opportunity Interface")]
     [SerializeField] private ContentView cardContent, recoveryContent, battleContent;
     [SerializeField] private Button secondaryButton;
-    [SerializeField] private TMP_Text secondaryText, recoveryDetail;
+    [SerializeField] private TMP_Text secondaryText, recoveryDetail, replacementLabel;
     [SerializeField] private RawImage icon;
     [SerializeField] private RectTransform revealPose;
     [SerializeField] private GameObject rewardRoot, replacementRoot;
+    [SerializeField] private RewardCardView[] rewardChoices;
     [SerializeField] private RectTransform replacementContent;
     [SerializeField] private RewardCardView replacementTemplate;
     [SerializeField] private CanvasGroup controls;
@@ -35,7 +36,7 @@ public sealed class MapOpportunityController : MapNonCombatController
     private Vector2 resultPosition, resultSize;
     private Quaternion resultRotation;
     private TMP_Text revealValue, revealBody;
-    private CardDefinition displayedOffer;
+    private CardDefinition selectedOffer;
     private bool returning;
     private string battleError;
 
@@ -139,9 +140,14 @@ public sealed class MapOpportunityController : MapNonCombatController
     {
         if (!base.BindInterface() || cardContent == null || !cardContent.IsValid || recoveryContent == null ||
             !recoveryContent.IsValid || battleContent == null || !battleContent.IsValid || secondaryButton == null ||
-            secondaryText == null || recoveryDetail == null || icon == null || revealPose == null ||
-            rewardRoot == null || rewardRoot.GetComponent<RewardCardView>() == null || replacementRoot == null ||
+            secondaryText == null || recoveryDetail == null || replacementLabel == null || icon == null || revealPose == null ||
+            rewardRoot == null || rewardChoices == null || rewardChoices.Length != 3 || replacementRoot == null ||
             replacementContent == null || replacementTemplate == null || controls == null) return false;
+        for (int i = 0; i < rewardChoices.Length; i++)
+        {
+            if (rewardChoices[i] == null || !rewardChoices[i].transform.IsChildOf(rewardRoot.transform)) return false;
+            for (int j = 0; j < i; j++) if (rewardChoices[i] == rewardChoices[j]) return false;
+        }
         resultPosition = icon.rectTransform.anchoredPosition;
         resultSize = icon.rectTransform.sizeDelta;
         resultRotation = icon.rectTransform.localRotation;
@@ -149,6 +155,7 @@ public sealed class MapOpportunityController : MapNonCombatController
         controls.interactable = false;
         SecondaryButton.onClick.AddListener(Secondary);
         SecondaryButton.gameObject.SetActive(false);
+        ContinueButton.gameObject.SetActive(true);
         replacementTemplate.gameObject.SetActive(false);
         replacementRoot.SetActive(false);
         SetContent(null);
@@ -195,15 +202,19 @@ public sealed class MapOpportunityController : MapNonCombatController
         if (card)
         {
             value.text = "";
-            if (receipt.Offers.Count > 0 && displayedOffer != receipt.Offers[0])
+            for (int i = 0; i < rewardChoices.Length; i++)
             {
-                displayedOffer = receipt.Offers[0];
-                rewardRoot.GetComponent<RewardCardView>().Initialize(displayedOffer, _ => Continue(), true);
+                var choice = rewardChoices[i];
+                bool visible = i < receipt.Offers.Count;
+                choice.gameObject.SetActive(visible);
+                if (!visible) continue;
+                choice.Initialize(receipt.Offers[i], ChooseCard, true);
+                choice.GetComponent<UnityEngine.UI.Button>().interactable = !receipt.Resolved;
             }
-            if (rewardRoot != null) rewardRoot.SetActive(true);
-            body.text = receipt.GrantedCard != null ? "Card acquired" : receipt.Skipped ? "Reward skipped" : "";
-            continueText.text = receipt.Resolved ? "Continue" :
-                session.CanAddCard(receipt.Offers[0]) ? "Take Card" : "Replace Card";
+            rewardRoot.SetActive(true);
+            body.text = receipt.GrantedCard != null ? "Card acquired" : receipt.Skipped ? "Reward skipped" : "Choose one card";
+            continueText.text = "Continue";
+            ContinueButton.gameObject.SetActive(receipt.Resolved);
             SecondaryButton.gameObject.SetActive(!receipt.Resolved);
             secondaryText.text = "Skip";
         }
@@ -236,11 +247,17 @@ public sealed class MapOpportunityController : MapNonCombatController
                 ShowBattleError("Battle unavailable. Retry when ready.");
             else battleError = null;
         }
-        else if (Receipt.Outcome == MapOpportunityOutcome.Card && !IsReplacing)
-        {
-            if (session.CanAddCard(Receipt.Offers[0])) Claim(null);
-            else ShowReplacement();
-        }
+    }
+
+    private void ChooseCard(CardDefinition definition)
+    {
+        if (!CanAct() || IsReplacing || Receipt.Resolved || Receipt.Outcome != MapOpportunityOutcome.Card) return;
+        bool offered = false;
+        foreach (var candidate in Receipt.Offers) if (candidate == definition) offered = true;
+        if (!offered) return;
+        selectedOffer = definition;
+        if (session.CanAddCard(definition)) Claim(null);
+        else ShowReplacement();
     }
 
     private bool CanAct() => IsActivated && IsRevealed && !returning && session != null && Receipt != null &&
@@ -251,6 +268,7 @@ public sealed class MapOpportunityController : MapNonCombatController
         if (!CanAct()) return;
         if (IsReplacing)
         {
+            selectedOffer = null;
             replacementRoot.SetActive(false);
             DisplayReceipt(Receipt, 1); return;
         }
@@ -260,19 +278,21 @@ public sealed class MapOpportunityController : MapNonCombatController
 
     private void Claim(string outgoing)
     {
-        if (!CanAct()) return;
-        if (!session.TryResolveOpportunityReward(EncounterId, Receipt.Offers[0], outgoing, out var reason))
+        if (!CanAct() || selectedOffer == null || Receipt.Resolved) return;
+        if (!session.TryResolveOpportunityReward(EncounterId, selectedOffer, outgoing, out var reason))
         { detail.text = reason; return; }
         replacementRoot.SetActive(false); DisplayReceipt(Receipt, 1);
+        ReturnToMap();
     }
 
     private void ShowReplacement()
     {
-        if (IsReplacing) return;
+        if (IsReplacing || selectedOffer == null) return;
         cardContent.root.SetActive(false);
         capacity.gameObject.SetActive(false); detail.text = "";
         ContinueButton.gameObject.SetActive(false);
         secondaryText.text = "Cancel Replacement";
+        replacementLabel.text = "Replace a card for " + selectedOffer.displayName;
         replacementRoot.SetActive(true);
         int index = 0;
         foreach (var instance in session.RunDeck)
@@ -303,6 +323,11 @@ public sealed class MapOpportunityController : MapNonCombatController
     { battleError = message; detail.text = message; continueText.text = "Retry Battle"; ContinueButton.interactable = true; }
 
     public override void ShowReturnError(string message)
-    { returning = false; IsRevealed = true; base.ShowReturnError(message); }
+    {
+        returning = false; IsRevealed = true;
+        if (Receipt != null) DisplayReceipt(Receipt, 1);
+        ContinueButton.gameObject.SetActive(true);
+        base.ShowReturnError(message);
+    }
 
 }

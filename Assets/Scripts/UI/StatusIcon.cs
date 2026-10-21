@@ -3,11 +3,23 @@ using UnityEngine.UI;
 
 public enum StatusSymbol { Health, Elixir, Shield, Speed, Damage, Hits }
 
-// Original vector silhouettes; no external texture dependencies.
+// Scene-authored artwork is optional; unconfigured icons retain their vector silhouettes.
 [RequireComponent(typeof(CanvasRenderer))]
 public sealed class StatusIcon : MaskableGraphic
 {
     public StatusSymbol symbol;
+    [Header("Optional Artwork")]
+    [SerializeField] private Sprite elixirArtwork;
+    [SerializeField] private Sprite shieldArtwork;
+    public Sprite Artwork => symbol == StatusSymbol.Elixir ? elixirArtwork :
+        symbol == StatusSymbol.Shield ? shieldArtwork : null;
+    public override Texture mainTexture => Artwork != null ? Artwork.texture : base.mainTexture;
+
+    public void SetSymbol(StatusSymbol value, Color tint)
+    {
+        symbol = value; color = tint;
+        SetVerticesDirty(); SetMaterialDirty();
+    }
     private static readonly Vector2[] Heart = { new(0,.22f), new(.15f,.38f), new(.32f,.35f), new(.43f,.2f),
         new(.4f,.02f), new(.24f,-.18f), new(0,-.4f), new(-.24f,-.18f), new(-.4f,.02f), new(-.43f,.2f), new(-.32f,.35f), new(-.15f,.38f) };
     private static readonly Vector2[] Flask = { new(-.16f,.4f), new(.16f,.4f), new(.16f,.12f), new(.37f,-.18f),
@@ -19,6 +31,24 @@ public sealed class StatusIcon : MaskableGraphic
     protected override void OnPopulateMesh(VertexHelper vh)
     {
         vh.Clear();
+        if (Artwork != null)
+        {
+            var sprite = Artwork;
+            var rect = GetPixelAdjustedRect();
+            var size = sprite.rect.size;
+            if (size.x <= 0 || size.y <= 0 || rect.width <= 0 || rect.height <= 0) return;
+            size *= Mathf.Min(rect.width / size.x, rect.height / size.y);
+            var min = rect.center - size * .5f; var max = rect.center + size * .5f;
+            var uv = UnityEngine.Sprites.DataUtility.GetOuterUV(sprite);
+            // Keep the illustration's original colors while preserving UI fades.
+            var tint = new Color(1, 1, 1, color.a);
+            vh.AddVert(new Vector3(min.x, min.y, 0), tint, new Vector2(uv.x, uv.y));
+            vh.AddVert(new Vector3(min.x, max.y, 0), tint, new Vector2(uv.x, uv.w));
+            vh.AddVert(new Vector3(max.x, max.y, 0), tint, new Vector2(uv.z, uv.w));
+            vh.AddVert(new Vector3(max.x, min.y, 0), tint, new Vector2(uv.z, uv.y));
+            vh.AddTriangle(0, 1, 2); vh.AddTriangle(2, 3, 0);
+            return;
+        }
         if (symbol == StatusSymbol.Hits)
         {
             for (int i = -1; i <= 1; i++)

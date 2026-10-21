@@ -19,9 +19,17 @@ public sealed class MapTravelView : MonoBehaviour
     public MapTravelPath[] paths = Array.Empty<MapTravelPath>();
     public Renderer portalRenderer;
     public Vector3 portalFocus;
+    [Header("Sacrifice Feedback (Visual Only)")]
+    [Range(0, .6f)] public float offeringCoreExpansion = .18f;
+    [Range(0, 2)] public float offeringHaloExpansion = .8f;
+    [Range(0, 1)] public float offeringGlow = .35f;
+    [Range(0, 1.5f)] public float offeringSigilExpansion = .65f;
+    [Range(0, 1)] public float offeringRingOpacity = .75f;
+    private float offeringPulse, offeringPhase;
+    private Color offeringTint = Color.white;
     private RunSession session;
     private Camera view;
-    private MeshRenderer core, halo, sigil, trailRenderer;
+    private MeshRenderer core, halo, sigil, trailRenderer, offeringRing;
     private MeshRenderer[] nodeSymbols, routeSymbols, typeSymbols;
     private MaterialPropertyBlock properties, portalBefore, portalPulse;
     private readonly List<Mesh> ownedMeshes = new();
@@ -48,6 +56,22 @@ public sealed class MapTravelView : MonoBehaviour
     public Vector3 FloorPosition => floor;
     public Vector3 CorePosition => floatingPoint;
     public bool IsMoving => moving;
+    public float SacrificePulse => offeringPulse;
+    public bool TryGetCoreViewport(out Vector3 point)
+    {
+        point = view != null ? view.WorldToViewportPoint(floatingPoint) : Vector3.zero;
+        return isActiveAndEnabled && core != null && point.z > 0;
+    }
+
+    // Presentation never writes player attributes or the pending encounter modifier.
+    public void SetSacrificePulse(float phase, Color tint)
+    {
+        offeringPhase = Mathf.Clamp01(phase);
+        offeringPulse = phase <= 0 || phase >= 1 ? 0 : Mathf.Sin(Mathf.Pow(phase, .55f) * Mathf.PI);
+        offeringTint = tint;
+        if (core != null && halo != null && sigil != null && view != null) PositionCore();
+    }
+    public void ClearSacrificePulse() => SetSacrificePulse(0, Color.white);
     public int LiveParticles { get; private set; }
 #if UNITY_EDITOR || DEVELOPMENT_BUILD
     public bool MeasureUpdateAllocations { get; set; }
@@ -73,6 +97,7 @@ public sealed class MapTravelView : MonoBehaviour
         session.Progress.Changed += RefreshSymbols;
         floor = SitePoint(session.Progress.CurrentNodeId); appear = 0;
         selected = null; activePath = null; moving = bossGather = false;
+        offeringPulse = 0;
         RefreshSymbols(); PositionCore();
     }
     public bool HasPath(string from, string to) => from == to || FindPath(from, to) != null;
@@ -96,6 +121,7 @@ public sealed class MapTravelView : MonoBehaviour
     public void RestorePosition(string id)
     {
         floor = SitePoint(id); moving = bossGather = false; gather = arrival = 0; dockBlend = 1;
+        offeringPulse = 0;
         RestorePortal(); appear = 0; Preview(null); PositionCore();
     }
     public IEnumerator Animate(MapTravelTicket ticket)
@@ -176,14 +202,24 @@ public sealed class MapTravelView : MonoBehaviour
         float depth = Mathf.Max(1, Vector3.Dot(floatingPoint - view.transform.position, view.transform.forward));
         float pixelSize = 2 * depth * Mathf.Tan(view.fieldOfView * Mathf.Deg2Rad * .5f) / 1080f;
         float breath = 1 + Mathf.Sin(VisualTime * 2.2f) * .035f;
-        float size = profile.corePixels * pixelSize * (bossGather ? Mathf.Max(.04f, gather) : 1 - gather * .06f);
+        float size = profile.corePixels * pixelSize * (bossGather ? Mathf.Max(.04f, gather) : 1 - gather * .06f) * (1 + offeringPulse * offeringCoreExpansion);
         SetPose(core.transform, floatingPoint, view.transform.rotation, size);
         core.transform.localScale = new Vector3(size, size * profile.coreHeightPixels / profile.corePixels, 1);
-        SetPose(halo.transform, floatingPoint + view.transform.forward * .006f, view.transform.rotation, profile.haloPixels * pixelSize * breath);
-        Paint(core, 0, Color.white, appear * (bossGather ? gather : 1), 1 + gather * .08f);
-        Paint(halo, 6, Color.white, .16f * appear * (bossGather ? gather : 1), 1);
-        SetPose(sigil.transform, floor + Vector3.up * .035f, Quaternion.Euler(90, 0, 0), profile.sigilRadius * 2 * (1 + arrival * .7f));
-        Paint(sigil, 4, Color.white, appear * (arrival > 0 ? (1 - arrival) * .85f : .35f), 1);
+        SetPose(halo.transform, floatingPoint + view.transform.forward * .006f, view.transform.rotation,
+            profile.haloPixels * pixelSize * breath * (1 + offeringPulse * offeringHaloExpansion));
+        Color feedbackTint = Color.Lerp(Color.white, offeringTint, offeringPulse * .35f);
+        Paint(core, 0, Color.white, appear * (bossGather ? gather : 1), 1 + gather * .08f + offeringPulse * offeringGlow);
+        Paint(halo, 6, feedbackTint, (.16f + offeringPulse * .38f) * appear * (bossGather ? gather : 1), 1);
+        SetPose(sigil.transform, floor + Vector3.up * .035f, Quaternion.Euler(90, 0, 0),
+            profile.sigilRadius * 2 * (1 + arrival * .7f + offeringPulse * offeringSigilExpansion));
+        Paint(sigil, 4, feedbackTint, appear * Mathf.Lerp(arrival > 0 ? (1 - arrival) * .85f : .35f, .85f, offeringPulse), 1);
+        if (offeringRing != null)
+        {
+            offeringRing.enabled = offeringPulse > .001f;
+            SetPose(offeringRing.transform, floatingPoint + view.transform.forward * .012f, view.transform.rotation,
+                profile.haloPixels * pixelSize * (.9f + offeringPhase * .85f));
+            Paint(offeringRing, 4, feedbackTint, appear * offeringPulse * offeringRingOpacity, 1);
+        }
     }
     private float ReferencePixelSize(Vector3 point)
     {
@@ -265,6 +301,7 @@ public sealed class MapTravelView : MonoBehaviour
         portalPulse ??= new MaterialPropertyBlock();
         view = Camera.main;
         core = Quad("Core", transform); halo = Quad("Halo", transform); sigil = Quad("Sigil", transform);
+        offeringRing = Quad("Pulse", transform); offeringRing.enabled = false;
         var nodeRoot = Child("Nodes", transform);
         var iconRoot = Child("Icons", transform);
         nodeSymbols = new MeshRenderer[sites.Length];
@@ -437,4 +474,5 @@ public sealed class MapTravelView : MonoBehaviour
         if (session?.Progress != null) session.Progress.Changed -= RefreshSymbols;
         RestorePortal(); foreach (var mesh in ownedMeshes) if (mesh != null) Destroy(mesh);
     }
+    private void OnDisable() => ClearSacrificePulse();
 }

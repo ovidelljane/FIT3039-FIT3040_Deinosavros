@@ -15,6 +15,7 @@ MonoBehaviour:
   cardWeight: 40
   recoveryWeight: 20
   battleWeight: 40
+  cardOptionCount: 3
   recoveryPercent: 15
   revealDuration: 3.5
   revealTurns: 7

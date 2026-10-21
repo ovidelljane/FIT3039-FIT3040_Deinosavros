@@ -29,12 +29,17 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _Emission: 1
+    - _Emission: 1.23
+    - _FlameFlicker: 0.08
+    - _FlameMotion: 0
+    - _FlameSpeed: 1.15
+    - _FlameTime: -1
+    - _FlameWarp: 0.075
     - _Head: 0
     - _Mode: 0
-    - _Opacity: 0.19
+    - _Opacity: 0.67
     - _Repeats: 1
-    - _SoftDepth: 0.06
+    - _SoftDepth: 1.37
     m_Colors:
     - _AtlasRect: {r: 0.5, g: 0.25, b: 0.25, a: 0.25}
     - _CreamTint: {r: 1, g: 1, b: 1, a: 1}

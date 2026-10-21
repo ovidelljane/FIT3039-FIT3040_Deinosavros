@@ -44,6 +44,7 @@ public static class RunIntegrationSetup
             else if (action == "apply") ApplyAndVerify();
             else if (action == "verify") Verify();
             else if (action == "refresh") AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
+            else if (action == "reduce-plant-models") MapPlantModelReduction.Apply();
             else if (action == "play") RunIntegrationPlayVerification.Run();
             else if (action == "audio") RunIntegrationPlayVerification.RunAudioPresentation();
             else if (action == "combat-ui") RunIntegrationPlayVerification.RunCombatCardHover();
@@ -58,6 +59,8 @@ public static class RunIntegrationSetup
             else if (action == "combat-shadows") RunIntegrationPlayVerification.RunCombatShadows();
             else if (action == "card-artwork") MapCardArtworkVerification.StartBatch();
             else if (action == "author-encounters") MapEncounterSceneAuthoring.Apply();
+            else if (action == "author-opportunity-choices") MapEncounterSceneAuthoring.ApplyOpportunityChoices();
+            else if (action == "opportunity-state") MapOpportunityVerification.VerifyState();
             else if (action == "opportunity-ui") RunIntegrationPlayVerification.RunOpportunityPages();
             else if (action == "author-combat-status") CombatStatusSceneAuthoring.Apply();
             else if (action == "combat-speed-units") CombatStatusSceneAuthoring.UseAttackInterval();
@@ -72,7 +75,11 @@ public static class RunIntegrationSetup
             else if (action == "author-card-feedback") CombatCardFeedbackAuthoring.Apply();
             else if (action == "enlarge-countdowns") CombatCardFeedbackAuthoring.EnlargeCountdowns();
             else if (action == "card-feedback") RunIntegrationPlayVerification.RunCardFeedback();
+            else if (action == "card-departure-apply") CardUseEffectAuthoring.Apply();
+            else if (action == "card-departure") CardUseEffectAuthoring.ApplyTwiceAndVerify();
             else if (action == "author-sacrifice") MapSacrificeAuthoring.Apply();
+            else if (action == "sacrifice-burn-apply") MapSacrificeAuthoring.ApplyBurn();
+            else if (action == "sacrifice-burn") MapSacrificeAuthoring.ApplyBurnAndVerify();
             else if (action == "sacrifice") RunIntegrationPlayVerification.RunSacrifice();
             else throw new ArgumentException("Unknown integration action.");
             File.WriteAllText(ResultDirectory + "/action-result.txt", "PASS: " + action + "\n");

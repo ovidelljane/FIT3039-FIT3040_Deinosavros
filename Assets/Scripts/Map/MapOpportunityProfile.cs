@@ -10,12 +10,14 @@ public sealed class MapOpportunityProfile : ScriptableObject
     [Min(0)] public int cardWeight = 40;
     [Min(0)] public int recoveryWeight = 20;
     [Min(0)] public int battleWeight = 40;
+    [Range(1, 3)] public int cardOptionCount = 3;
     [Range(1, 100)] public int recoveryPercent = 15;
     [Min(1f)] public float revealDuration = 3.5f;
     [Range(3, 12)] public int revealTurns = 7;
 
     public bool IsValid => cardWeight >= 0 && recoveryWeight >= 0 && battleWeight >= 0 &&
-        (long)cardWeight + recoveryWeight + battleWeight > 0 && recoveryPercent > 0 && recoveryPercent <= 100;
+        (long)cardWeight + recoveryWeight + battleWeight > 0 && recoveryPercent > 0 && recoveryPercent <= 100 &&
+        cardOptionCount >= 1 && cardOptionCount <= 3;
 
     public MapOpportunityOutcome OutcomeAt(double sample)
     {

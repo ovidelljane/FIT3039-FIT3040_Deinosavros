@@ -58,6 +58,7 @@ public static class MapSacrificeAuthoring
                 data.FindProperty("sacrificePanel").objectReferenceValue = authored;
                 data.ApplyModifiedPropertiesWithoutUndo(); changed = true;
             }
+            changed |= SimplifyPanelCopy(authored);
             if (changed) { EditorSceneManager.MarkSceneDirty(scene); EditorSceneManager.SaveScene(scene); }
             scene = EditorSceneManager.OpenScene(ScenePath);
             Validate(scene);
@@ -75,6 +76,92 @@ public static class MapSacrificeAuthoring
         Apply(); var before = File.ReadAllText(ScenePath); Apply(); Apply();
         if (File.ReadAllText(ScenePath) != before) throw new InvalidOperationException("Repeated authoring changed Map.");
         File.AppendAllText(Results + "/authoring.txt", "PASS: two additional applications preserve exact scene bytes.\n");
+        RunIntegrationPlayVerification.RunSacrifice();
+    }
+
+    [MenuItem("Tools/Map/Apply Sacrifice Burn")]
+    public static void ApplyBurn()
+    {
+        if (EditorApplication.isPlayingOrWillChangePlaymode) throw new InvalidOperationException("Stop Play Mode first.");
+        for (int i = 0; i < SceneManager.sceneCount; i++)
+            if (SceneManager.GetSceneAt(i).isDirty) throw new InvalidOperationException("Save your scene changes first.");
+        Directory.CreateDirectory(Results);
+        if (!File.Exists(Results + "/Map-before-burn.unity")) File.Copy(ScenePath, Results + "/Map-before-burn.unity");
+        if (!File.Exists(Results + "/Map-before-center-feedback.unity")) File.Copy(ScenePath, Results + "/Map-before-center-feedback.unity");
+        var setup = EditorSceneManager.GetSceneManagerSetup();
+        try
+        {
+            var shader = Shader.Find("Deinosavros/UI/Sacrifice Burn");
+            if (shader == null || ShaderUtil.ShaderHasError(shader)) throw new InvalidOperationException("The sacrifice burn shader must compile.");
+            const string path = "Assets/UI/SacrificeBurn.mat";
+            var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (material == null)
+            {
+                material = new Material(shader) { name = "SacrificeBurn" };
+                AssetDatabase.CreateAsset(material, path);
+            }
+            var scene = EditorSceneManager.OpenScene(ScenePath);
+            var panel = Components<MapSacrificePanel>(scene).Single();
+            var root = panel.burnEffect != null ? (RectTransform)panel.burnEffect.transform : panel.panel.Find("BurnFX") as RectTransform;
+            bool changed = false;
+            if (root == null)
+            {
+                root = Rect("BurnFX", panel.overlay.transform); Stretch(root);
+                var group = root.gameObject.AddComponent<CanvasGroup>();
+                group.interactable = false; group.blocksRaycasts = false;
+                changed = true;
+            }
+            var effect = root.GetComponent<SacrificeBurnEffect>();
+            if (effect == null) { effect = root.gameObject.AddComponent<SacrificeBurnEffect>(); changed = true; }
+            if (root.parent != panel.overlay.transform)
+            {
+                root.SetParent(panel.overlay.transform, false); Stretch(root); changed = true;
+            }
+            if (effect.focusAnchor == null)
+            {
+                var focus = Rect("OfferingFocus", panel.overlay.transform.Find("SafeArea"));
+                focus.anchorMin = focus.anchorMax = focus.pivot = new(.5f, .5f);
+                focus.anchoredPosition = Vector2.zero; focus.sizeDelta = Vector2.zero;
+                effect.focusAnchor = focus; changed = true;
+            }
+            var player = Components<MapTravelView>(scene).Single();
+            if (panel.playerSymbol != player) { panel.playerSymbol = player; changed = true; }
+            if (player.transform.Find("Pulse") == null)
+            {
+                var pulse = new GameObject("Pulse", typeof(MeshFilter), typeof(MeshRenderer));
+                pulse.transform.SetParent(player.transform, false);
+                pulse.GetComponent<MeshFilter>().sharedMesh = player.profile.quadMesh;
+                var renderer = pulse.GetComponent<MeshRenderer>(); renderer.sharedMaterial = player.profile.symbolMaterial;
+                renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                renderer.receiveShadows = false; renderer.enabled = false;
+                changed = true;
+            }
+            var backdrop = panel.overlay.GetComponent<Image>();
+            if (panel.feedbackBackdrop != backdrop) { panel.feedbackBackdrop = backdrop; changed = true; }
+            if (effect.cardTemplate == null)
+            {
+                var template = new GameObject("CardTemplate", typeof(RectTransform)).AddComponent<UnityEngine.UI.RawImage>();
+                template.transform.SetParent(root, false); template.rectTransform.sizeDelta = new(264, 363);
+                template.raycastTarget = false; template.material = material;
+                template.gameObject.SetActive(false); effect.cardTemplate = template; changed = true;
+            }
+            if (panel.burnEffect != effect) { panel.burnEffect = effect; changed = true; }
+            if (changed) { EditorSceneManager.MarkSceneDirty(scene); EditorSceneManager.SaveScene(scene); }
+            scene = EditorSceneManager.OpenScene(ScenePath);
+            panel = Components<MapSacrificePanel>(scene).Single();
+            if (panel.burnEffect == null || !panel.burnEffect.IsReady || panel.burnEffect.cardTemplate.gameObject.activeSelf ||
+                panel.burnEffect.focusAnchor == null || panel.playerSymbol == null || panel.feedbackBackdrop == null)
+                throw new InvalidOperationException("The saved burn template or material is missing.");
+            AssetDatabase.SaveAssetIfDirty(material);
+            File.WriteAllText(Results + "/burn-authoring.txt", "PASS: saved BurnFX, material, non-interactive template and Inspector settings; existing layout preserved.\n");
+        }
+        finally { EditorSceneManager.RestoreSceneManagerSetup(setup); }
+    }
+
+    public static void ApplyBurnAndVerify()
+    {
+        ApplyBurn(); string before = File.ReadAllText(ScenePath); ApplyBurn();
+        if (File.ReadAllText(ScenePath) != before) throw new InvalidOperationException("Repeated burn authoring changed Map.");
         RunIntegrationPlayVerification.RunSacrifice();
     }
 
@@ -295,7 +382,20 @@ public static class MapSacrificeAuthoring
             ui.departureContinue = Button("Continue", box.transform, "Enter Battle", new(123, -87), new(260, 54), true);
             ui.departureWarning.SetActive(false);
         }
+        SimplifyPanelCopy(ui);
         EditorUtility.SetDirty(ui);
+    }
+
+    private static bool SimplifyPanelCopy(MapSacrificePanel ui)
+    {
+        bool changed = false;
+        foreach (var label in new[] { ui.capacity, ui.benefitTitle, ui.benefitDetails, ui.benefitLimit, ui.reason })
+        {
+            if (label == null) continue;
+            if (!string.IsNullOrEmpty(label.text)) { label.text = ""; changed = true; }
+            if (label.gameObject.activeSelf) { label.gameObject.SetActive(false); changed = true; }
+        }
+        return changed;
     }
 
     private static void PlaceStatus(MapSacrificePanel ui)
@@ -314,6 +414,9 @@ public static class MapSacrificeAuthoring
         var panel = Components<MapSacrificePanel>(scene).Single();
         if (!panel.IsReady || panel.illustration == null || panel.frame == null || panel.statusButton == null)
             throw new InvalidOperationException("Missing saved sacrifice references.");
+        if (new[] { panel.capacity, panel.benefitTitle, panel.benefitDetails, panel.benefitLimit, panel.reason }
+            .Any(label => label == null || label.gameObject.activeSelf || !string.IsNullOrEmpty(label.text)))
+            throw new InvalidOperationException("The saved sacrifice panel still contains redundant copy.");
         foreach (var view in Components<MapCardView>(scene))
         {
             using var data = new SerializedObject(view);

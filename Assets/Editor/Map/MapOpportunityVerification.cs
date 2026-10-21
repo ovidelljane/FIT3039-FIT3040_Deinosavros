@@ -77,10 +77,15 @@ public static class MapOpportunityVerification
             session.SetNextOpportunityForTesting(MapOpportunityOutcome.Card);
             var ticket = EnterOpportunity(session, profile, pool);
             var receipt = session.GetNonCombatReceipt(ticket.EncounterId);
-            var offer = receipt.Offers.Single();
+            var originalOffers = receipt.Offers.ToArray();
+            Require(originalOffers.Length == profile.cardOptionCount && originalOffers.Distinct().Count() == originalOffers.Length,
+                "The event offers three distinct cards from the pool.");
+            var offer = originalOffers[1];
             Require(session.NextOpportunityForTesting == null, "Forced result is consumed once.");
-            Require(session.TryPrepareOpportunityEvent(ticket.EncounterId, profile, pool) && receipt.Offers.Single() == offer,
-                "Repeated preparation retains the same card.");
+            Require(session.TryPrepareOpportunityEvent(ticket.EncounterId, profile, pool) && receipt.Offers.SequenceEqual(originalOffers),
+                "Repeated preparation retains all candidates and their order.");
+            var notOffered = pool.Cards.First(card => card != null && !originalOffers.Contains(card));
+            Require(!session.TryClaimOpportunityCard(ticket.EncounterId, notOffered, out _), "A non-offered card cannot be claimed.");
             Require(!session.CompleteNonCombatEncounter(ticket.EncounterId), "Unresolved card cannot complete.");
             Require(!session.TryClaimOpportunityCard(ticket.EncounterId, null, out _) && !receipt.Resolved,
                 "A null claim does not silently skip the reward.");
@@ -94,6 +99,7 @@ public static class MapOpportunityVerification
                 "Only the chosen same-name instance is replaced.");
             Require(!session.SacrificeUsed && !session.HasPendingModifier, "Replacement is not an offering.");
             Require(!session.TryResolveOpportunityReward(ticket.EncounterId, offer, ids[4], out _), "No duplicate claim.");
+            Require(!session.TryClaimOpportunityCard(ticket.EncounterId, originalOffers[2], out _), "A second candidate cannot be claimed after the first.");
             Require(session.CompleteNonCombatEncounter(ticket.EncounterId) && !session.CompleteNonCombatEncounter(ticket.EncounterId), "One completion only.");
 
             StartEntrance(session);
@@ -101,12 +107,37 @@ public static class MapOpportunityVerification
             session.SetNextOpportunityForTesting(MapOpportunityOutcome.Card);
             ticket = EnterOpportunity(session, profile, pool);
             receipt = session.GetNonCombatReceipt(ticket.EncounterId);
-            expectedCapacity = session.DeckCapacity + receipt.Offers.Single().capacityCost;
-            Require(session.TryClaimOpportunityCard(ticket.EncounterId, receipt.Offers.Single(), out _) && session.DeckCapacity == expectedCapacity,
+            expectedCapacity = session.DeckCapacity + receipt.Offers[2].capacityCost;
+            Require(session.TryClaimOpportunityCard(ticket.EncounterId, receipt.Offers[2], out _) && session.DeckCapacity == expectedCapacity,
                 "A free capacity slot accepts one card.");
             Require(session.HasPendingModifier && session.SacrificeUsed, "Card reward preserves pending offering.");
             session.CompleteNonCombatEncounter(ticket.EncounterId);
             Require(!session.TryClaimOpportunityCard(ticket.EncounterId, offer, out _), "Expired reward rejected.");
+
+            var smallPool = ScriptableObject.CreateInstance<CardPool>();
+            try
+            {
+                var definitions = pool.Cards.Where(candidate => candidate != null).Distinct().Take(2).ToArray();
+                for (int count = 1; count <= 2; count++)
+                {
+                    using (var data = new SerializedObject(smallPool))
+                    {
+                        var cards = data.FindProperty("cards"); cards.arraySize = count + 2;
+                        for (int i = 0; i < count; i++) cards.GetArrayElementAtIndex(i).objectReferenceValue = definitions[i];
+                        cards.GetArrayElementAtIndex(count).objectReferenceValue = definitions[0];
+                        cards.GetArrayElementAtIndex(count + 1).objectReferenceValue = null;
+                        data.ApplyModifiedPropertiesWithoutUndo();
+                    }
+                    StartEntrance(session); session.SetNextOpportunityForTesting(MapOpportunityOutcome.Card);
+                    var smallTicket = EnterOpportunity(session, profile, smallPool);
+                    var smallReceipt = session.GetNonCombatReceipt(smallTicket.EncounterId);
+                    Require(smallReceipt.Offers.Count == count && smallReceipt.Offers.Distinct().Count() == count,
+                        "Small pools expose only valid unique candidates, without duplicate padding.");
+                    Require(session.TryResolveOpportunityReward(smallTicket.EncounterId, null, null, out _) &&
+                        session.CompleteNonCombatEncounter(smallTicket.EncounterId), "Small-pool offers can still be skipped.");
+                }
+            }
+            finally { Object.DestroyImmediate(smallPool); }
 
             foreach (int health in new[] { 40, 97, 100 })
             {
