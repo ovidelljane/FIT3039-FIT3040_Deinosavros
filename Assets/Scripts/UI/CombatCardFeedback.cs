@@ -111,10 +111,12 @@ public sealed class CombatCardFeedback : MonoBehaviour
         float delta = change.After - change.Before;
         Color tint = cost ? costColor : change.Stat == StatType.Heal ? healColor :
             change.Stat == StatType.Elixir || change.Stat == StatType.ElixirRegen ? elixirColor :
-            change.Stat == StatType.EnemySlow ? debuffColor : bonusColor;
+            change.Stat == StatType.EnemySlow || change.Stat == StatType.FrequencySlow ? debuffColor : bonusColor;
         if (isPlayer)
         {
-            StatType channel = change.Stat == StatType.ElixirRegen ? StatType.Elixir : change.Stat;
+            StatType channel = change.Stat == StatType.ElixirRegen ? StatType.Elixir :
+                change.Stat == StatType.FrequencySlow ? StatType.AttackSpeed :
+                change.Stat == StatType.Cataclysm ? StatType.Damage : change.Stat;
             foreach (var number in numbers)
                 if (number.stat == channel)
                 {
@@ -139,12 +141,16 @@ public sealed class CombatCardFeedback : MonoBehaviour
             case StatType.ExtraHits: value = Signed(delta) + " Hits"; break;
             case StatType.ElixirRegen: value = Signed(delta) + "/s"; break;
             case StatType.EnemySlow: value = "Slowed"; break;
+            case StatType.FrequencySlow: value = "Attack rate -" + change.Instance.amount.ToString("0.#") + "%"; break;
+            case StatType.Cataclysm: value = "Cataclysm"; break;
             default: value = Signed(delta); break;
         }
         RectTransform anchor = null;
         if (isPlayer)
         {
             StatType slot = change.Stat == StatType.ExtraHits ? StatType.Damage :
+                change.Stat == StatType.Cataclysm ? StatType.Damage :
+                change.Stat == StatType.FrequencySlow ? StatType.AttackSpeed :
                 change.Stat == StatType.ElixirRegen ? StatType.Elixir : change.Stat;
             anchor = playerView.ValueLabel(slot)?.rectTransform;
             if (change.Stat == StatType.Heal || change.Stat == StatType.Elixir)
@@ -230,7 +236,10 @@ public sealed class CombatCardFeedback : MonoBehaviour
         for (int i = 0; i < effects.Count; i++)
         {
             var effect = effects[i];
-            if (effect != null && effect.IsApplied && effect.target == player && effect.effectType == stat) return true;
+            if (effect != null && effect.IsApplied && effect.target == player &&
+                (effect.effectType == stat || (effect.effectType == StatType.Cataclysm &&
+                (stat == StatType.Damage || stat == StatType.AttackSpeed)) ||
+                (effect.effectType == StatType.FrequencySlow && stat == StatType.AttackSpeed))) return true;
         }
         return false;
     }
@@ -273,12 +282,15 @@ public sealed class CombatCardFeedback : MonoBehaviour
     public static string Title(StatType stat) => stat switch
     {
         StatType.Damage => "Damage", StatType.AttackSpeed => "Attack speed", StatType.ExtraHits => "Extra hits",
-        StatType.ElixirRegen => "Elixir regeneration", StatType.EnemySlow => "Slowed", _ => stat.ToString()
+        StatType.ElixirRegen => "Elixir regeneration", StatType.EnemySlow or StatType.FrequencySlow => "Slowed",
+        StatType.Cataclysm => "Cataclysm", _ => stat.ToString()
     };
     private static string EffectDescription(Effect effect) => effect.effectType switch
     {
         StatType.AttackSpeed => "Interval " + Signed(-effect.amount) + "s",
         StatType.EnemySlow => "Interval " + Signed(effect.amount) + "s",
+        StatType.FrequencySlow => "Attack rate -" + effect.amount.ToString("0.#") + "%",
+        StatType.Cataclysm => "+" + effect.CurrentHealthBonus.ToString("0.#") + "% damage and attack rate",
         StatType.ExtraHits => Signed(effect.amount) + " hits per attack",
         StatType.ElixirRegen => Signed(effect.amount) + " Elixir/s",
         _ => Signed(effect.amount) + " damage"

@@ -73,11 +73,25 @@ public static class RunIntegrationPlayVerification
         SessionState.SetBool(Key + ".balanceOnly", true);
     }
 
+    [MenuItem("Tools/Battle/Verify Environment Switching in Play Mode")]
+    public static void RunEnvironment()
+    {
+        StartVerification(true);
+        SessionState.SetBool(Key + ".environmentOnly", true);
+    }
+
     [MenuItem("Tools/Battle/Verify Combat Feedback")]
     public static void RunCombatFeedback()
     {
         StartVerification(false);
         SessionState.SetBool(Key + ".feedbackOnly", true);
+    }
+
+    [MenuItem("Tools/Battle/Verify Damage Scaled Recoil")]
+    public static void RunCombatRecoil()
+    {
+        StartVerification(true);
+        SessionState.SetBool(Key + ".recoilOnly", true);
     }
 
     [MenuItem("Tools/Battle/Verify Portrait Shadows")]
@@ -179,7 +193,9 @@ public static class RunIntegrationPlayVerification
         SessionState.SetBool(Key + ".enemyLoopOnly", false);
         SessionState.SetBool(Key + ".rewardOnly", false);
         SessionState.SetBool(Key + ".balanceOnly", false);
+        SessionState.SetBool(Key + ".environmentOnly", false);
         SessionState.SetBool(Key + ".feedbackOnly", false);
+        SessionState.SetBool(Key + ".recoilOnly", false);
         SessionState.SetBool(Key + ".shadowsOnly", false);
         SessionState.SetBool(Key + ".cardFeedbackOnly", false);
         SessionState.SetBool(Key + ".cardDepartureOnly", false);
@@ -231,7 +247,8 @@ public static class RunIntegrationPlayVerification
             if (routines.Count == 0)
             {
                 deadline = EditorApplication.timeSinceStartup + 360;
-                routines.Push(SessionState.GetBool(Key + ".menuEmbersOnly", false) ? MenuBackgroundAuthoring.VerifyRuntime(Check) :
+                routines.Push(SessionState.GetBool(Key + ".environmentOnly", false) ? CombatEnvironmentSetup.VerifyRuntime(Check) :
+                    SessionState.GetBool(Key + ".menuEmbersOnly", false) ? MenuBackgroundAuthoring.VerifyRuntime(Check) :
                     SessionState.GetBool(Key + ".cardDepartureOnly", false) ? CardUseEffectAuthoring.Verify(Check) :
                     SessionState.GetBool(Key + ".shadowsOnly", false) ? CombatShadowVerification.Run(Check) :
                     SessionState.GetBool(Key + ".mapStatusOnly", false) ? MapStatusVerification.Run(Check) :
@@ -239,6 +256,7 @@ public static class RunIntegrationPlayVerification
                     SessionState.GetBool(Key + ".sacrificeOnly", false) ? MapSacrificeVerification.Run(Check) :
                     SessionState.GetBool(Key + ".cardFeedbackOnly", false) ? CombatCardFeedbackVerification.Run(Check) :
                     SessionState.GetBool(Key + ".cardArtworkOnly", false) ? MapCardArtworkVerification.Run(Check) :
+                    SessionState.GetBool(Key + ".recoilOnly", false) ? CombatFeedbackVerification.RunRecoil(Check) :
                     SessionState.GetBool(Key + ".feedbackOnly", false) ? CombatFeedbackVerification.Run(Check) :
                     SessionState.GetBool(Key + ".balanceOnly", false) ? RunBalanceVerification.Run(Check) :
                     SessionState.GetBool(Key + ".rewardOnly", false) ? RewardPresentation() :
@@ -257,7 +275,9 @@ public static class RunIntegrationPlayVerification
                 if (current.Current is IEnumerator nested) { routines.Push(nested); continue; }
                 return;
             }
-            Finish("PASS: " + assertions + " runtime checks; " + (SessionState.GetBool(Key + ".menuEmbersOnly", false)
+            Finish("PASS: " + assertions + " runtime checks; " + (SessionState.GetBool(Key + ".environmentOnly", false)
+                ? "actual scene loads select forest, forest, desert; reload, unchanged actor transforms and new-run reset.\n"
+                : SessionState.GetBool(Key + ".menuEmbersOnly", false)
                 ? "live background flow, compiled UI shader, preserved artwork layers and unblocked menu actions.\n"
                 : SessionState.GetBool(Key + ".cardDepartureOnly", false)
                 ? "gold leaf card departure, composed text and artwork, bounded pool, immediate gameplay, input safety, pause, cleanup and three resolutions.\n"
@@ -275,6 +295,8 @@ public static class RunIntegrationPlayVerification
                 ? "all eleven illustrations, single borders, uniform Map backs, titles, reversible hover, deck order, combat and rewards.\n"
                 : SessionState.GetBool(Key + ".feedbackOnly", false)
                 ? "damage and shield numbers, actor flash, recoil, attack lunge, shared frame properties, pooling, pause, cloud pixels and three resolutions.\n"
+                : SessionState.GetBool(Key + ".recoilOnly", false)
+                ? "damage tiers, player/enemy/Boss direction, shield hits, rebound, repeat-hit cap, pause, cleanup and unchanged gameplay transforms.\n"
                 : SessionState.GetBool(Key + ".balanceOnly", false)
                 ? "configurable run rules, layer difficulty, offering order, three tick rates, catch-up, timed effects, drawing, health costs, dynamic descriptions and persistent maximum health.\n"
                 : SessionState.GetBool(Key + ".rewardOnly", false)
@@ -1142,7 +1164,7 @@ public static class RunIntegrationPlayVerification
         Check(UnityEngine.Object.FindObjectsByType<RunSession>(FindObjectsSortMode.None).Length == 1, "Only one persistent run session survives.");
 
         var offering = session.RunDeck.First(card => !card.sacrificed && card.definition.overworldEffect.effectType == OverworldEffectType.GrantStartingShield);
-        int offeringShield = offering.definition.overworldEffect.magnitude;
+        int offeringShield = Mathf.RoundToInt(offering.definition.overworldEffect.magnitude);
         var map = Find<MapController>();
         var view = map.GetComponentsInChildren<MapCardView>(true).FirstOrDefault(card => card.InstanceId == offering.instanceId);
         if (view == null) view = UnityEngine.Object.FindObjectsByType<MapCardView>(FindObjectsSortMode.None).First(card => card.InstanceId == offering.instanceId);

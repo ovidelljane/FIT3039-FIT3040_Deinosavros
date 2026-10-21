@@ -209,17 +209,17 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
         }
         target.SetActive(true);
 
-        foreach (TMP_Text combatLabel in target.GetComponentsInChildren<TMP_Text>(true))
-        {
-            combatLabel.text = GameFonts.FormatEffect(definition.GetCombatDescription());
-        }
-
-        // After the labels above, so the card's cost number isn't overwritten with effect text.
         GameFonts.ApplyHierarchy(target.transform);
         foreach (BuffCards combatCard in target.GetComponentsInChildren<BuffCards>(true))
         {
             combatCard.enabled = false;
             combatCard.ApplyArt(definition);
+        }
+
+        // Map fronts show artwork and cost only; offering text stays on the separate back and panel.
+        foreach (TMP_Text combatLabel in target.GetComponentsInChildren<TMP_Text>(true))
+        {
+            if (combatLabel.name != "CostText") combatLabel.gameObject.SetActive(false);
         }
 
         foreach (Graphic graphic in target.GetComponentsInChildren<Graphic>(true))

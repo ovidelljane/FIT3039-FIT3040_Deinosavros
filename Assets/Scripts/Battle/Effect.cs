@@ -9,6 +9,9 @@ public class Effect : MonoBehaviour
     public float amount;
     public float effectDur;
     public BattleScript target;
+    [Tooltip("Ascending HP percentage thresholds; each comparison is strictly below.")]
+    public Vector3 healthThresholds = new(50, 75, 100);
+    public Vector3 healthBonuses = new(70, 40, 15);
     
     private double elapsed;
     private bool applied;
@@ -17,6 +20,29 @@ public class Effect : MonoBehaviour
     public bool IsApplied => applied;
     public float RemainingSeconds => applied ? Mathf.Max(0, effectDur - (float)elapsed) : 0;
     public float TotalSeconds => effectDur;
+    public float CurrentHealthBonus => target == null || target.maxHealth <= 0 ? 0 :
+        BonusAtHealth(100f * target.health / target.maxHealth, healthThresholds, healthBonuses);
+
+    public static float BonusAtHealth(float percent, Vector3 thresholds, Vector3 bonuses) =>
+        percent < thresholds.x ? bonuses.x : percent < thresholds.y ? bonuses.y : percent < thresholds.z ? bonuses.z : 0;
+
+    public static float DamageMultiplier(BattleScript actor)
+    {
+        float bonus = 0;
+        foreach (var effect in activeEffects)
+            if (effect != null && effect.applied && effect.target == actor && effect.effectType == StatType.Cataclysm)
+                bonus = Mathf.Max(bonus, effect.CurrentHealthBonus);
+        return 1 + bonus / 100f;
+    }
+
+    public static float FrequencyMultiplier(BattleScript actor)
+    {
+        float frequency = DamageMultiplier(actor);
+        foreach (var effect in activeEffects)
+            if (effect != null && effect.applied && effect.target == actor && effect.effectType == StatType.FrequencySlow)
+                frequency *= Mathf.Clamp(1 - effect.amount / 100f, .01f, 1);
+        return frequency;
+    }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ResetRegistry() => activeEffects.Clear();

@@ -33,6 +33,104 @@ public static class CombatFeedbackVerification
         while (now() < end) yield return null;
     }
 
+    public static IEnumerator RunRecoil(Action<bool, string> check)
+    {
+        yield return Wait(() => Object.FindFirstObjectByType<MainMenuController>() != null);
+        Call(Object.FindFirstObjectByType<MainMenuController>(), "StartRun");
+        yield return Wait(() => BattleHud.Find(SceneManager.GetActiveScene())?.Deck?.CanPlay == true);
+        var feedback = Object.FindFirstObjectByType<CombatFeedback>();
+        var player = BattleHud.Find(SceneManager.GetActiveScene()).Deck.Player;
+        var enemies = BattleScript.FindFighters("Enemy");
+        TimeTickSystem.Active.StopTimer();
+        Time.timeScale = 0;
+        check(feedback != null && feedback.isActiveAndEnabled, "Recoil uses the active combat presentation component.");
+        var boss = Object.FindFirstObjectByType<CombatEncounterRoster>().boss;
+        boss.SetActive(true);
+        var fighters = new[] { player }.Concat(enemies).Append(boss.GetComponent<BattleScript>()).ToArray();
+        var origins = fighters.ToDictionary(actor => actor, actor => actor.transform.position);
+        var block = new MaterialPropertyBlock();
+        object Visual(BattleScript actor) => typeof(CombatFeedback).GetMethod("Get", Private).Invoke(feedback, new object[] { actor });
+        void Reset(object visual) => visual.GetType().GetMethod("Reset").Invoke(visual, null);
+        void Tick(object visual, float delta) => visual.GetType().GetMethod("Tick").Invoke(visual, new object[] { feedback, delta });
+        Vector3 Offset(Renderer renderer) { renderer.GetPropertyBlock(block); return block.GetVector("_WorldOffset"); }
+        float duration = Mathf.Max(.05f, feedback.recoilDuration);
+        foreach (var target in fighters)
+        {
+            target.maxHealth = target.health = 2000;
+            target.shield = 0;
+            var source = target == player ? enemies[0] : player;
+            var visual = Visual(target);
+            var renderer = target.GetComponent<Renderer>();
+            float recoilLimit = feedback.recoilDistance * (target.CompareTag("Enemy") ? feedback.enemyRecoilMultiplier : 1);
+            check(renderer.sharedMaterial.HasProperty("_WorldOffset") && !ShaderUtil.ShaderHasError(renderer.sharedMaterial.shader),
+                "Compiled portrait supports visual displacement: " + target.name);
+            Vector3 direction = Vector3.ProjectOnPlane(target.transform.position - source.transform.position, Vector3.up).normalized;
+            foreach (int damage in new[] { 1, 4, 5, 9, 10, 50, 70 })
+            {
+                Reset(visual);
+                int health = target.health;
+                target.TakeDamage(damage, source);
+                Tick(visual, duration * .18f);
+                Vector3 peak = Offset(renderer);
+                float fraction = damage < 5 ? feedback.lightRecoilScale : damage < 10 ? feedback.mediumRecoilScale : 1;
+                check(Mathf.Abs(peak.magnitude - recoilLimit * fraction) < .0001f && Vector3.Dot(peak, direction) > 0 && Mathf.Abs(peak.y) < .0001f,
+                    target.name + " recoils horizontally away from the attacker at the correct tier: " + damage);
+                check(target.health == health - damage && target.transform.position == origins[target] &&
+                    target.GetComponentsInChildren<Renderer>().All(part => (Offset(part) - peak).sqrMagnitude < .000001f),
+                    "Actual damage, fixed gameplay position and matching portrait/shadow offsets: " + target.name + " / " + damage);
+                Tick(visual, duration * .41f);
+                check(Vector3.Dot(Offset(renderer), direction) < 0 && Offset(renderer).magnitude < peak.magnitude * .2f,
+                    "One restrained rebound follows the kick: " + target.name + " / " + damage);
+                Tick(visual, duration);
+                check(Offset(renderer).sqrMagnitude < .000001f, "Recoil settles without position drift: " + target.name + " / " + damage);
+            }
+            Reset(visual); target.shield = 20;
+            int beforeShieldHit = target.health;
+            target.TakeDamage(7, source); Tick(visual, duration * .18f);
+            check(target.health == beforeShieldHit && target.shield == 13 &&
+                Mathf.Abs(Offset(renderer).magnitude - recoilLimit * feedback.mediumRecoilScale) < .0001f,
+                "Absorbed damage gives a medium hit without health loss: " + target.name);
+            target.shield = 0;
+            foreach (var fallbackSource in new[] { target, null })
+            {
+                Reset(visual); target.TakeDamage(4, fallbackSource); Tick(visual, duration * .18f);
+                Vector3 cameraRight = Vector3.ProjectOnPlane(feedback.worldCamera.transform.right, Vector3.up).normalized;
+                check(Vector3.Dot(Offset(renderer), cameraRight * (target == player ? -1 : 1)) > 0,
+                    "Self or unknown source still recoils toward the correct side: " + target.name);
+            }
+            Reset(visual); target.TakeDamage(50, source); target.TakeDamage(1, source);
+            Tick(visual, duration * .18f);
+            check(Mathf.Abs(Offset(renderer).magnitude - recoilLimit) < .0001f,
+                "Rapid hits retain the strongest kick without stacking displacement: " + target.name);
+            Vector3 paused = Offset(renderer); Tick(visual, 0);
+            check(Offset(renderer) == paused, "A paused update does not advance recoil: " + target.name);
+            Reset(visual); int events = feedback.DamageEventCount;
+            target.TakeDamage(0, source); Tick(visual, duration * .18f);
+            check(events == feedback.DamageEventCount && Offset(renderer).sqrMagnitude < .000001f,
+                "Zero damage causes no hit animation: " + target.name);
+        }
+        // Also observe real LateUpdate while paused, and verify attack animation still composes.
+        var playerVisual = Visual(player); Reset(playerVisual);
+        Call(feedback, "OnAttack", player, enemies[0]); Tick(playerVisual, feedback.attackDuration * .5f);
+        check(Mathf.Abs(Offset(player.GetComponent<Renderer>()).magnitude - feedback.attackLunge) < .0001f,
+            "Existing attack lunge is unchanged.");
+        Reset(playerVisual); player.TakeDamage(10, enemies[0]); Tick(playerVisual, duration * .18f);
+        Vector3 playerOffset = Offset(player.GetComponent<Renderer>());
+        yield return Delay(.12f, true);
+        check((Offset(player.GetComponent<Renderer>()) - playerOffset).sqrMagnitude < .000001f,
+            "Real paused frames preserve the hit pose alongside the player animation.");
+        feedback.enabled = false;
+        check(fighters.All(actor => actor.GetComponentsInChildren<Renderer>().All(part => Offset(part).sqrMagnitude < .000001f)) &&
+            fighters.All(actor => actor.transform.position == origins[actor]), "Disabling feedback clears all render offsets without moving actors.");
+        feedback.enabled = true;
+        int count = feedback.DamageEventCount;
+        player.TakeDamage(4, enemies[0]);
+        check(feedback.DamageEventCount == count + 1, "Re-enabling feedback keeps exactly one damage subscription.");
+        Tick(playerVisual, duration * .18f);
+        Capture(feedback.canvas, feedback.worldCamera, new Vector2Int(1920, 1080), "recoil");
+        Time.timeScale = 1;
+    }
+
     public static IEnumerator Run(Action<bool,string> check)
     {
         yield return Wait(() => Object.FindFirstObjectByType<MainMenuController>() != null);

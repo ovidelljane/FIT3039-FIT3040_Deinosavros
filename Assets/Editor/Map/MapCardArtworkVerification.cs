@@ -12,6 +12,74 @@ using Object = UnityEngine.Object;
 // Explicit, disposable visual regression check. Never saves gameplay scenes.
 public static class MapCardArtworkVerification
 {
+    [MenuItem("Tools/Map/Verify Artwork Only Card Fronts")]
+    public static void VerifyFrontLabels()
+    {
+        if (EditorApplication.isPlayingOrWillChangePlaymode) throw new InvalidOperationException("Stop Play Mode before verification.");
+        var preview = UnityEditor.SceneManagement.EditorSceneManager.NewPreviewScene();
+        int checks = 0;
+        string error = null;
+        Application.LogCallback onLog = (message, trace, type) =>
+        {
+            if (type == LogType.Error || type == LogType.Exception || type == LogType.Assert) error = message;
+        };
+        Application.logMessageReceived += onLog;
+        void Check(bool condition, string message)
+        {
+            if (!condition) throw new InvalidOperationException(message);
+            checks++;
+        }
+        try
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Map/MapCardPrefab.prefab");
+            var definitions = AssetDatabase.FindAssets("t:CardDefinition", new[] { "Assets/Data/Cards" })
+                .Select(g => AssetDatabase.LoadAssetAtPath<CardDefinition>(AssetDatabase.GUIDToAssetPath(g))).ToArray();
+            foreach (var definition in definitions)
+            {
+                var root = (GameObject)PrefabUtility.InstantiatePrefab(prefab, preview);
+                PrefabUtility.UnpackPrefabInstance(root, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
+                var view = root.GetComponent<MapCardView>();
+                view.Initialize(null, definition, "front-check");
+                var front = Field<GameObject>(view, "combatFrontInstance");
+                Check(front != null, "Missing card front: " + definition.name);
+                for (int pass = 0; pass < 2; pass++)
+                {
+                    view.Initialize(null, definition, "front-check");
+                    GameFonts.ApplyHierarchy(root.transform);
+                    var labels = front.GetComponentsInChildren<TMPro.TMP_Text>(true);
+                    Check(labels.Where(label => label.name != "CostText").All(label => !label.gameObject.activeSelf),
+                        "Map front description reappeared: " + definition.name);
+                    var costs = front.GetComponentsInChildren<TMPro.TMP_Text>().Where(label => label.name == "CostText").ToArray();
+                    Check(costs.Length == 1 && costs[0].text == definition.BaseValues.Cost.ToString(),
+                        "Map cost must stay visible and correct: " + definition.name);
+                    var combat = front.GetComponent<BuffCards>();
+                    Check(Field<UnityEngine.UI.Image>(combat, "artworkImage").sprite == definition.FrontIllustration &&
+                        Field<UnityEngine.UI.Image>(combat, "borderImage").sprite == definition.frontBorder,
+                        "Artwork or border changed: " + definition.name);
+                    Check(Field<TMPro.TMP_Text>(view, "effectText").gameObject.activeSelf &&
+                        !string.IsNullOrEmpty(Field<TMPro.TMP_Text>(view, "effectText").text) &&
+                        Field<TMPro.TMP_Text>(view, "titleText").text == definition.displayName,
+                        "Map back content changed: " + definition.name);
+                    typeof(MapCardView).GetMethod("SetFace", BindingFlags.Instance | BindingFlags.NonPublic)
+                        .Invoke(view, new object[] { true });
+                    Check(Field<GameObject>(view, "backFace").activeSelf && !Field<GameObject>(view, "frontFace").activeSelf,
+                        "Back visibility failed: " + definition.name);
+                    typeof(MapCardView).GetMethod("SetFace", BindingFlags.Instance | BindingFlags.NonPublic)
+                        .Invoke(view, new object[] { false });
+                }
+            }
+            Check(error == null, error ?? "Unexpected editor error.");
+            System.IO.Directory.CreateDirectory(RunIntegrationSetup.ResultDirectory);
+            System.IO.File.WriteAllText(RunIntegrationSetup.ResultDirectory + "/map-front-labels.txt",
+                "PASS: " + checks + " checks across " + definitions.Length + " cards; artwork, cost, back content, repeat binding and font refresh. No scene or prefab saved.\n");
+        }
+        finally
+        {
+            Application.logMessageReceived -= onLog;
+            UnityEditor.SceneManagement.EditorSceneManager.ClosePreviewScene(preview);
+        }
+    }
+
     public static void StartBatch()
     {
         var fleet = Card("FleetFootwork");

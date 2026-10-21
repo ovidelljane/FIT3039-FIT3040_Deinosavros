@@ -38,6 +38,7 @@ public sealed class MapProgressState
     public int CurrentEncounterLayer => CurrentEncounter != null && nodes.TryGetValue(CurrentEncounter.NodeId, out var node)
         ? node.layer : 1;
     public int CompletedCount => completed.Count;
+    public int CompletedCombatCount { get; private set; }
     public IEnumerable<string> NodeIds => nodes.Keys;
     public IReadOnlyList<string> NextNodes(string id) => nodes.TryGetValue(id, out var node)
         ? Array.AsReadOnly(node.next) : Array.Empty<string>();
@@ -69,6 +70,7 @@ public sealed class MapProgressState
             kinds.Add(n.id, catalog != null ? catalog.Find(n.id).kind : n.boss ? MapEncounterKind.Boss : MapEncounterKind.Battle);
         }
         completed.Clear(); available.Clear(); traveled.Clear(); passedLayer = 0;
+        CompletedCombatCount = 0;
 #if UNITY_EDITOR
         TestStartNodeId = null;
 #endif
@@ -131,6 +133,7 @@ public sealed class MapProgressState
     public bool CompleteEncounter(string encounterId, bool victory)
     {
         if (!Matches(encounterId) || Phase != MapProgressPhase.InEncounter) return false;
+        if (victory && CurrentEncounter.IsCombat) CompletedCombatCount++;
         var node = nodes[CurrentEncounter.NodeId]; available.Clear(); CurrentEncounter = null;
         if (!victory) Phase = MapProgressPhase.Lost;
         else

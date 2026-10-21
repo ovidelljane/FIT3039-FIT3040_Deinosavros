@@ -11,7 +11,7 @@ public sealed class MapNodeInteraction : MonoBehaviour
     private Camera sceneCamera;
     private Canvas canvas;
     private RectTransform panel;
-    private TMP_Text heading, category, body, instruction;
+    private TMP_Text heading;
     private MapEncounterNode hovered, pressed;
     private Vector2 pressPoint;
     private float hoverStarted, lastOnTarget;
@@ -99,17 +99,10 @@ public sealed class MapNodeInteraction : MonoBehaviour
     private void ShowDetail()
     {
         var info = view.profile.nodeInformation != null ? view.profile.nodeInformation.Find(hovered.NodeId) : null;
-        heading.text = info != null && !string.IsNullOrWhiteSpace(info.title) ? info.title : "Level " + hovered.Level;
-        category.text = (info != null ? info.KindLabel : "ENCOUNTER") + "  /  AVAILABLE";
-        body.text = info != null ? (info.summary ?? "").Replace("{recoveryPercent}",
-            (RunSession.Instance != null ? RunSession.Instance.RecoveryPercent : RunBalance.Default.recoveryPercent).ToString()) :
-            "Select this destination to continue your adventure.";
-        if (info != null && !string.IsNullOrWhiteSpace(info.enemies)) body.text += "\n\nEnemies: " + info.enemies;
-        if (info != null && !string.IsNullOrWhiteSpace(info.rewards)) body.text += "\n\nRewards: " + info.rewards;
-        instruction.text = "Click the level to travel";
-        float textHeight = Mathf.Clamp(body.GetPreferredValues(body.text, 264, 0).y, 46, 260);
-        body.rectTransform.sizeDelta = new Vector2(264, textHeight);
-        panel.sizeDelta = new Vector2(300, 124 + textHeight);
+        heading.text = (info != null ? info.kind : MapEncounterKind.Battle).ToString();
+        float width = Mathf.Max(132, heading.GetPreferredValues(heading.text).x + 36);
+        panel.sizeDelta = new Vector2(width, 56);
+        heading.rectTransform.sizeDelta = new Vector2(width - 36, 32);
         panel.gameObject.SetActive(true); PositionPanel();
     }
     private void PositionPanel()
@@ -131,18 +124,14 @@ public sealed class MapNodeInteraction : MonoBehaviour
     }
     private void CreatePanel()
     {
-        var root = new GameObject("NodeInfo", typeof(RectTransform), typeof(Image), typeof(Outline));
+        var root = new GameObject("NodeInfo", typeof(RectTransform), typeof(UnityEngine.UI.Image), typeof(UnityEngine.UI.Outline));
         panel = (RectTransform)root.transform; panel.SetParent(canvas.transform, false);
         panel.anchorMin = panel.anchorMax = new Vector2(.5f, .5f); panel.pivot = new Vector2(0, 1);
-        root.GetComponent<Image>().color = new Color(.13f, .085f, .052f, .97f);
-        var border = root.GetComponent<Outline>(); border.effectColor = new Color(.77f, .56f, .29f, 1); border.effectDistance = new Vector2(1, -1);
-        category = Text("Type", 14, new Vector2(18, -14), 264, 20, new Color(.88f, .69f, .41f));
-        heading = Text("Title", 24, new Vector2(18, -37), 264, 32, new Color(1, .91f, .72f));
+        root.GetComponent<UnityEngine.UI.Image>().color = new Color(.13f, .085f, .052f, .97f);
+        var border = root.GetComponent<UnityEngine.UI.Outline>(); border.effectColor = new Color(.77f, .56f, .29f, 1); border.effectDistance = new Vector2(1, -1);
+        heading = Text("Title", 24, new Vector2(18, -12), 264, 32, new Color(1, .91f, .72f));
+        heading.alignment = TextAlignmentOptions.Center;
         GameFonts.Apply(heading, GameFontRole.Heading);
-        body = Text("Content", 18, new Vector2(18, -77), 264, 100, new Color(.9f, .85f, .74f));
-        instruction = Text("Hint", 14, Vector2.zero, 264, 22, new Color(.91f, .71f, .39f));
-        instruction.rectTransform.anchorMin = instruction.rectTransform.anchorMax = new Vector2(0, 0);
-        instruction.rectTransform.pivot = Vector2.zero; instruction.rectTransform.anchoredPosition = new Vector2(18, 12);
         panel.gameObject.SetActive(false);
     }
     private TMP_Text Text(string name, float size, Vector2 position, float width, float height, Color color)

@@ -17,7 +17,7 @@ public sealed class EnemyModelPicker : MonoBehaviour
         foreach (var root in gameObject.scene.GetRootGameObjects())
             foreach (var actor in root.GetComponentsInChildren<BattleScript>())
             {
-                if (!actor.isActiveAndEnabled || !actor.CompareTag("Enemy")) continue;
+                if (!actor.isActiveAndEnabled || !actor.CompareTag("Enemy") || actor.GetComponent<BossCombat>() != null) continue;
                 // Draw without repeats until every model has been used once.
                 if (pool.Count == 0 && enemyModels != null)
                     foreach (var model in enemyModels) if (model != null) pool.Add(model);

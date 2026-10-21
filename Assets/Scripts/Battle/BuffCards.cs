@@ -5,7 +5,7 @@ using UnityEngine.UI;
 using TMPro;
 
 // Append new values at the end: prefabs store these as ints.
-public enum StatType { Damage, AttackSpeed, Heal, Shield, Elixir, DamageAllEnemies, ExtraHits, EnemySlow, ElixirRegen }
+public enum StatType { Damage, AttackSpeed, Heal, Shield, Elixir, DamageAllEnemies, ExtraHits, EnemySlow, ElixirRegen, JudgementDay, Cataclysm, FrequencySlow }
 
 public class BuffCards : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler, IPointerMoveHandler
 {
@@ -260,6 +260,7 @@ public class BuffCards : MonoBehaviour, IPointerClickHandler, IPointerEnterHandl
         {
             bool timed = stat == StatType.Damage || stat == StatType.AttackSpeed || stat == StatType.ExtraHits ||
                 stat == StatType.ElixirRegen || stat == StatType.EnemySlow;
+            if ((stat == StatType.JudgementDay || stat == StatType.Cataclysm) && GetComponent<AdvancedCardRules>() == null) return;
             if (timed && (effectPrefab == null || effectPrefab.GetComponent<Effect>() == null))
             {
                 Debug.LogError("Assign a valid timed effect prefab before playing this card.", this);
@@ -296,6 +297,8 @@ public class BuffCards : MonoBehaviour, IPointerClickHandler, IPointerEnterHandl
                 case StatType.Heal: player.health = Mathf.Min(player.health + (int)amount, player.maxHealth); break;
                 case StatType.Shield: player.shield += (int)amount; break;
                 case StatType.Elixir: player.elixir = Mathf.Min(player.elixir + amount, player.maxElixir); break;
+                case StatType.JudgementDay: GetComponent<AdvancedCardRules>().PlayJudgement(player, amount, effectDuration); break;
+                case StatType.Cataclysm: GetComponent<AdvancedCardRules>().PlayCataclysm(player, effectDuration); break;
                 
             }
             if (stat == StatType.Heal || stat == StatType.Shield || stat == StatType.Elixir)

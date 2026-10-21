@@ -44,6 +44,9 @@ public static class RunIntegrationSetup
             else if (action == "apply") ApplyAndVerify();
             else if (action == "verify") Verify();
             else if (action == "refresh") AssetDatabase.Refresh(ImportAssetOptions.ForceUpdate);
+            else if (action == "new-cards-boss") NewCardsBossSetup.Apply();
+            else if (action == "new-cards-boss-bindings") NewCardsBossSetup.VerifySavedBindings();
+            else if (action == "verify-new-cards-boss") NewCardsBossVerification.Start();
             else if (action == "reduce-plant-models") MapPlantModelReduction.Apply();
             else if (action == "play") RunIntegrationPlayVerification.Run();
             else if (action == "audio") RunIntegrationPlayVerification.RunAudioPresentation();
@@ -52,12 +55,18 @@ public static class RunIntegrationSetup
             else if (action == "enemy-loop") RunIntegrationPlayVerification.RunEnemyLoop();
             else if (action == "reward-ui") RunIntegrationPlayVerification.RunRewardPresentation();
             else if (action == "balance") RunIntegrationPlayVerification.RunBalance();
+            else if (action == "card-tuning") RunBalanceVerification.VerifyCardTuning();
+            else if (action == "combat-environment") CombatEnvironmentSetup.Apply();
+            else if (action == "verify-combat-environment") CombatEnvironmentSetup.Verify();
+            else if (action == "combat-environment-play") RunIntegrationPlayVerification.RunEnvironment();
             else if (action == "combat-feedback-apply") CombatFeedbackSetup.Apply();
             else if (action == "combat-feedback") RunIntegrationPlayVerification.RunCombatFeedback();
+            else if (action == "combat-recoil") RunIntegrationPlayVerification.RunCombatRecoil();
             else if (action == "combat-shadow-inspect") CombatShadowSetup.Inspect();
             else if (action == "combat-shadow-apply") CombatShadowSetup.Apply();
             else if (action == "combat-shadows") RunIntegrationPlayVerification.RunCombatShadows();
             else if (action == "card-artwork") MapCardArtworkVerification.StartBatch();
+            else if (action == "map-front-labels") MapCardArtworkVerification.VerifyFrontLabels();
             else if (action == "author-encounters") MapEncounterSceneAuthoring.Apply();
             else if (action == "author-opportunity-choices") MapEncounterSceneAuthoring.ApplyOpportunityChoices();
             else if (action == "opportunity-state") MapOpportunityVerification.VerifyState();

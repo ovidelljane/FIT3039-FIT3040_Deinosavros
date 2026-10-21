@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 063508554f8790442a8283fa3091dbee, type: 3}
+  m_Name: Cataclysm
+  m_EditorClassIdentifier: Assembly-CSharp::CardDefinition
+  cardId: cataclysm
+  displayName: Cataclysm
+  combatEffectText: 'For {duration}s, gain damage and attack rate based on current
+    HP:
+
+    Below {highThreshold}%: +{highBonus}%
+
+    Below {midThreshold}%: +{midBonus}%
+
+    Below
+    {lowThreshold}%: +{lowBonus}%
+
+    Replaying refreshes the duration.'
+  cardType: 1
+  capacityCost: 5
+  combatPrefab: {fileID: 3386567266915157623, guid: 5ec2dc8da02d23249822ae563c191d68, type: 3}
+  mapPrefab: {fileID: 0}
+  backPrefab: {fileID: 0}
+  frontArtwork: {fileID: 21300000, guid: 7c39037d970b52745a1254885309637d, type: 3}
+  frontArtworkRegion:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+  frontBorder: {fileID: 21300000, guid: 8301a261a4e11914eb5ca1683b6c439c, type: 3}
+  backArtwork: {fileID: 21300000, guid: b73586b0dc72d774894cffb4d459886d, type: 3}
+  overworldEffect:
+    effectType: 5
+    magnitude: 25
+    triggerEvery: 0
+    title: Cataclysm
+    description: Enemy attack rate -{magnitude}% for the entire next battle.
+    scopeLabel: Next battle
