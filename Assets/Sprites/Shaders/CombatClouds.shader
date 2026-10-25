@@ -40,7 +40,8 @@ Shader "Deinosavros/Combat/Clouds"
                 float time = _PreviewTime >= 0 ? _PreviewTime : _Time.y;
                 float2 uv = i.uv;
                 float billow = sin(uv.x * 9 + time * .19) * sin(uv.y * 6 - time * .13);
-                uv.x += time * _DriftSpeed * lerp(.65,1,saturate(uv.y)) + billow * _Billow;
+                // Keep drift uniform across rows so shear cannot accumulate over time.
+                uv.x += time * _DriftSpeed + billow * _Billow;
                 // Mirrored extension is continuous even when the source illustration is not tileable.
                 uv.x = 1 - abs(frac(uv.x * .5) * 2 - 1);
                 uv.y = clamp(uv.y + billow * _Billow * sin(saturate(uv.y) * PI), .002, .998);
