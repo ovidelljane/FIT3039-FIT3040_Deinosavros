@@ -7709,13 +7709,13 @@ MonoBehaviour:
   detailTransferPadding: 12
   hoverMotionTolerance: 6
   sequenceDirector: {fileID: 872248703}
-  dimOpacity: 0.731
+  dimOpacity: 0.777
   departureWarning: {fileID: 506274213}
   departurePanel: {fileID: 2098277871}
   departureMessage: {fileID: 584588617}
   departureContinue: {fileID: 1890908376}
   departureBack: {fileID: 276722743}
-  deckSettleDuration: 0.2
+  deckSettleDuration: 0.39
   transferArc: 50
   transferEndScale: 0.45
   bodyColor: {r: 0.94, g: 0.88, b: 0.76, a: 1}

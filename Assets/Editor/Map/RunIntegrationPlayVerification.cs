@@ -87,6 +87,13 @@ public static class RunIntegrationPlayVerification
         SessionState.SetBool(Key + ".feedbackOnly", true);
     }
 
+    [MenuItem("Tools/Battle/Verify Card Particles")]
+    public static void RunCombatVfx()
+    {
+        StartVerification(true);
+        SessionState.SetBool(Key + ".combatVfxOnly", true);
+    }
+
     [MenuItem("Tools/Battle/Verify Damage Scaled Recoil")]
     public static void RunCombatRecoil()
     {
@@ -214,6 +221,7 @@ public static class RunIntegrationPlayVerification
         SessionState.SetBool(Key + ".balanceOnly", false);
         SessionState.SetBool(Key + ".environmentOnly", false);
         SessionState.SetBool(Key + ".feedbackOnly", false);
+        SessionState.SetBool(Key + ".combatVfxOnly", false);
         SessionState.SetBool(Key + ".recoilOnly", false);
         SessionState.SetBool(Key + ".shadowsOnly", false);
         SessionState.SetBool(Key + ".cardFeedbackOnly", false);
@@ -269,7 +277,8 @@ public static class RunIntegrationPlayVerification
             if (routines.Count == 0)
             {
                 deadline = EditorApplication.timeSinceStartup + 360;
-                routines.Push(SessionState.GetBool(Key + ".timelineOnly", false) ? MapCardDetailVerification.RunTimeline(Check) :
+                routines.Push(SessionState.GetBool(Key + ".combatVfxOnly", false) ? CombatCardVfxAuthoring.VerifyRuntime(Check) :
+                    SessionState.GetBool(Key + ".timelineOnly", false) ? MapCardDetailVerification.RunTimeline(Check) :
                     SessionState.GetBool(Key + ".cardHoverOnly", false) ? MapCardDetailVerification.RunHover(Check) :
                     SessionState.GetBool(Key + ".pauseOnly", false) ? PauseMenuVerification.Run(Check) :
                     SessionState.GetBool(Key + ".environmentOnly", false) ? CombatEnvironmentSetup.VerifyRuntime(Check) :
@@ -300,7 +309,9 @@ public static class RunIntegrationPlayVerification
                 if (current.Current is IEnumerator nested) { routines.Push(nested); continue; }
                 return;
             }
-            Finish("PASS: " + assertions + " runtime checks; " + (SessionState.GetBool(Key + ".timelineOnly", false)
+            Finish("PASS: " + assertions + " runtime checks; " + (SessionState.GetBool(Key + ".combatVfxOnly", false)
+                ? "card particles follow accepted effects, stacking, shield consumption, expiration, basic attacks, pause and battle cleanup.\n"
+                : SessionState.GetBool(Key + ".timelineOnly", false)
                 ? "native sacrifice Timeline playback, seeking, pause/resume, editable timing, curves, transforms and materials; exact-instance commit and cleanup.\n"
                 : SessionState.GetBool(Key + ".cardHoverOnly", false)
                 ? "immediate first preview, hover dwell, protected pointer travel, deliberate switching, click priority, synchronized flips, exact-instance sacrifice and unchanged layout.\n"
