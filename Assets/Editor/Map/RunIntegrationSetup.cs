@@ -60,6 +60,8 @@ public static class RunIntegrationSetup
             else if (action == "verify-combat-environment") CombatEnvironmentSetup.Verify();
             else if (action == "combat-environment-play") RunIntegrationPlayVerification.RunEnvironment();
             else if (action == "combat-feedback-apply") CombatFeedbackSetup.Apply();
+            else if (action == "combat-vfx-apply") CombatCardVfxAuthoring.Apply();
+            else if (action == "combat-vfx") RunIntegrationPlayVerification.RunCombatVfx();
             else if (action == "combat-feedback") RunIntegrationPlayVerification.RunCombatFeedback();
             else if (action == "combat-recoil") RunIntegrationPlayVerification.RunCombatRecoil();
             else if (action == "combat-shadow-inspect") CombatShadowSetup.Inspect();

@@ -723,7 +723,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &86773205
 Transform:
   m_ObjectHideFlags: 0
@@ -1098,7 +1098,7 @@ ParticleSystem:
   emitterVelocityMode: 1
   looping: 1
   prewarm: 0
-  playOnAwake: 1
+  playOnAwake: 0
   useUnscaledTime: 0
   autoRandomSeed: 1
   startDelay:
@@ -7067,7 +7067,7 @@ ParticleSystem:
   emitterVelocityMode: 1
   looping: 0
   prewarm: 0
-  playOnAwake: 1
+  playOnAwake: 0
   useUnscaledTime: 0
   autoRandomSeed: 1
   startDelay:
@@ -12238,7 +12238,7 @@ Transform:
   m_GameObject: {fileID: 274178448}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0.8191521, z: 0.5735764, w: 0}
-  m_LocalPosition: {x: -7.41, y: 1.4425, z: -6.73}
+  m_LocalPosition: {x: -7.41, y: 2.325, z: -6.73}
   m_LocalScale: {x: 1.0118188, y: 0.6745458, z: -0.6745458}
   m_ConstrainProportionsScale: 1
   m_Children:
@@ -13949,7 +13949,7 @@ ParticleSystem:
   emitterVelocityMode: 1
   looping: 0
   prewarm: 0
-  playOnAwake: 1
+  playOnAwake: 0
   useUnscaledTime: 0
   autoRandomSeed: 1
   startDelay:
@@ -19633,7 +19633,7 @@ ParticleSystem:
   emitterVelocityMode: 1
   looping: 0
   prewarm: 0
-  playOnAwake: 1
+  playOnAwake: 0
   useUnscaledTime: 0
   autoRandomSeed: 1
   startDelay:
@@ -24873,7 +24873,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &581668213
 Transform:
   m_ObjectHideFlags: 0
@@ -25331,7 +25331,7 @@ ParticleSystem:
   emitterVelocityMode: 1
   looping: 1
   prewarm: 0
-  playOnAwake: 1
+  playOnAwake: 0
   useUnscaledTime: 0
   autoRandomSeed: 1
   startDelay:
@@ -30503,7 +30503,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &654614901
 Transform:
   m_ObjectHideFlags: 0
@@ -30604,7 +30604,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &665658209
 Transform:
   m_ObjectHideFlags: 0
@@ -31024,7 +31024,7 @@ Transform:
   m_GameObject: {fileID: 685612089}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0.8191521, z: 0.5735764, w: 0}
-  m_LocalPosition: {x: -3.9032, y: 1.5075, z: -10.41}
+  m_LocalPosition: {x: -3.9032, y: 2.39, z: -10.41}
   m_LocalScale: {x: 1.0039191, y: 0.66927946, z: -0.66927946}
   m_ConstrainProportionsScale: 1
   m_Children:
@@ -32385,7 +32385,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &802327215
 Transform:
   m_ObjectHideFlags: 0
@@ -35487,7 +35487,7 @@ Transform:
   m_GameObject: {fileID: 1079615865}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0.8191521, z: 0.5735764, w: 0}
-  m_LocalPosition: {x: -6.92, y: 1.503367, z: -0.87089384}
+  m_LocalPosition: {x: -6.92, y: 2.3858669, z: -0.87089384}
   m_LocalScale: {x: 1.0532058, y: 0.70213723, z: -0.70213735}
   m_ConstrainProportionsScale: 1
   m_Children:
@@ -36807,7 +36807,7 @@ ParticleSystem:
   emitterVelocityMode: 1
   looping: 1
   prewarm: 0
-  playOnAwake: 1
+  playOnAwake: 0
   useUnscaledTime: 0
   autoRandomSeed: 1
   startDelay:
@@ -42704,7 +42704,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1262908458
 Transform:
   m_ObjectHideFlags: 0
@@ -44796,7 +44796,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1398237344
 Transform:
   m_ObjectHideFlags: 0
@@ -45843,7 +45843,7 @@ ParticleSystem:
   emitterVelocityMode: 1
   looping: 0
   prewarm: 0
-  playOnAwake: 1
+  playOnAwake: 0
   useUnscaledTime: 0
   autoRandomSeed: 1
   startDelay:
@@ -50840,7 +50840,7 @@ ParticleSystem:
   emitterVelocityMode: 1
   looping: 0
   prewarm: 0
-  playOnAwake: 1
+  playOnAwake: 0
   useUnscaledTime: 0
   autoRandomSeed: 1
   startDelay:
@@ -55826,7 +55826,7 @@ ParticleSystem:
   emitterVelocityMode: 1
   looping: 0
   prewarm: 0
-  playOnAwake: 1
+  playOnAwake: 0
   useUnscaledTime: 0
   autoRandomSeed: 1
   startDelay:
@@ -63008,7 +63008,7 @@ ParticleSystem:
   emitterVelocityMode: 1
   looping: 0
   prewarm: 0
-  playOnAwake: 1
+  playOnAwake: 0
   useUnscaledTime: 0
   autoRandomSeed: 1
   startDelay:
@@ -70401,6 +70401,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1952788140}
+  - component: {fileID: 1952788141}
   m_Layer: 0
   m_Name: Particles
   m_TagString: Untagged
@@ -70434,6 +70435,115 @@ Transform:
   - {fileID: 86773205}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1952788141
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1952788139}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6c0074f4f2b1c6c46b8ee923db91f6e1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CombatCardVfx
+  bindings:
+  - name: Haste
+    stats: 01000000
+    sustained: 1
+    parts:
+    - template: {fileID: 4472141238446569549}
+      offset: {x: 0, y: -0.25, z: 0}
+      scale: 0.1
+      playbackSpeed: 1
+      loop: 1
+  - name: MultiHit
+    stats: 06000000
+    sustained: 1
+    parts:
+    - template: {fileID: 4472141238446569548}
+      offset: {x: 0, y: -0.4, z: 0}
+      scale: 0.045
+      playbackSpeed: 1
+      loop: 1
+    - template: {fileID: 4472141238446569549}
+      offset: {x: 0, y: -0.25, z: 0}
+      scale: 0.1
+      playbackSpeed: 1
+      loop: 1
+  - name: Cataclysm
+    stats: 0a000000
+    sustained: 1
+    parts:
+    - template: {fileID: 4472141238446569548}
+      offset: {x: 0, y: -0.31, z: 0}
+      scale: 0.085
+      playbackSpeed: 1.1
+      loop: 1
+  - name: Damage
+    stats: 00000000
+    sustained: 1
+    parts:
+    - template: {fileID: 1514364420}
+      offset: {x: 0, y: -0.4, z: 0}
+      scale: 0.045
+      playbackSpeed: 1
+      loop: 1
+    - template: {fileID: 243691434}
+      offset: {x: 0, y: -0.42, z: 0}
+      scale: 0.15
+      playbackSpeed: 1
+      loop: 1
+  - name: Shield
+    stats: 03000000
+    sustained: 1
+    parts:
+    - template: {fileID: 7752427474036425584}
+      offset: {x: 0, y: 0, z: 0}
+      scale: 0.18
+      playbackSpeed: 1
+      loop: 0
+    - template: {fileID: 7752427474036425583}
+      offset: {x: 0, y: 0, z: 0}
+      scale: 0.25
+      playbackSpeed: 1
+      loop: 1
+  - name: Elixir
+    stats: 0400000008000000
+    sustained: 0
+    parts:
+    - template: {fileID: 8696260759955063796}
+      offset: {x: 0, y: -0.35, z: 0}
+      scale: 0.18
+      playbackSpeed: 1.5
+      loop: 0
+    - template: {fileID: 8696260759955063795}
+      offset: {x: 0, y: 0.1, z: 0}
+      scale: 0.12
+      playbackSpeed: 1.8
+      loop: 0
+  - name: Slow
+    stats: 070000000b000000
+    sustained: 1
+    parts:
+    - template: {fileID: 3159477836815726602}
+      offset: {x: 0, y: -0.39, z: 0}
+      scale: 0.12
+      playbackSpeed: 1
+      loop: 1
+    - template: {fileID: 3159477836815726601}
+      offset: {x: 0, y: 0.31, z: 0}
+      scale: 0.13
+      playbackSpeed: 1
+      loop: 1
+  attackImpact:
+    template: {fileID: 1173552936}
+    offset: {x: 0, y: 0.05, z: 0}
+    scale: 0.24
+    playbackSpeed: 5.01
+    loop: 0
+  maximumBursts: 16
+  cameraOffset: 0.04
 --- !u!1 &1953967746
 GameObject:
   m_ObjectHideFlags: 0
@@ -72667,15 +72777,37 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2825211489389768188, guid: 858ef5f060d7204479cf73c0ac3813b6, type: 3}
+      propertyPath: playOnAwake
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3754430805634701382, guid: 858ef5f060d7204479cf73c0ac3813b6, type: 3}
+      propertyPath: playOnAwake
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4803309609069587521, guid: 858ef5f060d7204479cf73c0ac3813b6, type: 3}
       propertyPath: m_Name
       value: DebuffParticle
+      objectReference: {fileID: 0}
+    - target: {fileID: 4803309609069587521, guid: 858ef5f060d7204479cf73c0ac3813b6, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 858ef5f060d7204479cf73c0ac3813b6, type: 3}
+--- !u!198 &3159477836815726601 stripped
+ParticleSystem:
+  m_CorrespondingSourceObject: {fileID: 3754430805634701382, guid: 858ef5f060d7204479cf73c0ac3813b6, type: 3}
+  m_PrefabInstance: {fileID: 3159477836815726600}
+  m_PrefabAsset: {fileID: 0}
+--- !u!198 &3159477836815726602 stripped
+ParticleSystem:
+  m_CorrespondingSourceObject: {fileID: 2825211489389768188, guid: 858ef5f060d7204479cf73c0ac3813b6, type: 3}
+  m_PrefabInstance: {fileID: 3159477836815726600}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &4472141238446569547
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -72687,6 +72819,18 @@ PrefabInstance:
     - target: {fileID: 209009989742511471, guid: 8cb92277b79e4f6479a00efa279cc680, type: 3}
       propertyPath: m_Name
       value: BuffParticle
+      objectReference: {fileID: 0}
+    - target: {fileID: 209009989742511471, guid: 8cb92277b79e4f6479a00efa279cc680, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3608970685166316376, guid: 8cb92277b79e4f6479a00efa279cc680, type: 3}
+      propertyPath: playOnAwake
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4110929150790345690, guid: 8cb92277b79e4f6479a00efa279cc680, type: 3}
+      propertyPath: playOnAwake
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5680615467354376666, guid: 8cb92277b79e4f6479a00efa279cc680, type: 3}
       propertyPath: m_LocalPosition.x
@@ -72733,6 +72877,16 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 8cb92277b79e4f6479a00efa279cc680, type: 3}
+--- !u!198 &4472141238446569548 stripped
+ParticleSystem:
+  m_CorrespondingSourceObject: {fileID: 3608970685166316376, guid: 8cb92277b79e4f6479a00efa279cc680, type: 3}
+  m_PrefabInstance: {fileID: 4472141238446569547}
+  m_PrefabAsset: {fileID: 0}
+--- !u!198 &4472141238446569549 stripped
+ParticleSystem:
+  m_CorrespondingSourceObject: {fileID: 4110929150790345690, guid: 8cb92277b79e4f6479a00efa279cc680, type: 3}
+  m_PrefabInstance: {fileID: 4472141238446569547}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &4761433001475095310
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -72860,6 +73014,10 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 318046854433112383, guid: 27501aaee7896364eb8e5f02dc5ecbf3, type: 3}
+      propertyPath: playOnAwake
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 318046854433112383, guid: 27501aaee7896364eb8e5f02dc5ecbf3, type: 3}
       propertyPath: TrailModule.enabled
       value: 1
       objectReference: {fileID: 0}
@@ -72869,6 +73027,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1818440619356384782, guid: 27501aaee7896364eb8e5f02dc5ecbf3, type: 3}
       propertyPath: looping
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1818440619356384782, guid: 27501aaee7896364eb8e5f02dc5ecbf3, type: 3}
+      propertyPath: playOnAwake
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2394585326413627664, guid: 27501aaee7896364eb8e5f02dc5ecbf3, type: 3}
@@ -72923,11 +73085,25 @@ PrefabInstance:
       propertyPath: m_Name
       value: ShieldParticle
       objectReference: {fileID: 0}
+    - target: {fileID: 8410616872634574306, guid: 27501aaee7896364eb8e5f02dc5ecbf3, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 27501aaee7896364eb8e5f02dc5ecbf3, type: 3}
+--- !u!198 &7752427474036425583 stripped
+ParticleSystem:
+  m_CorrespondingSourceObject: {fileID: 1818440619356384782, guid: 27501aaee7896364eb8e5f02dc5ecbf3, type: 3}
+  m_PrefabInstance: {fileID: 7752427474036425582}
+  m_PrefabAsset: {fileID: 0}
+--- !u!198 &7752427474036425584 stripped
+ParticleSystem:
+  m_CorrespondingSourceObject: {fileID: 318046854433112383, guid: 27501aaee7896364eb8e5f02dc5ecbf3, type: 3}
+  m_PrefabInstance: {fileID: 7752427474036425582}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &8696260759955063794
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -72976,15 +73152,37 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 3293998994286114152, guid: 78e4f294e252f0f42b1d0728ccc80eac, type: 3}
+      propertyPath: playOnAwake
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7860774041322116293, guid: 78e4f294e252f0f42b1d0728ccc80eac, type: 3}
+      propertyPath: playOnAwake
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8683293143296409699, guid: 78e4f294e252f0f42b1d0728ccc80eac, type: 3}
       propertyPath: m_Name
       value: ElixirParticle
+      objectReference: {fileID: 0}
+    - target: {fileID: 8683293143296409699, guid: 78e4f294e252f0f42b1d0728ccc80eac, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 78e4f294e252f0f42b1d0728ccc80eac, type: 3}
+--- !u!198 &8696260759955063795 stripped
+ParticleSystem:
+  m_CorrespondingSourceObject: {fileID: 7860774041322116293, guid: 78e4f294e252f0f42b1d0728ccc80eac, type: 3}
+  m_PrefabInstance: {fileID: 8696260759955063794}
+  m_PrefabAsset: {fileID: 0}
+--- !u!198 &8696260759955063796 stripped
+ParticleSystem:
+  m_CorrespondingSourceObject: {fileID: 3293998994286114152, guid: 78e4f294e252f0f42b1d0728ccc80eac, type: 3}
+  m_PrefabInstance: {fileID: 8696260759955063794}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
