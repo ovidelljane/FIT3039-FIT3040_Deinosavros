@@ -142,7 +142,8 @@ public static class MapCardArtworkVerification
         var definitions = AssetDatabase.FindAssets("t:CardDefinition", new[] { "Assets/Data/Cards" })
             .Select(g => AssetDatabase.LoadAssetAtPath<CardDefinition>(AssetDatabase.GUIDToAssetPath(g)))
             .OrderBy(c => c.displayName).ToArray();
-        check(definitions.Length == 11 && definitions.All(c => c.FrontIllustration != null), "All eleven cards have illustrations.");
+        check(definitions.Length == AssetDatabase.LoadAssetAtPath<CardPool>("Assets/Data/CardPool.asset").Cards.Count &&
+            definitions.All(c => c.FrontIllustration != null), "All registered cards have illustrations.");
         check(Card("TidalWave").frontArtwork.name == "TIDAL_WAVE" && Card("UncertainFates").frontArtwork.name == "GOLDEN_CHARIOT",
             "The two newly imported illustrations are bound to the intended definitions.");
         var fleet = Card("FleetFootwork");
@@ -193,6 +194,7 @@ public static class MapCardArtworkVerification
             {
                 var point = RectTransformUtility.WorldToScreenPoint(null, view.transform.position);
                 view.OnPointerEnter(new PointerEventData(EventSystem.current) { position = point });
+                view.OnPointerClick(new PointerEventData(EventSystem.current) { position = point, button = PointerEventData.InputButton.Left });
             }
             yield return Delay(.8f);
             var reference = Field<Image>(views[0], "backArtwork");
@@ -202,7 +204,7 @@ public static class MapCardArtworkVerification
             {
                 var back = Field<Image>(view, "backArtwork");
                 check(Field<GameObject>(view, "backFace").activeSelf && !Field<GameObject>(view, "frontFace").activeSelf,
-                    view.Definition.name + ": hover shows only the back.");
+                    view.Definition.name + ": clicking shows only the back.");
                 check(back.rectTransform.rect == reference.rectTransform.rect && back.preserveAspect &&
                     back.rectTransform.localScale == Vector3.one && back.rectTransform.anchoredPosition == Vector2.zero,
                     view.Definition.name + ": identical frame size, centering and undistorted aspect.");
@@ -225,11 +227,17 @@ public static class MapCardArtworkVerification
             check(overflow.Count == 0, "All offering back labels fit: " + string.Join("; ", overflow));
             foreach (var view in views) view.OnPointerExit(null);
             yield return Delay(.5f);
-            check(views.All(v => Field<GameObject>(v, "frontFace").activeSelf), "Every card returns to its front after hover.");
+            check(views.All(v => v.IsBack), "Leaving hover preserves each card's chosen face.");
+            foreach (var view in views) view.OnPointerClick(new PointerEventData(EventSystem.current) { button = PointerEventData.InputButton.Left });
+            yield return Delay(.5f);
+            check(views.All(v => Field<GameObject>(v, "frontFace").activeSelf), "Clicking again returns cards to their fronts.");
             // Reverse a partial flip to exercise the existing hit-area/animation separation.
             var last = views.Last();
             last.OnPointerEnter(new PointerEventData(EventSystem.current) { position = RectTransformUtility.WorldToScreenPoint(null, last.transform.position) });
-            yield return Delay(.1f); last.OnPointerExit(null); yield return Delay(.4f);
+            last.OnPointerClick(new PointerEventData(EventSystem.current) { button = PointerEventData.InputButton.Left });
+            yield return Delay(.1f);
+            last.OnPointerClick(new PointerEventData(EventSystem.current) { button = PointerEventData.InputButton.Left });
+            last.OnPointerExit(null); yield return Delay(.4f);
             check(Field<GameObject>(last, "frontFace").activeSelf, "A partial flip reverses without sticking on the back.");
         }
         finally { Object.Destroy(board); }

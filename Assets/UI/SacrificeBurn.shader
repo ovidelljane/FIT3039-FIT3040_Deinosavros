@@ -3,10 +3,9 @@ Shader "Deinosavros/UI/Sacrifice Burn"
     Properties
     {
         [PerRendererData] _MainTex("Card Snapshot", 2D) = "white" {}
-        _Progress("Burn Progress", Range(0,1)) = 0
-        _Heat("Ignition", Range(0,1)) = 0
-        _Clock("Visual Time", Float) = 0
-        _Seed("Variation", Float) = 0
+        [HideInInspector] _Progress("Burn Progress", Range(0,1)) = 0
+        [HideInInspector] _Clock("Visual Time", Float) = 0
+        [HideInInspector] _Seed("Variation", Float) = 0
         _CharWidth("Char Width", Range(.01,.25)) = .085
         _EdgeWidth("Ember Width", Range(.002,.06)) = .018
         _CharColor("Charcoal", Color) = (.075,.032,.018,1)
@@ -45,7 +44,7 @@ Shader "Deinosavros/UI/Sacrifice Burn"
             sampler2D _MainTex;
             float4 _ClipRect;
             half4 _CharColor, _EmberColor, _HotColor;
-            float _Progress, _Heat, _Clock, _Seed, _CharWidth, _EdgeWidth, _ParticleMode;
+            float _Progress, _Clock, _Seed, _CharWidth, _EdgeWidth, _ParticleMode;
             int _UIVertexColorAlwaysGammaSpace;
             struct Input { float4 vertex : POSITION; half4 color : COLOR; float2 uv : TEXCOORD0; float2 kind : TEXCOORD1; };
             struct Output { float4 position : SV_POSITION; half4 color : COLOR; float2 uv : TEXCOORD0; float2 local : TEXCOORD1; float kind : TEXCOORD2; };
@@ -114,8 +113,6 @@ Shader "Deinosavros/UI/Sacrifice Burn"
                     half3 surface = lerp(original,charred,charMask*.95);
                     surface = lerp(surface,_EmberColor.rgb,rim*flicker);
                     surface = lerp(surface,_HotColor.rgb,hot*.85);
-                    float ignition = (1-smoothstep(.005,.055,border))*_Heat*(.4+.6*broad);
-                    surface = lerp(surface,_EmberColor.rgb,ignition*.65);
                     result.a = card.a*i.color.a*cover;
                     result.rgb = surface*i.color.rgb*result.a;
                 }

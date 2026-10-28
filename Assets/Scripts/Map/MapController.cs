@@ -21,6 +21,7 @@ public sealed class MapController : MonoBehaviour
     [SerializeField, Min(0)] private int sacrificeReminderCapacity = 25;
     private string warnedNodeId;
     private int inputReleaseFrame = -1;
+    private readonly HashSet<string> backFacingCards = new();
     [SerializeField] private MapCardView[] prebuiltCardViews;
     [SerializeField] private MapGraphDefinition routeGraph;
     [SerializeField] private MapTravelView travelView;
@@ -47,7 +48,7 @@ public sealed class MapController : MonoBehaviour
     public bool UsesTravelInteraction => travelView != null && routeGraph != null;
     public MapNodeInteraction NodeInteraction => nodeInteraction;
     public MapEncounterRouting EncounterRouting => encounterRouting;
-    public bool CanInteract => !loading && Time.frameCount > inputReleaseFrame && (sacrificePanel == null || !sacrificePanel.IsBlocking) &&
+    public bool CanInteract => !PauseMenu.IsPaused && !loading && Time.frameCount > inputReleaseFrame && (sacrificePanel == null || !sacrificePanel.IsBlocking) &&
         (runSession?.Progress == null || runSession.Progress.Phase == MapProgressPhase.OnMap) && (travel == null || !travel.IsBusy);
 
     private void Start()
@@ -179,10 +180,37 @@ public sealed class MapController : MonoBehaviour
 
     public void RequestSacrifice(MapCardView cardView)
     {
+        ShowCardDetail(cardView);
+    }
+
+    public bool CardShowsBack(string instanceId) => !string.IsNullOrEmpty(instanceId) && backFacingCards.Contains(instanceId);
+    public void RememberCardFace(string instanceId, bool back)
+    {
+        if (string.IsNullOrEmpty(instanceId)) return;
+        if (back) backFacingCards.Add(instanceId); else backFacingCards.Remove(instanceId);
+    }
+    public void ShowCardDetail(MapCardView cardView)
+    {
         if (!CanInteract || cardView == null || sacrificePanel == null) return;
         nodeInteraction?.Close();
-        foreach (var card in prebuiltCardViews) if (card != null) card.SetInteractionLocked(true);
         sacrificePanel.Open(cardView);
+    }
+    public void HoverCardDetail(MapCardView cardView, PointerEventData eventData)
+    {
+        if (!CanInteract || cardView == null || sacrificePanel == null) return;
+        nodeInteraction?.Close();
+        sacrificePanel.HoverCard(cardView, eventData);
+    }
+    public void LockSacrificeInput()
+    {
+        nodeInteraction?.Close();
+        foreach (var card in prebuiltCardViews) if (card != null) card.SetInteractionLocked(true);
+    }
+    private bool HasActiveCardInstance(string id)
+    {
+        foreach (var card in runSession.RunDeck)
+            if (card.instanceId == id && !card.sacrificed) return true;
+        return false;
     }
 
     public bool TryCommitSacrifice(CardDefinition definition, string instanceId, out string reason)
@@ -207,6 +235,7 @@ public sealed class MapController : MonoBehaviour
 
     private void BuildDeckView()
     {
+        backFacingCards.RemoveWhere(id => !HasActiveCardInstance(id));
         var previous = new Dictionary<string, Vector3>();
         if (sacrificePanel != null && sacrificePanel.IsBusy)
             foreach (var view in prebuiltCardViews)
@@ -325,6 +354,7 @@ public sealed class MapController : MonoBehaviour
 
     private void ResetRunPresentation()
     {
+        backFacingCards.Clear();
         warnedNodeId = null;
         nodeInteraction?.Close();
         sacrificePanel?.HideImmediate();

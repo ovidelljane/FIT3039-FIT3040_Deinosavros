@@ -49,7 +49,8 @@ public static class GameFonts
         foreach (var text in root.GetComponentsInChildren<TMP_Text>(true))
         {
             if (preserveRoot != null && text.transform.IsChildOf(preserveRoot)) continue;
-            if (text.GetComponentInParent<MapSacrificePanel>(true) != null ||
+            if (text.GetComponentInParent<PauseMenu>(true) != null ||
+                text.GetComponentInParent<MapSacrificePanel>(true) != null ||
                 text.GetComponentInParent<MapPlayerStatusPanel>(true) != null ||
                 text.GetComponentInParent<MapCardView>(true)?.PreservesBackTypography(text.transform) == true) continue;
             string label = text.name.ToLowerInvariant();

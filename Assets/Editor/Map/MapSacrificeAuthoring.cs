@@ -58,6 +58,8 @@ public static class MapSacrificeAuthoring
                 data.FindProperty("sacrificePanel").objectReferenceValue = authored;
                 data.ApplyModifiedPropertiesWithoutUndo(); changed = true;
             }
+            changed |= MapCardDetailAuthoring.Migrate(authored);
+            changed |= MapCardDetailAuthoring.EnableHierarchyEditing(authored);
             changed |= SimplifyPanelCopy(authored);
             if (changed) { EditorSceneManager.MarkSceneDirty(scene); EditorSceneManager.SaveScene(scene); }
             scene = EditorSceneManager.OpenScene(ScenePath);
@@ -201,75 +203,52 @@ public static class MapSacrificeAuthoring
 
     private static MapSacrificePanel BuildPanel(Canvas canvas, TMP_Text status)
     {
-        var root = Rect("Sacrifice", canvas.transform); Stretch(root);
+        var root = Rect("Sacrifice",canvas.transform); Stretch(root);
         var ui = root.gameObject.AddComponent<MapSacrificePanel>();
         ui.statusText = status; status.text = "Sacrifice available";
-        status.font = Body; status.fontSize = 22; status.fontSizeMin = 18; status.enableAutoSizing = true;
-        var statusRect = status.rectTransform;
-        statusRect.anchorMin = new(.66f, 0); statusRect.anchorMax = Vector2.one;
-        statusRect.offsetMin = new(12, 4); statusRect.offsetMax = new(-24, -4);
-        status.alignment = TextAlignmentOptions.MidlineRight; status.raycastTarget = true;
-        ui.statusButton = status.gameObject.AddComponent<Button>(); ui.statusButton.targetGraphic = status;
+        ui.statusButton = status.GetComponent<Button>() ?? status.gameObject.AddComponent<Button>();
+        ui.statusButton.targetGraphic = status; status.raycastTarget = true;
         PlaceStatus(ui);
-        ui.statusPopup = Box("Pending", root, Panel, Vector2.zero, new(430, 320)).gameObject;
-        var popupRect = (RectTransform)ui.statusPopup.transform; popupRect.anchorMin = popupRect.anchorMax = popupRect.pivot = Vector2.one;
-        popupRect.anchoredPosition = new(-24, -68); Border(ui.statusPopup, Gold);
-        ui.statusDetails = Label("Details", popupRect, "", Vector2.zero, new(390, 280), 20);
-        ui.statusDetails.alignment = TextAlignmentOptions.TopLeft; ui.statusPopup.GetComponent<Image>().raycastTarget = true;
-        ui.statusPopup.SetActive(false);
-        var overlay = Box("Overlay", root, new(.06f, .045f, .032f, .48f), Vector2.zero, Vector2.zero);
-        Stretch(overlay.rectTransform); overlay.raycastTarget = true; ui.overlay = overlay.gameObject;
-        var safe = Rect("SafeArea", overlay.transform); safe.anchorMin = new(0, .27f); safe.anchorMax = new(1, .94f); safe.offsetMin = safe.offsetMax = Vector2.zero;
-        var panel = Box("Panel", safe, Panel, Vector2.zero, new(960, 560)); panel.raycastTarget = true;
-        ui.panel = panel.rectTransform; Border(panel.gameObject, Gold);
-        Box("Header", panel.transform, Ink, new(0, 243), new(958, 72));
-        var heading = Label("Title", panel.transform, "SACRIFICE", new(-208, 241), new(480, 42), 30, true); heading.alignment = TextAlignmentOptions.MidlineLeft;
-        Label("Subtitle", panel.transform, "A card for a blessing", new(239, 241), new(320, 30), 21);
-        Box("Rule", panel.transform, Gold, new(0, 207), new(902, 1));
-        // Restrained meander accents, made from original flat vector segments.
-        for (int side = -1; side <= 1; side += 2)
-        {
-            var corner = Rect(side < 0 ? "LeftKey" : "RightKey", panel.transform); Set(corner, new(side * 452, -191), new(18, 18));
-            Box("A", corner, Gold, new(0, 0), new(20, 2)); Box("B", corner, Gold, new(9, 5), new(2, 12));
-            Box("C", corner, Gold, new(3, 10), new(12, 2)); Box("D", corner, Gold, new(-2, 7), new(2, 8));
-        }
-        Label("Give", panel.transform, "YOU GIVE", new(-320, 183), new(248, 25), 18, true);
-        ui.cardPreview = Rect("Card", panel.transform); Set(ui.cardPreview, new(-320, 15), new(220, 292));
-        ui.cardGroup = ui.cardPreview.gameObject.AddComponent<CanvasGroup>(); ui.cardGroup.blocksRaycasts = false;
-        Box("Paper", ui.cardPreview, Ink, Vector2.zero, new(164, 276));
-        ui.illustration = Box("Art", ui.cardPreview, Color.white, new(0, 8), new(163, 224)); ui.illustration.preserveAspect = true;
-        ui.frame = Box("Frame", ui.cardPreview, Color.white, Vector2.zero, new(264, 363)); ui.frame.preserveAspect = true;
-        ui.cardOutline = ui.frame.gameObject.AddComponent<Outline>(); ui.cardOutline.effectDistance = new(3, -3); ui.cardOutline.enabled = false;
-        ui.combatText = Label("CombatText", ui.cardPreview, "", new(0, -17), new(150, 200), 21); ui.combatText.fontSizeMin = 18;
-        var textShadow = ui.combatText.gameObject.AddComponent<Shadow>(); textShadow.effectColor = new(0, 0, 0, .95f); textShadow.effectDistance = new(1, -1);
-        ui.cost = Label("Cost", ui.cardPreview, "", new(-75, 132), new(24, 28), 19);
-        ui.categoryMedallion = Box("Category", ui.cardPreview, Color.clear, new(0, -137), new(35, 2));
-        ui.cardName = Label("Name", panel.transform, "", new(-320, -147), new(265, 44), 19, true); ui.cardName.fontSizeMin = 16; ui.cardName.enableAutoSizing = true;
-        Box("Divider", panel.transform, new(.46f, .37f, .26f), new(-167, 9), new(1, 345));
-        var next = Label("Scope", panel.transform, "NEXT BATTLE", new(160, 183), new(510, 26), 18, true); next.alignment = TextAlignmentOptions.MidlineLeft;
-        ui.effectIcon = Icon("Effect", panel.transform, new(-101, 112), 66);
-        ui.brokenHeartCut = Box("Fracture", ui.effectIcon.transform, Panel, Vector2.zero, new(4, 39));
-        ui.brokenHeartCut.rectTransform.localEulerAngles = new(0, 0, -18); ui.brokenHeartCut.enabled = false;
-        ui.benefitTitle = Label("BenefitTitle", panel.transform, "", new(181, 139), new(444, 42), 26, true);
-        ui.benefitTitle.alignment = TextAlignmentOptions.MidlineLeft;
-        ui.benefitValue = Label("Value", panel.transform, "", new(181, 80), new(444, 68), 36); ui.benefitValue.fontSizeMin = 30; ui.benefitValue.enableAutoSizing = true;
-        ui.benefitValue.alignment = TextAlignmentOptions.MidlineLeft;
-        ui.benefitDetails = Label("Details", panel.transform, "", new(145, -19), new(520, 100), 24); ui.benefitDetails.alignment = TextAlignmentOptions.TopLeft;
-        ui.benefitLimit = Label("Limit", panel.transform, "", new(145, -114), new(520, 58), 20); ui.benefitLimit.alignment = TextAlignmentOptions.TopLeft;
-        ui.benefitLimit.color = new(.76f, .71f, .62f);
-        Box("Footer", panel.transform, Ink, new(0, -224), new(958, 110));
-        ui.capacity = Label("Capacity", panel.transform, "", new(-174, -190), new(545, 36), 22); ui.capacity.alignment = TextAlignmentOptions.MidlineLeft;
-        Label("Removal", panel.transform, "Removed from this run.", new(-18, -220), new(240, 30), 18);
-        ui.reason = Label("Reason", panel.transform, "", new(-5, -251), new(450, 44), 17);
-        ui.reason.enableAutoSizing = true; ui.reason.fontSizeMin = 15;
-        ui.confirm = Button("Confirm", panel.transform, "Sacrifice Card", new(324, -239), new(240, 52), true);
-        ui.close = Button("Close", panel.transform, "X", new(447, 243), new(40, 40), false);
-        ui.flightIcon = Icon("OfferingFlight", overlay.transform, Vector2.zero, 66);
-        ui.flightHeartCut = Box("Fracture", ui.flightIcon.transform, Ink, Vector2.zero, new(4, 39));
-        ui.flightHeartCut.rectTransform.localEulerAngles = new(0, 0, -18);
+        ui.statusPopup = Box("Pending",root,Panel,Vector2.zero,new(430,320)).gameObject;
+        var popup = (RectTransform)ui.statusPopup.transform;
+        popup.anchorMin = popup.anchorMax = popup.pivot = Vector2.one;
+        popup.anchoredPosition = new(-24,-68); Border(ui.statusPopup,Gold);
+        ui.statusDetails = Label("Details",popup,"",Vector2.zero,new(390,280),20);
+        ui.statusDetails.alignment = TextAlignmentOptions.TopLeft;
+        ui.statusPopup.GetComponent<Image>().raycastTarget = true; ui.statusPopup.SetActive(false);
+        var overlay = Box("Overlay",root,new(.06f,.045f,.032f,0),Vector2.zero,Vector2.zero);
+        Stretch(overlay.rectTransform); ui.overlay = overlay.gameObject;
+        var safe = Rect("SafeArea",overlay.transform);
+        safe.anchorMin = new(0,.27f); safe.anchorMax = new(1,.94f); safe.offsetMin = safe.offsetMax = Vector2.zero;
+        var panel = Box("Detail",safe,Color.clear,new(244,0),new(440,696));
+        panel.rectTransform.anchorMin = panel.rectTransform.anchorMax = new(0,.5f);
+        panel.raycastTarget = true; ui.panel = panel.rectTransform;
+        // Supply only the live content; the shared migration arranges the full-art presentation.
+        ui.cardPreview = Rect("Card",panel.transform);
+        ui.illustration = Box("Artwork",ui.cardPreview,Color.white,Vector2.zero,new(440,696));
+        ui.cardName = Label("Name",ui.cardPreview,"",new(0,280),new(376,92),32,true);
+        ui.combatText = Label("Effect",ui.cardPreview,"",new(0,-105),new(376,252),26);
+        ui.reason = Label("Reason",panel.transform,"",new(0,-249),new(388,36),20);
+        ui.confirm = Button("Sacrifice",panel.transform,"Sacrifice",new(0,-296),new(260,52),false);
+        ui.flightIcon = Icon("OfferingFlight",overlay.transform,Vector2.zero,66);
+        ui.flightHeartCut = Box("Fracture",ui.flightIcon.transform,Ink,Vector2.zero,new(4,39));
+        ui.flightHeartCut.rectTransform.localEulerAngles = new(0,0,-18);
         ui.flightIcon.gameObject.SetActive(false); overlay.gameObject.SetActive(false);
-        LayoutLeftPanel(ui);
+        BuildDepartureWarning(ui);
         return ui;
+    }
+
+    private static void BuildDepartureWarning(MapSacrificePanel ui)
+    {
+        var shade = Box("TravelWarning",ui.transform,new(.06f,.045f,.032f,.38f),Vector2.zero,Vector2.zero);
+        Stretch(shade.rectTransform); shade.raycastTarget = true; ui.departureWarning = shade.gameObject;
+        var box = Box("Panel",shade.transform,Panel,new(0,70),new(600,280));
+        box.raycastTarget = true; Border(box.gameObject,Gold); ui.departurePanel = box.rectTransform;
+        Label("Title",box.transform,"NO SACRIFICE",new(0,93),new(540,50),30,true);
+        ui.departureMessage = Label("Message",box.transform,"",new(0,16),new(548,104),27);
+        ui.departureBack = Button("Back",box.transform,"Back",new(-145,-87),new(200,54),false);
+        ui.departureContinue = Button("Continue",box.transform,"Enter Battle",new(123,-87),new(260,54),true);
+        ui.departureWarning.SetActive(false);
     }
 
     [MenuItem("Tools/Map/Use Left Sacrifice Details")]
@@ -290,7 +269,8 @@ public static class MapSacrificeAuthoring
             }
             var scene = EditorSceneManager.OpenScene(ScenePath);
             var ui = Components<MapSacrificePanel>(scene).Single();
-            LayoutLeftPanel(ui);
+            MapCardDetailAuthoring.Migrate(ui);
+            MapCardDetailAuthoring.EnableHierarchyEditing(ui);
             foreach (var card in Components<MapCardView>(scene)) CompactBack(card);
             var controller = Components<MapController>(scene).Single();
             using var data = new SerializedObject(controller);
@@ -337,59 +317,12 @@ public static class MapSacrificeAuthoring
         EditorUtility.SetDirty(view);
     }
 
-    private static void LayoutLeftPanel(MapSacrificePanel ui)
-    {
-        var p = ui.panel;
-        Set(p, new(24, 0), new(440, 696)); p.anchorMin = p.anchorMax = p.pivot = new(0, .5f);
-        // Restore a centered local coordinate system for the already-authored children.
-        p.pivot = new(.5f, .5f); p.anchoredPosition = new(244, 0);
-        ui.overlay.GetComponent<Image>().color = new(.06f, .045f, .032f, .12f);
-        Remove(p, "Subtitle", "Give", "Divider", "LeftKey", "RightKey", "Keep", "Freed", "Removal");
-        Set((RectTransform)p.Find("Header"), new(0, 312), new(438, 70));
-        var title = p.Find("Title").GetComponent<TMP_Text>();
-        Set(title.rectTransform, new(-32, 312), new(338, 48)); Style(title, true, 30, 30); title.alignment = TextAlignmentOptions.MidlineLeft;
-        Set((RectTransform)p.Find("Rule"), new(0, 276), new(394, 1));
-        Set(ui.cardPreview, new(-112, 161), new(220, 292)); ui.cardPreview.localScale = Vector3.one * .62f;
-        ui.combatText.gameObject.SetActive(false);
-        Set(ui.cardName.rectTransform, new(84, 235), new(212, 74)); Style(ui.cardName, true, 26, 21);
-        Set(ui.effectIcon.rectTransform, new(82, 165), new(60, 60));
-        Set(ui.benefitTitle.rectTransform, new(82, 102), new(212, 68)); Style(ui.benefitTitle, true, 24, 21);
-        var scope = p.Find("Scope").GetComponent<TMP_Text>();
-        Set(scope.rectTransform, new(0, 31), new(396, 34)); Style(scope, true, 22, 22); scope.text = "NEXT BATTLE";
-        Set(ui.benefitValue.rectTransform, new(0, -29), new(396, 88)); Style(ui.benefitValue, false, 34, 30);
-        Set(ui.benefitDetails.rectTransform, new(0, -114), new(396, 90)); Style(ui.benefitDetails, false, 25, 24); ui.benefitDetails.alignment = TextAlignmentOptions.TopLeft;
-        Set(ui.benefitLimit.rectTransform, new(0, -174), new(396, 64)); Style(ui.benefitLimit, false, 22, 21); ui.benefitLimit.alignment = TextAlignmentOptions.TopLeft;
-        Set((RectTransform)p.Find("Footer"), new(0, -277), new(438, 140));
-        Set(ui.capacity.rectTransform, new(0, -229), new(400, 38)); Style(ui.capacity, false, 24, 23);
-        Set(ui.reason.rectTransform, new(0, -273), new(400, 50)); Style(ui.reason, false, 21, 19);
-        Set((RectTransform)ui.confirm.transform, new(0, -315), new(258, 52));
-        ui.confirm.GetComponentInChildren<TMP_Text>().text = "Sacrifice";
-        Style(ui.confirm.GetComponentInChildren<TMP_Text>(), true, 24, 24);
-        Set((RectTransform)ui.close.transform, new(185, 312), new(42, 42));
-        Style(ui.statusText, false, 25, 21); ui.statusText.alignment = TextAlignmentOptions.MidlineRight;
-        Style(ui.statusDetails, false, 22, 22); ui.statusDetails.alignment = TextAlignmentOptions.TopLeft;
-        Set(ui.cost.rectTransform, new(-75, 132), new(30, 36)); Style(ui.cost, false, 28, 24); ui.cost.fontStyle = FontStyles.Bold;
-        var warning = ui.transform.Find("TravelWarning");
-        if (warning == null)
-        {
-            var shade = Box("TravelWarning", ui.transform, new(.06f, .045f, .032f, .38f), Vector2.zero, Vector2.zero);
-            Stretch(shade.rectTransform); shade.raycastTarget = true; ui.departureWarning = shade.gameObject;
-            var box = Box("Panel", shade.transform, Panel, new(0, 70), new(600, 280)); box.raycastTarget = true; Border(box.gameObject, Gold);
-            ui.departurePanel = box.rectTransform;
-            Label("Title", box.transform, "NO SACRIFICE", new(0, 93), new(540, 50), 30, true);
-            ui.departureMessage = Label("Message", box.transform, "", new(0, 16), new(548, 104), 27);
-            ui.departureBack = Button("Back", box.transform, "Back", new(-145, -87), new(200, 54), false);
-            ui.departureContinue = Button("Continue", box.transform, "Enter Battle", new(123, -87), new(260, 54), true);
-            ui.departureWarning.SetActive(false);
-        }
-        SimplifyPanelCopy(ui);
-        EditorUtility.SetDirty(ui);
-    }
+
 
     private static bool SimplifyPanelCopy(MapSacrificePanel ui)
     {
         bool changed = false;
-        foreach (var label in new[] { ui.capacity, ui.benefitTitle, ui.benefitDetails, ui.benefitLimit, ui.reason })
+        foreach (var label in new[] { ui.reason })
         {
             if (label == null) continue;
             if (!string.IsNullOrEmpty(label.text)) { label.text = ""; changed = true; }
@@ -412,10 +345,10 @@ public static class MapSacrificeAuthoring
     public static void Validate(Scene scene)
     {
         var panel = Components<MapSacrificePanel>(scene).Single();
-        if (!panel.IsReady || panel.illustration == null || panel.frame == null || panel.statusButton == null)
+        if (!panel.IsReady || panel.illustration == null || panel.detailVisual == null || panel.statusButton == null)
             throw new InvalidOperationException("Missing saved sacrifice references.");
-        if (new[] { panel.capacity, panel.benefitTitle, panel.benefitDetails, panel.benefitLimit, panel.reason }
-            .Any(label => label == null || label.gameObject.activeSelf || !string.IsNullOrEmpty(label.text)))
+        if (new[] { panel.reason }
+            .Any(label => label != null && (label.gameObject.activeSelf || !string.IsNullOrEmpty(label.text))))
             throw new InvalidOperationException("The saved sacrifice panel still contains redundant copy.");
         foreach (var view in Components<MapCardView>(scene))
         {

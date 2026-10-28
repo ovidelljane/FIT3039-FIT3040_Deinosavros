@@ -118,15 +118,34 @@ public static class RunIntegrationPlayVerification
     [MenuItem("Tools/Map/Verify Sacrifice Interface")]
     public static void RunSacrifice()
     {
-        StartVerification(false);
+        StartVerification(true);
         SessionState.SetBool(Key + ".sacrificeOnly", true);
     }
 
     [MenuItem("Tools/Map/Verify Status Panel")]
     public static void RunMapStatus()
     {
-        StartVerification(false);
+        StartVerification(true);
         SessionState.SetBool(Key + ".mapStatusOnly", true);
+    }
+
+    [MenuItem("Tools/UI/Verify Pause Menus")]
+    public static void RunPauseMenu()
+    {
+        StartVerification(true);
+        SessionState.SetBool(Key + ".pauseOnly", true);
+    }
+
+    [MenuItem("Tools/Map/Verify Card Hover Handoff")]
+    public static void RunCardHover()
+    {
+        StartVerification(true);
+        SessionState.SetBool(Key + ".cardHoverOnly", true);
+    }
+    public static void RunEditableSacrifice()
+    {
+        StartVerification(true);
+        SessionState.SetBool(Key + ".timelineOnly", true);
     }
 
     [MenuItem("Tools/Battle/Verify Attack Countdowns")]
@@ -202,6 +221,9 @@ public static class RunIntegrationPlayVerification
         SessionState.SetBool(Key + ".cardArtworkOnly", false);
         SessionState.SetBool(Key + ".sacrificeOnly", false);
         SessionState.SetBool(Key + ".mapStatusOnly", false);
+        SessionState.SetBool(Key + ".pauseOnly", false);
+        SessionState.SetBool(Key + ".cardHoverOnly", false);
+        SessionState.SetBool(Key + ".timelineOnly", false);
         SessionState.SetBool(Key + ".attackCountdownOnly", false);
         EditorApplication.isPlaying = true;
     }
@@ -247,7 +269,10 @@ public static class RunIntegrationPlayVerification
             if (routines.Count == 0)
             {
                 deadline = EditorApplication.timeSinceStartup + 360;
-                routines.Push(SessionState.GetBool(Key + ".environmentOnly", false) ? CombatEnvironmentSetup.VerifyRuntime(Check) :
+                routines.Push(SessionState.GetBool(Key + ".timelineOnly", false) ? MapCardDetailVerification.RunTimeline(Check) :
+                    SessionState.GetBool(Key + ".cardHoverOnly", false) ? MapCardDetailVerification.RunHover(Check) :
+                    SessionState.GetBool(Key + ".pauseOnly", false) ? PauseMenuVerification.Run(Check) :
+                    SessionState.GetBool(Key + ".environmentOnly", false) ? CombatEnvironmentSetup.VerifyRuntime(Check) :
                     SessionState.GetBool(Key + ".menuEmbersOnly", false) ? MenuBackgroundAuthoring.VerifyRuntime(Check) :
                     SessionState.GetBool(Key + ".cardDepartureOnly", false) ? CardUseEffectAuthoring.Verify(Check) :
                     SessionState.GetBool(Key + ".shadowsOnly", false) ? CombatShadowVerification.Run(Check) :
@@ -275,7 +300,13 @@ public static class RunIntegrationPlayVerification
                 if (current.Current is IEnumerator nested) { routines.Push(nested); continue; }
                 return;
             }
-            Finish("PASS: " + assertions + " runtime checks; " + (SessionState.GetBool(Key + ".environmentOnly", false)
+            Finish("PASS: " + assertions + " runtime checks; " + (SessionState.GetBool(Key + ".timelineOnly", false)
+                ? "native sacrifice Timeline playback, seeking, pause/resume, editable timing, curves, transforms and materials; exact-instance commit and cleanup.\n"
+                : SessionState.GetBool(Key + ".cardHoverOnly", false)
+                ? "immediate first preview, hover dwell, protected pointer travel, deliberate switching, click priority, synchronized flips, exact-instance sacrifice and unchanged layout.\n"
+                : SessionState.GetBool(Key + ".pauseOnly", false)
+                ? "saved pause menus, time restoration, blocked map input, stopped non-combat reveals, return cleanup, Combat exclusion and three resolutions.\n"
+                : SessionState.GetBool(Key + ".environmentOnly", false)
                 ? "actual scene loads select forest, forest, desert; reload, unchanged actor transforms and new-run reset.\n"
                 : SessionState.GetBool(Key + ".menuEmbersOnly", false)
                 ? "live background flow, compiled UI shader, preserved artwork layers and unblocked menu actions.\n"
@@ -1280,11 +1311,11 @@ public static class RunIntegrationPlayVerification
         foreach (var definition in AssetDatabase.LoadAssetAtPath<CardPool>("Assets/Data/CardPool.asset").Cards)
         {
             detailView.Initialize(map, definition); map.RequestSacrifice(detailView);
-            Check(map.SacrificePanel.frame.sprite == definition.frontBorder &&
+            Check(map.SacrificePanel.cardPreview.GetComponentsInChildren<Image>(true).Length == 1 &&
                 map.SacrificePanel.illustration.sprite == definition.FrontIllustration,
-                "The offering uses one front frame and one illustration for " + definition.name);
+                "The offering uses the frameless illustration for " + definition.name);
             if (definition.cardId == "violet_velocity")
-                MapOpportunityVerification.CaptureCanvas(map.SacrificePanel.frame.canvas.rootCanvas,
+                MapOpportunityVerification.CaptureCanvas(map.SacrificePanel.illustration.canvas.rootCanvas,
                     Camera.main, "map-card-detail");
             map.SacrificePanel.Close(); yield return Until(() => map.CanInteract, "Offering inspector closed");
         }

@@ -27,6 +27,9 @@ public sealed class MapTravelView : MonoBehaviour
     [Range(0, 1)] public float offeringRingOpacity = .75f;
     private float offeringPulse, offeringPhase;
     private Color offeringTint = Color.white;
+    private MeshRenderer[] previewGlow;
+    private Vector3[] previewGlowScales;
+    private MaterialPropertyBlock[] previewGlowBlocks;
     private RunSession session;
     private Camera view;
     private MeshRenderer core, halo, sigil, trailRenderer, offeringRing;
@@ -59,6 +62,13 @@ public sealed class MapTravelView : MonoBehaviour
     public float SacrificePulse => offeringPulse;
     public bool TryGetCoreViewport(out Vector3 point)
     {
+        if (!Application.isPlaying)
+        {
+            var marker = transform.Find("Core");
+            var camera = Camera.main;
+            point = marker != null && camera != null ? camera.WorldToViewportPoint(marker.position) : Vector3.zero;
+            return marker != null && camera != null && point.z > 0;
+        }
         point = view != null ? view.WorldToViewportPoint(floatingPoint) : Vector3.zero;
         return isActiveAndEnabled && core != null && point.z > 0;
     }
@@ -69,7 +79,39 @@ public sealed class MapTravelView : MonoBehaviour
         offeringPhase = Mathf.Clamp01(phase);
         offeringPulse = phase <= 0 || phase >= 1 ? 0 : Mathf.Sin(Mathf.Pow(phase, .55f) * Mathf.PI);
         offeringTint = tint;
+        if (!Application.isPlaying) { PreviewSacrificeGlow(); return; }
         if (core != null && halo != null && sigil != null && view != null) PositionCore();
+    }
+    private void PreviewSacrificeGlow()
+    {
+        if (previewGlow == null && offeringPulse > 0)
+        {
+            string[] names = { "Core", "Halo", "Sigil" };
+            previewGlow = new MeshRenderer[names.Length]; previewGlowScales = new Vector3[names.Length];
+            previewGlowBlocks = new MaterialPropertyBlock[names.Length];
+            for (int i = 0; i < names.Length; i++)
+            {
+                previewGlow[i] = transform.Find(names[i])?.GetComponent<MeshRenderer>();
+                if (previewGlow[i] == null) continue;
+                previewGlowScales[i] = previewGlow[i].transform.localScale;
+                previewGlowBlocks[i] = new MaterialPropertyBlock(); previewGlow[i].GetPropertyBlock(previewGlowBlocks[i]);
+            }
+        }
+        if (previewGlow == null) return;
+        for (int i = 0; i < previewGlow.Length; i++)
+        {
+            var renderer = previewGlow[i]; if (renderer == null) continue;
+            float expansion = i == 0 ? offeringCoreExpansion : i == 1 ? offeringHaloExpansion : offeringSigilExpansion;
+            renderer.transform.localScale = previewGlowScales[i] * (1 + offeringPulse * expansion);
+            if (offeringPulse <= 0) renderer.SetPropertyBlock(previewGlowBlocks[i]);
+            else
+            {
+                var block = new MaterialPropertyBlock(); renderer.GetPropertyBlock(block);
+                block.SetFloat(Emission, 1 + offeringPulse * offeringGlow);
+                block.SetColor(Tint, Color.Lerp(Color.white, offeringTint, offeringPulse)); renderer.SetPropertyBlock(block);
+            }
+        }
+        if (offeringPulse <= 0) { previewGlow = null; previewGlowBlocks = null; previewGlowScales = null; }
     }
     public void ClearSacrificePulse() => SetSacrificePulse(0, Color.white);
     public int LiveParticles { get; private set; }
