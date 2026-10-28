@@ -79,7 +79,7 @@ public sealed class MapOpportunityController : MapNonCombatController
             int shown = random.Next(3);
             SetIcon((MapOpportunityOutcome)shown);
             int previousTurn = 0;
-            for (float elapsed = 0; elapsed < duration; elapsed += Time.unscaledDeltaTime)
+            for (float elapsed = 0; elapsed < duration; elapsed += PauseMenu.PresentationDeltaTime)
             {
                 float time = Mathf.Clamp01(elapsed / duration);
                 float rotation = turns * (1f - (1f - time) * (1f - time));
@@ -99,8 +99,8 @@ public sealed class MapOpportunityController : MapNonCombatController
             SetIcon(Receipt.Outcome.Value);
             icon.rectTransform.localRotation = Quaternion.identity;
             IsSpinning = false;
-            yield return new WaitForSecondsRealtime(.3f);
-            for (float t = 0; t < .3f; t += Time.unscaledDeltaTime)
+            for (float t = 0; t < .3f; t += PauseMenu.PresentationDeltaTime) yield return null;
+            for (float t = 0; t < .3f; t += PauseMenu.PresentationDeltaTime)
             {
                 float progress = Mathf.SmoothStep(0, 1, t / .3f);
                 icon.rectTransform.anchoredPosition = Vector2.Lerp(revealPose.anchoredPosition, resultPosition, progress);
@@ -115,7 +115,7 @@ public sealed class MapOpportunityController : MapNonCombatController
         if (Receipt.Outcome == MapOpportunityOutcome.Recovery)
         {
             if (!session.TryResolveOpportunityRecovery(EncounterId)) yield break;
-            for (float t = 0; t < .6f; t += Time.unscaledDeltaTime)
+            for (float t = 0; t < .6f; t += PauseMenu.PresentationDeltaTime)
             { DisplayReceipt(Receipt, Mathf.SmoothStep(0, 1, t / .6f)); yield return null; }
         }
         DisplayReceipt(Receipt, 1); IsRevealed = true;
@@ -260,7 +260,7 @@ public sealed class MapOpportunityController : MapNonCombatController
         else ShowReplacement();
     }
 
-    private bool CanAct() => IsActivated && IsRevealed && !returning && session != null && Receipt != null &&
+    private bool CanAct() => !PauseMenu.IsPaused && IsActivated && IsRevealed && !returning && session != null && Receipt != null &&
         !MapTravelCoordinator.Ensure(session).IsBusy;
 
     private void Secondary()

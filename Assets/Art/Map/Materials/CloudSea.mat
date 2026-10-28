@@ -25,19 +25,11 @@ Material:
     m_TexEnvs: []
     m_Ints: []
     m_Floats:
-    - _BaseFadeDistance: 1
-    - _BaseHeight: -10000
     - _Ceiling: -5
-    - _Coverage: 0.96
-    - _Density: 1.35
-    - _EdgeSoftness: 0.3
-    - _HeightFade: 2
-    - _NoiseScale: 0.035
-    - _SoftDepth: 4
+    - _CloudSize: 12
+    - _Direction: 15
+    - _Speed: 0.65
     m_Colors:
-    - _BaseColor: {r: 0.2, g: 0.27, b: 0.3, a: 0.94}
-    - _FlowA: {r: 0.0018, g: 0.0006, b: 0, a: 0}
-    - _FlowB: {r: -0.0009, g: 0.0012, b: 0, a: 0}
-    - _HighlightColor: {r: 0.55, g: 0.59, b: 0.58, a: 1}
+    - _BaseColor: {r: 0.445, g: 0.49399996, b: 0.496, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

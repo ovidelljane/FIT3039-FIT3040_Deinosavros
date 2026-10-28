@@ -33,7 +33,6 @@ Material:
     - _Clock: 0
     - _ColorMask: 15
     - _EdgeWidth: 0.018
-    - _Heat: 0
     - _ParticleMode: 0
     - _Progress: 0
     - _Seed: 0

@@ -87,8 +87,17 @@ public static class RunIntegrationSetup
             else if (action == "card-departure-apply") CardUseEffectAuthoring.Apply();
             else if (action == "card-departure") CardUseEffectAuthoring.ApplyTwiceAndVerify();
             else if (action == "author-sacrifice") MapSacrificeAuthoring.Apply();
+            else if (action == "card-detail-reset") MapCardDetailAuthoring.Apply();
+            else if (action == "card-hover") RunIntegrationPlayVerification.RunCardHover();
+            else if (action == "card-detail-hierarchy") MapCardDetailAuthoring.ApplyCurrent();
+            else if (action == "verify-card-detail-hierarchy") MapCardDetailAuthoring.VerifyHierarchyEditing();
+            else if (action == "simplify-card-gradient") MapCardDetailAuthoring.SimplifyGradient();
+            else if (action == "clean-sacrifice-content") MapCardDetailAuthoring.CleanupCurrent();
             else if (action == "sacrifice-burn-apply") MapSacrificeAuthoring.ApplyBurn();
             else if (action == "sacrifice-burn") MapSacrificeAuthoring.ApplyBurnAndVerify();
+            else if (action == "sacrifice-timeline") MapSacrificeTimelineAuthoring.ApplyAndVerify();
+            else if (action == "sacrifice-preview") MapCardDetailVerification.VerifyTimelinePreview();
+            else if (action == "sacrifice-editable") RunIntegrationPlayVerification.RunEditableSacrifice();
             else if (action == "sacrifice") RunIntegrationPlayVerification.RunSacrifice();
             else throw new ArgumentException("Unknown integration action.");
             File.WriteAllText(ResultDirectory + "/action-result.txt", "PASS: " + action + "\n");

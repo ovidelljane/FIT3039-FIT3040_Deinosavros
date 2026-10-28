@@ -99,11 +99,22 @@ public sealed class MapNodeInteraction : MonoBehaviour
     private void ShowDetail()
     {
         var info = view.profile.nodeInformation != null ? view.profile.nodeInformation.Find(hovered.NodeId) : null;
-        heading.text = (info != null ? info.kind : MapEncounterKind.Battle).ToString();
-        float width = Mathf.Max(132, heading.GetPreferredValues(heading.text).x + 36);
-        panel.sizeDelta = new Vector2(width, 56);
-        heading.rectTransform.sizeDelta = new Vector2(width - 36, 32);
-        panel.gameObject.SetActive(true); PositionPanel();
+        var kind = owner.Session?.Progress?.KindOf(hovered.NodeId) ?? info?.kind ?? MapEncounterKind.Battle;
+        heading.text = kind switch
+        {
+            MapEncounterKind.Opportunity => "Opportunity\n<size=85%>Random event (1 of 3)</size>",
+            MapEncounterKind.Recovery => "Recovery",
+            MapEncounterKind.Boss => "Boss",
+            _ => "Battle"
+        };
+        panel.gameObject.SetActive(true);
+        heading.ForceMeshUpdate();
+        var preferred = heading.GetPreferredValues(heading.text);
+        float width = Mathf.Clamp(preferred.x + 36, 144, 340);
+        float height = Mathf.Max(64, Mathf.Ceil(preferred.y) + 24);
+        panel.sizeDelta = new Vector2(width, height);
+        heading.rectTransform.sizeDelta = new Vector2(width - 36, height - 24);
+        heading.ForceMeshUpdate(); PositionPanel();
     }
     private void PositionPanel()
     {
@@ -125,24 +136,28 @@ public sealed class MapNodeInteraction : MonoBehaviour
     private void CreatePanel()
     {
         var root = new GameObject("NodeInfo", typeof(RectTransform), typeof(UnityEngine.UI.Image), typeof(UnityEngine.UI.Outline));
+        root.layer = canvas.gameObject.layer;
         panel = (RectTransform)root.transform; panel.SetParent(canvas.transform, false);
         panel.anchorMin = panel.anchorMax = new Vector2(.5f, .5f); panel.pivot = new Vector2(0, 1);
         root.GetComponent<UnityEngine.UI.Image>().color = new Color(.13f, .085f, .052f, .97f);
         var border = root.GetComponent<UnityEngine.UI.Outline>(); border.effectColor = new Color(.77f, .56f, .29f, 1); border.effectDistance = new Vector2(1, -1);
         heading = Text("Title", 24, new Vector2(18, -12), 264, 32, new Color(1, .91f, .72f));
         heading.alignment = TextAlignmentOptions.Center;
+        heading.richText = true;
         GameFonts.Apply(heading, GameFontRole.Heading);
         panel.gameObject.SetActive(false);
     }
     private TMP_Text Text(string name, float size, Vector2 position, float width, float height, Color color)
     {
         var go = new GameObject(name, typeof(RectTransform), typeof(TextMeshProUGUI));
+        go.layer = panel.gameObject.layer;
         var text = go.GetComponent<TextMeshProUGUI>(); text.transform.SetParent(panel, false);
         var rect = text.rectTransform; rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(0, 1);
         rect.anchoredPosition = position; rect.sizeDelta = new Vector2(width, height);
         GameFonts.Apply(text, GameFontRole.Body);
         text.fontSize = size; text.color = color; text.raycastTarget = false; text.richText = false;
-        text.overflowMode = TextOverflowModes.Ellipsis;
+        text.textWrappingMode = TextWrappingModes.NoWrap;
+        text.overflowMode = TextOverflowModes.Overflow;
         return text;
     }
     private void OnDestroy() { if (panel != null) Destroy(panel.gameObject); }

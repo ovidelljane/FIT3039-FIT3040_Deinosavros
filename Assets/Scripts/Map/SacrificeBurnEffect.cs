@@ -11,26 +11,15 @@ public sealed class SacrificeBurnEffect : MonoBehaviour
     public UnityEngine.UI.RawImage cardTemplate;
     public RectTransform focusAnchor;
     [Header("Center Presentation")]
-    [Min(.05f)] public float moveDuration = .30f;
-    [Min(0)] public float centerHold = .08f;
-    [Range(1, 1.8f)] public float focusScale = 1.25f;
-    [Header("Timing")]
-    [Min(.03f)] public float ignitionDuration = .18f;
-    [Min(.1f)] public float burnDuration = .72f;
+    [Min(.1f)] public float focusScale = 1.25f;
+    [Header("Ash Lifetime")]
     [Min(.1f)] public float ashDuration = .40f;
-    [Header("Burn Surface")]
-    public Color charcoal = new(.075f, .032f, .018f, 1);
-    public Color ember = new(1, .27f, .035f, 1);
-    public Color hotEdge = new(1, .78f, .32f, 1);
-    [Range(.01f, .25f)] public float charWidth = .085f;
-    [Range(.002f, .06f)] public float edgeWidth = .018f;
     [Header("Ash and Sparks (Reference Pixels)")]
     [Range(0, 64)] public int particleCount = 42;
     [Range(1, 15)] public float emberSize = 5;
     [Range(10, 180)] public float rise = 82;
     [Range(0, 80)] public float drift = 25;
     [Range(0, .5f)] public float smokeOpacity = .12f;
-    [Range(0, 30)] public float lift = 8;
     [Range(256, 1024)] public int snapshotHeight = 640;
 
     private UnityEngine.UI.RawImage face;
@@ -44,16 +33,18 @@ public sealed class SacrificeBurnEffect : MonoBehaviour
     private Rect bounds;
     private float seed;
     private int sequence;
+    private float emissionDuration;
     public bool IsPlaying { get; private set; }
     public float Progress { get; private set; }
     public float Elapsed { get; private set; }
     public Vector3 FacePosition => face != null ? face.transform.position : transform.position;
     public int VisibleParticles => ash != null ? ash.VisibleCount : 0;
+    public float BurnEmissionDuration => emissionDuration;
+    public Color EmberColor => cardTemplate.material.GetColor("_EmberColor");
+    public Color HotEdgeColor => cardTemplate.material.GetColor("_HotColor");
+    public SacrificeTimelineFrame CurrentFrame { get; private set; }
     public bool IsReady => cardTemplate != null && cardTemplate.material != null &&
         cardTemplate.material.shader != null && cardTemplate.material.shader.isSupported;
-    public float BurnStart => Mathf.Max(.05f, moveDuration) + Mathf.Max(0, centerHold);
-    public float BurnDuration => Mathf.Max(.03f, ignitionDuration) + Mathf.Max(.1f, burnDuration) + Mathf.Max(.1f, ashDuration);
-    public float Duration => BurnStart + BurnDuration;
 
     public bool Begin(RectTransform card)
     {
@@ -66,15 +57,11 @@ public sealed class SacrificeBurnEffect : MonoBehaviour
             Capture(card);
             seed = (++sequence % 997) * .731f;
             face.texture = snapshot; face.rectTransform.sizeDelta = bounds.size;
-            faceMaterial.SetColor("_CharColor", charcoal);
-            faceMaterial.SetColor("_EmberColor", ember);
-            faceMaterial.SetColor("_HotColor", hotEdge);
-            faceMaterial.SetFloat("_CharWidth", charWidth);
-            faceMaterial.SetFloat("_EdgeWidth", edgeWidth);
             faceMaterial.SetFloat("_Seed", seed);
             ashMaterial.SetFloat("_Seed", seed);
             face.gameObject.SetActive(true); ash.gameObject.SetActive(true);
-            IsPlaying = true; Evaluate(0);
+            IsPlaying = true;
+            EvaluateFrame(new SacrificeTimelineFrame { burnAge = -1, burnDuration = 1 });
             return true;
         }
         catch (Exception exception)
@@ -85,27 +72,39 @@ public sealed class SacrificeBurnEffect : MonoBehaviour
         }
     }
 
-    public void Evaluate(float elapsed)
+    public void RefreshSnapshot()
     {
         if (!IsPlaying || source == null) return;
-        Elapsed = Mathf.Max(0, elapsed);
-        float burnTime = Mathf.Max(0, Elapsed - BurnStart);
-        Progress = Mathf.Clamp01((burnTime - ignitionDuration) / Mathf.Max(.1f, burnDuration));
+        bounds = Bounds(source); Capture(source); face.texture = snapshot; face.rectTransform.sizeDelta = bounds.size;
+    }
+
+    public void EvaluateFrame(SacrificeTimelineFrame frame)
+    {
+        if (!IsPlaying || source == null) return;
+        CurrentFrame = frame;
+        Elapsed = Mathf.Max(0, frame.elapsed);
+        Progress = Mathf.Clamp01(frame.burn);
+        emissionDuration = Mathf.Max(.1f, frame.burnDuration);
         var root = (RectTransform)transform;
-        float move = Mathf.SmoothStep(0, 1, Elapsed / Mathf.Max(.05f, moveDuration));
-        float breathing = Mathf.Sin(Mathf.Clamp01(burnTime / BurnDuration) * Mathf.PI);
         Vector3 origin = root.InverseTransformPoint(source.TransformPoint(bounds.center));
         Vector3 destination = focusAnchor != null ? root.InverseTransformPoint(focusAnchor.position) : Vector3.zero;
-        face.rectTransform.localPosition = Vector3.Lerp(origin, destination, move) + Vector3.up * lift * breathing;
-        face.rectTransform.localScale = new Vector3(source.lossyScale.x / root.lossyScale.x, source.lossyScale.y / root.lossyScale.y, 1) *
-            Mathf.Lerp(1, focusScale, move) * (1 + .025f * breathing);
-        face.rectTransform.localRotation = Quaternion.Slerp(Quaternion.Inverse(root.rotation) * source.rotation, Quaternion.identity, move);
+        face.rectTransform.localPosition = Vector3.Lerp(origin, destination, frame.move);
+        Vector3 startScale = new(source.lossyScale.x / root.lossyScale.x, source.lossyScale.y / root.lossyScale.y, 1);
+        Vector3 targetScale = focusAnchor != null
+            ? new(focusAnchor.lossyScale.x / root.lossyScale.x, focusAnchor.lossyScale.y / root.lossyScale.y, 1) : startScale;
+        face.rectTransform.localScale = Vector3.Scale(Vector3.Lerp(startScale, targetScale * focusScale, frame.expand), cardTemplate.rectTransform.localScale);
+        Quaternion destinationRotation = focusAnchor != null ? Quaternion.Inverse(root.rotation) * focusAnchor.rotation : Quaternion.identity;
+        face.rectTransform.localRotation = Quaternion.Slerp(Quaternion.Inverse(root.rotation) * source.rotation, destinationRotation, frame.move);
+        face.color = cardTemplate.color;
+        faceMaterial.CopyPropertiesFromMaterial(cardTemplate.material);
+        ashMaterial.CopyPropertiesFromMaterial(cardTemplate.material);
+        faceMaterial.SetFloat("_Seed", seed); ashMaterial.SetFloat("_Seed", seed);
+        ashMaterial.SetFloat("_ParticleMode", 1);
         faceMaterial.SetFloat("_Progress", Progress);
-        faceMaterial.SetFloat("_Heat", Mathf.Sin(Mathf.Clamp01(burnTime / Mathf.Max(.03f, ignitionDuration)) * Mathf.PI));
-        faceMaterial.SetFloat("_Clock", elapsed);
-        ashMaterial.SetFloat("_Clock", elapsed);
+        faceMaterial.SetFloat("_Clock", Elapsed);
+        ashMaterial.SetFloat("_Clock", Elapsed);
         face.enabled = Progress < 1;
-        ash.SetFrame(this, burnTime, seed, face.rectTransform.localPosition,
+        ash.SetFrame(this, Mathf.Max(0, frame.burnAge), seed, face.rectTransform.localPosition,
             Vector2.Scale(bounds.size, face.rectTransform.localScale));
     }
 
@@ -113,12 +112,14 @@ public sealed class SacrificeBurnEffect : MonoBehaviour
     {
         if (face != null) return;
         face = Instantiate(cardTemplate, transform); face.name = "BurningCard"; face.raycastTarget = false;
+        if (!Application.isPlaying) face.gameObject.hideFlags = HideFlags.HideAndDontSave;
         face.rectTransform.anchorMin = face.rectTransform.anchorMax = face.rectTransform.pivot = new(.5f, .5f);
         faceMaterial = new Material(cardTemplate.material) { name = "Sacrifice Burn Instance" };
         ashMaterial = new Material(cardTemplate.material) { name = "Sacrifice Ash Instance" };
         ashMaterial.SetFloat("_ParticleMode", 1); face.material = faceMaterial;
         ash = new GameObject("Ash", typeof(RectTransform), typeof(CanvasRenderer)).AddComponent<SacrificeAshGraphic>();
         ash.transform.SetParent(transform, false);
+        if (!Application.isPlaying) ash.gameObject.hideFlags = HideFlags.HideAndDontSave;
         ash.rectTransform.anchorMin = Vector2.zero; ash.rectTransform.anchorMax = Vector2.one;
         ash.rectTransform.offsetMin = ash.rectTransform.offsetMax = Vector2.zero;
         ash.material = ashMaterial; ash.raycastTarget = false;
@@ -164,7 +165,7 @@ public sealed class SacrificeBurnEffect : MonoBehaviour
         int width = Mathf.Clamp(Mathf.RoundToInt(height*bounds.width/Mathf.Max(1,bounds.height)), 64, 1024);
         if (snapshot == null || snapshot.width != width || snapshot.height != height)
         {
-            if (snapshot != null) { snapshot.Release(); Destroy(snapshot); }
+            if (snapshot != null) { snapshot.Release(); Release(snapshot); }
             snapshot = new RenderTexture(width, height, 24, RenderTextureFormat.ARGB32)
             { name = "Sacrifice Card Snapshot", filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp };
             snapshot.Create();
@@ -184,7 +185,7 @@ public sealed class SacrificeBurnEffect : MonoBehaviour
             captureCamera.orthographicSize = bounds.height*.5f; captureCamera.aspect = (float)width/height;
             RenderPipeline.SubmitRenderRequest(captureCamera, new UniversalRenderPipeline.SingleCameraRequest { destination = snapshot });
         }
-        finally { if (clone != null) { clone.gameObject.SetActive(false); Destroy(clone.gameObject); } }
+        finally { if (clone != null) { clone.gameObject.SetActive(false); Release(clone.gameObject); } }
     }
 
     public void Clear()
@@ -196,13 +197,25 @@ public sealed class SacrificeBurnEffect : MonoBehaviour
     }
     private void Awake() { if (cardTemplate != null) cardTemplate.gameObject.SetActive(false); }
     private void OnDisable() => Clear();
-    private void OnDestroy()
+    public void ReleasePreviewResources()
     {
-        if (snapshot != null) { snapshot.Release(); Destroy(snapshot); }
-        if (captureRoot != null) Destroy(captureRoot);
-        if (faceMaterial != null) Destroy(faceMaterial);
-        if (ashMaterial != null) Destroy(ashMaterial);
+        if (Application.isPlaying) return;
+        if (face != null) Release(face.gameObject);
+        if (ash != null) Release(ash.gameObject);
+        ReleaseOwnedResources(); face = null; ash = null;
     }
+    private void OnDestroy()
+    { ReleaseOwnedResources(); }
+    private void ReleaseOwnedResources()
+    {
+        if (snapshot != null) { snapshot.Release(); Release(snapshot); }
+        if (captureRoot != null) Release(captureRoot);
+        if (faceMaterial != null) Release(faceMaterial);
+        if (ashMaterial != null) Release(ashMaterial);
+        snapshot = null; captureRoot = null; captureCamera = null; captureCanvas = null; faceMaterial = null; ashMaterial = null;
+    }
+    private static void Release(UnityEngine.Object value)
+    { if (value != null) { if (Application.isPlaying) Destroy(value); else DestroyImmediate(value); } }
 }
 
 [RequireComponent(typeof(CanvasRenderer))]
@@ -223,8 +236,8 @@ public sealed class SacrificeAshGraphic : UnityEngine.UI.MaskableGraphic
         for (int i = 0; i < count; i++)
         {
             float a = Hash(i*3+seed), b = Hash(i*7+seed+2), c = Hash(i*11+seed+4);
-            float born = style.ignitionDuration*.65f + a*style.burnDuration*.80f;
-            float life = Mathf.Min(style.BurnDuration-born, style.ashDuration+.12f+b*.18f);
+            float born = a*style.BurnEmissionDuration*.80f;
+            float life = Mathf.Min(style.BurnEmissionDuration+style.ashDuration-born, style.ashDuration+.12f+b*.18f);
             float t = (age-born)/Mathf.Max(.1f,life);
             if (t <= 0 || t >= 1) continue;
             int kind = i % 9 == 0 ? 2 : i % 3 == 0 ? 1 : 0;
@@ -235,7 +248,7 @@ public sealed class SacrificeAshGraphic : UnityEngine.UI.MaskableGraphic
             center += new Vector2((c-.5f)*style.drift*t+Mathf.Sin(t*5+c*6)*style.drift*.16f*t, style.rise*t*(.55f+b*.45f));
             float fade = Mathf.Sin(Mathf.Pow(t,.7f)*Mathf.PI);
             Color tint = kind == 2 ? new Color(.28f,.22f,.17f, style.smokeOpacity*fade) :
-                kind == 1 ? new Color(.43f,.32f,.22f,fade*.85f) : Color.Lerp(style.ember,style.hotEdge,(1-t)*.75f);
+                kind == 1 ? new Color(.43f,.32f,.22f,fade*.85f) : Color.Lerp(style.EmberColor,style.HotEdgeColor,(1-t)*.75f);
             if (kind == 0) tint.a = fade;
             float radius = kind == 2 ? style.emberSize*(3+t*6) : style.emberSize*(.6f+c*.8f)*(1-.45f*t);
             Vector2 extents = kind == 2 ? new(radius,radius*1.3f) : new(radius*(.35f+.65f*Mathf.Abs(Mathf.Cos(t*9+c))),radius);

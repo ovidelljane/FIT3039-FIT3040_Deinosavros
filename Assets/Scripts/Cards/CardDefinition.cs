@@ -79,11 +79,11 @@ public sealed class CardDefinition : ScriptableObject
     public CardEffectValues BaseValues => combatPrefab != null && combatPrefab.TryGetComponent<BuffCards>(out var card)
         ? card.Values : default;
 
-    public string GetCombatDescription(CardEffectValues? current = null)
+    public string GetCombatDescription(CardEffectValues? current = null, string template = null)
     {
         var baseline = BaseValues;
         var values = current ?? baseline;
-        string text = combatEffectText ?? "";
+        string text = template ?? combatEffectText ?? "";
         if (combatPrefab != null && combatPrefab.TryGetComponent<AdvancedCardRules>(out var advanced)) text = advanced.Expand(text);
         return text
             .Replace("{amount}", Number(values.Amount, baseline.Amount))
@@ -93,11 +93,11 @@ public sealed class CardDefinition : ScriptableObject
             .Replace("{costResource}", values.Stat == StatType.Elixir ? "Health" : "Elixir");
     }
 
-    public string GetSacrificeDescription(RunSession session = null)
+    public string GetSacrificeDescription(RunSession session = null, string template = null)
     {
         float minimum = session != null ? session.MinimumOfferingAttackInterval :
             Mathf.Max(.01f, RunBalance.Default.minimumOfferingAttackInterval);
-        return (overworldEffect.description ?? "")
+        return (template ?? overworldEffect.description ?? "")
             .Replace("{magnitude}", Number(overworldEffect.magnitude, overworldEffect.magnitude))
             .Replace("{triggerEvery}", Mathf.Max(1, overworldEffect.triggerEvery).ToString())
             .Replace("{minInterval}", Number(minimum, minimum));
