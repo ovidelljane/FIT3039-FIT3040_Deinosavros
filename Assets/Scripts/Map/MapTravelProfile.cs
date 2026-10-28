@@ -4,7 +4,6 @@ using UnityEngine;
 public sealed class MapTravelProfile : ScriptableObject
 {
     public Material symbolMaterial;
-    public Material glowMaterial;
     public Mesh quadMesh;
     public MapNodeCatalog nodeInformation;
     public Color amber = new(0.906f, 0.714f, 0.416f, 1);

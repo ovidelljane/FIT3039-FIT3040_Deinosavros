@@ -12,6 +12,9 @@ Shader "Deinosavros/Map Review/Foliage Lit"
     Properties
     {
         [MainColor] _BaseColor("Atlas Tint / Untextured Color", Color) = (1, 1, 1, 1)
+        [HideInInspector] _LeafPalette("Use Mesh Leaf Palette", Float) = 0
+        _LeafColorA("Mature Leaf Color", Color) = (1,1,1,1)
+        _LeafColorB("New Leaf Color", Color) = (1,1,1,1)
         [ToggleUI] _UseTextures("Use Original Foliage Atlas", Float) = 1
         [MainTexture] _BaseMap("Original Albedo and Coverage", 2D) = "white" {}
         [Normal] [NoScaleOffset] _NormalMap("Original Tangent Normal", 2D) = "bump" {}
@@ -53,6 +56,8 @@ Shader "Deinosavros/Map Review/Foliage Lit"
         TEXTURE2D(_RoughnessMap); SAMPLER(sampler_RoughnessMap);
         CBUFFER_START(UnityPerMaterial)
             half4 _BaseColor;
+            half4 _LeafColorA, _LeafColorB;
+            half _LeafPalette;
             float4 _BaseMap_ST;
             float4 _WindDirection;
             half _UseTextures;
@@ -77,6 +82,7 @@ Shader "Deinosavros/Map Review/Foliage Lit"
             float4 tangentOS : TANGENT;
             float2 uv : TEXCOORD0;
             float2 lightmapUV : TEXCOORD1;
+            half4 color : COLOR;
             UNITY_VERTEX_INPUT_INSTANCE_ID
         };
         struct Varyings
@@ -90,6 +96,7 @@ Shader "Deinosavros/Map Review/Foliage Lit"
             float2 lightmapUV : TEXCOORD5;
             half3 vertexSH : TEXCOORD6;
             float4 screenShadowCoord : TEXCOORD7;
+            half palette : TEXCOORD8;
             UNITY_VERTEX_INPUT_INSTANCE_ID
             UNITY_VERTEX_OUTPUT_STEREO
         };
@@ -134,6 +141,7 @@ Shader "Deinosavros/Map Review/Foliage Lit"
             output.tangentWS = half4(SafeNormalize(bentTangent - output.normalWS * dot(bentTangent, output.normalWS)), handedness);
             output.positionCS = TransformWorldToHClip(output.positionWS);
             output.uv = TRANSFORM_TEX(input.uv, _BaseMap);
+            output.palette = input.color.g;
             output.fogAndVertexLight = half4(ComputeFogFactor(output.positionCS.z),
                 VertexLighting(output.positionWS, output.normalWS));
             OUTPUT_LIGHTMAP_UV(input.lightmapUV, unity_LightmapST, output.lightmapUV);
@@ -142,16 +150,17 @@ Shader "Deinosavros/Map Review/Foliage Lit"
             return output;
         }
 
-        half4 ReadBase(float2 uv)
+        half4 ReadBase(float2 uv,half palette)
         {
             half4 color = _BaseColor;
+            if (_LeafPalette > .5h) color *= lerp(_LeafColorA,_LeafColorB,saturate(palette));
             UNITY_BRANCH
             if (_UseTextures > 0.5h) color *= SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, uv);
             return color;
         }
-        void ClipFoliage(float2 uv)
+        void ClipFoliage(float2 uv,half palette)
         {
-            clip(ReadBase(uv).a - _Cutoff);
+            clip(ReadBase(uv,palette).a - _Cutoff);
         }
         half3 ReadNormal(Varyings input, half faceSign)
         {
@@ -203,7 +212,7 @@ Shader "Deinosavros/Map Review/Foliage Lit"
             {
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
-                half4 albedo = ReadBase(input.uv);
+                half4 albedo = ReadBase(input.uv,input.palette);
                 clip(albedo.a - _Cutoff);
                 half smoothness = _Smoothness;
                 UNITY_BRANCH
@@ -273,7 +282,7 @@ Shader "Deinosavros/Map Review/Foliage Lit"
             half4 FoliageShadowFragment(Varyings input) : SV_Target
             {
                 UNITY_SETUP_INSTANCE_ID(input);
-                ClipFoliage(input.uv);
+                ClipFoliage(input.uv,input.palette);
                 return 0;
             }
             ENDHLSL
@@ -293,7 +302,7 @@ Shader "Deinosavros/Map Review/Foliage Lit"
             {
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
-                ClipFoliage(input.uv);
+                ClipFoliage(input.uv,input.palette);
                 return input.positionCS.z;
             }
             ENDHLSL
@@ -320,7 +329,7 @@ Shader "Deinosavros/Map Review/Foliage Lit"
             {
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
-                ClipFoliage(input.uv);
+                ClipFoliage(input.uv,input.palette);
                 half3 normalWS = ReadNormal(input, IS_FRONT_VFACE(face, 1.0h, -1.0h));
                 #if defined(_GBUFFER_NORMALS_OCT)
                     float2 octNormal = PackNormalOctQuadEncode(normalWS);
@@ -335,5 +344,6 @@ Shader "Deinosavros/Map Review/Foliage Lit"
             ENDHLSL
         }
     }
+    CustomEditor "MapFoliageShaderGUI"
     FallBack "Hidden/Universal Render Pipeline/FallbackError"
 }

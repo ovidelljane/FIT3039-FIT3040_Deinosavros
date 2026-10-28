@@ -44,8 +44,6 @@ public static class MapTravelArt
         var shader = Shader.Find("Map/Travel Symbols");
         if (shader == null) throw new InvalidOperationException("Travel shader has not compiled.");
         Material symbols = Material("FireSeed", shader, atlas, 0, 1.05f, .06f);
-        Material halo = Material("Halo", shader, atlas, 6, 1, .06f); halo.SetFloat("_Opacity", .19f);
-        Material sigil = Material("Sigil", shader, atlas, 4, 1, 0); sigil.SetFloat("_Opacity", .35f);
         string quadPath = Root + "/Models/Quad.asset";
         var quad = AssetDatabase.LoadAssetAtPath<Mesh>(quadPath);
         if (quad == null)
@@ -58,10 +56,10 @@ public static class MapTravelArt
         string profilePath = Root + "/Settings/Travel.asset";
         var profile = AssetDatabase.LoadAssetAtPath<MapTravelProfile>(profilePath);
         if (profile == null) { profile = ScriptableObject.CreateInstance<MapTravelProfile>(); AssetDatabase.CreateAsset(profile, profilePath); }
-        profile.symbolMaterial = symbols; profile.glowMaterial = halo; profile.quadMesh = quad;
+        profile.symbolMaterial = symbols; profile.quadMesh = quad;
         profile.nodeInformation = CreateNodeInformation();
-        EditorUtility.SetDirty(profile); EditorUtility.SetDirty(symbols); EditorUtility.SetDirty(halo); EditorUtility.SetDirty(sigil);
-        AssetDatabase.SaveAssetIfDirty(profile); AssetDatabase.SaveAssetIfDirty(symbols); AssetDatabase.SaveAssetIfDirty(halo); AssetDatabase.SaveAssetIfDirty(sigil);
+        EditorUtility.SetDirty(profile); EditorUtility.SetDirty(symbols);
+        AssetDatabase.SaveAssetIfDirty(profile); AssetDatabase.SaveAssetIfDirty(symbols);
         return profile;
     }
     private static MapNodeCatalog CreateNodeInformation()
@@ -87,7 +85,8 @@ public static class MapTravelArt
     private static Material Material(string name, Shader shader, Texture2D atlas, int glyph, float emission, float softness)
     {
         string path = Root + "/Materials/" + name + ".mat"; var material = AssetDatabase.LoadAssetAtPath<Material>(path);
-        if (material == null) { material = new Material(shader) { name = name }; AssetDatabase.CreateAsset(material, path); }
+        if (material != null) return material;
+        material = new Material(shader) { name = name }; AssetDatabase.CreateAsset(material, path);
         material.shader = shader; material.SetTexture("_BaseMap", atlas); material.SetVector("_AtlasRect", MapTravelView.AtlasRect(glyph));
         material.SetColor("_Tint", Color.white); material.SetFloat("_Opacity", 1); material.SetFloat("_Emission", emission);
         material.SetFloat("_SoftDepth", softness); material.SetFloat("_Mode", 0); return material;

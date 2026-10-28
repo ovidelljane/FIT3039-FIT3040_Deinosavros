@@ -50,6 +50,19 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
     private Vector3 settleOffset;
     public CardDefinition Definition => definition;
     public string InstanceId { get; private set; }
+    public bool IsBack => showingBack;
+    public bool TargetBack => targetBack;
+    public bool IsHovered => pointerHovered;
+    public float FlipProgress => flipProgress;
+    public bool IsFlipping => !Mathf.Approximately(flipProgress, targetBack ? 1f : 0f);
+    public float FlipAngle
+    {
+        get
+        {
+            float t = flipProgress * flipProgress * (3f - 2f * flipProgress) * 180f;
+            return t <= 90f ? t : t - 180f;
+        }
+    }
     public bool PreservesBackTypography(Transform target) => backFace != null && target.IsChildOf(backFace.transform);
 
     private void Awake()
@@ -65,14 +78,14 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
 
     private void Update()
     {
-        if (!initialized || interactionLocked)
+        if (!initialized || interactionLocked || PauseMenu.IsPaused)
         {
             return;
         }
 
         EnsureVisualTransform();
 
-        float deltaTime = Time.unscaledDeltaTime;
+        float deltaTime = Mathf.Min(Time.unscaledDeltaTime, .05f);
         float duration = Mathf.Max(flipDuration, 0.01f);
         float targetProgress = targetBack ? 1f : 0f;
         flipProgress = Mathf.MoveTowards(flipProgress, targetProgress, deltaTime / duration);
@@ -133,9 +146,9 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
         }
         initialized = true;
         pointerHovered = false;
-        targetBack = false;
-        showingBack = false;
-        flipProgress = 0f;
+        targetBack = owner != null && owner.CardShowsBack(instanceId);
+        showingBack = targetBack;
+        flipProgress = targetBack ? 1f : 0f;
         targetTilt = Vector2.zero;
         currentTilt = Vector2.zero;
         targetRoll = 0f;
@@ -154,8 +167,7 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
         scopeText.text = "Next battle";
         if (offeringIcon != null) offeringIcon.SetSymbol(preview.Symbol, effectText.color);
         if (brokenHeartCut != null) brokenHeartCut.enabled = preview.Symbol == StatusSymbol.Health;
-        frontFace.SetActive(true);
-        backFace.SetActive(false);
+        SetFace(showingBack);
         selectionGlow.SetActive(false);
         sacrificedOverlay.SetActive(false);
         if (sacrificeButton != null) sacrificeButton.gameObject.SetActive(false);
@@ -244,9 +256,9 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
     {
         if (!initialized || interactionLocked || controller == null || !controller.CanInteract) return;
         pointerHovered = true;
-        targetBack = true;
         selectionGlow.SetActive(true);
         UpdateTiltTarget(eventData);
+        controller.HoverCardDetail(this, eventData);
     }
 
     public void OnPointerMove(PointerEventData eventData)
@@ -257,16 +269,17 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
         }
 
         UpdateTiltTarget(eventData);
+        controller?.HoverCardDetail(this, eventData);
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
         if (!initialized || interactionLocked) return;
         pointerHovered = false;
-        targetBack = false;
         targetTilt = Vector2.zero;
         targetRoll = 0f;
         selectionGlow.SetActive(false);
+        controller?.SacrificePanel?.LeaveCard(this, eventData);
     }
 
     public void SetSacrificed()
@@ -300,7 +313,12 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
     public void OnPointerClick(PointerEventData eventData)
     {
         if (initialized && !interactionLocked && controller != null && controller.CanInteract &&
-            eventData.button == PointerEventData.InputButton.Left) controller.RequestSacrifice(this);
+            eventData.button == PointerEventData.InputButton.Left)
+        {
+            targetBack = !targetBack;
+            controller.RememberCardFace(InstanceId, targetBack);
+            controller.ShowCardDetail(this);
+        }
     }
 
     public void SettleFrom(Vector3 worldPosition, float duration)

@@ -79,6 +79,93 @@ public static class MapStatusVerification
         check(Object.FindObjectsByType<MapPlayerStatusPanel>(FindObjectsInactive.Include, FindObjectsSortMode.None).Length == 1,
             "Map reload restores exactly one authored panel.");
         CheckValues(panel.View, session, check);
+        yield return VerifyHoverAndShield(Object.FindFirstObjectByType<MapController>(),check);
+    }
+
+    private static IEnumerator VerifyHoverAndShield(MapController map,Action<bool,string> check)
+    {
+        var session=map.Session;var interaction=map.NodeInteraction;
+        var input=UnityEngine.EventSystems.EventSystem.current?.currentInputModule;
+        bool inputEnabled=input!=null && input.enabled, interactionEnabled=interaction.enabled;
+        if(input!=null) input.enabled=false;interaction.enabled=false;
+        try
+        {
+            foreach(var kind in new[] { MapEncounterKind.Battle,MapEncounterKind.Opportunity,MapEncounterKind.Recovery,MapEncounterKind.Boss })
+            {
+                var node=map.Nodes.First(n=>session.Progress.KindOf(n.NodeId)==kind);
+                typeof(MapNodeInteraction).GetMethod("SetHover",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(interaction,new object[] { node });
+                typeof(MapNodeInteraction).GetMethod("ShowDetail",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(interaction,null);
+                yield return null;
+                Canvas.ForceUpdateCanvases();var heading=interaction.DetailPanel.GetComponentInChildren<TMP_Text>(true);heading.ForceMeshUpdate(true);
+                string expected=kind==MapEncounterKind.Opportunity ? "Opportunity\nRandom event (1 of 3)" : kind.ToString();
+                check(interaction.DetailVisible && heading.GetParsedText()==expected,"Hover shows only the requested concise copy for "+kind);
+                check(heading.textInfo.characterInfo.Take(heading.textInfo.characterCount).Any(c=>c.isVisible) && !heading.isTextOverflowing &&
+                    heading.preferredHeight<=heading.rectTransform.rect.height+.01f && heading.preferredWidth<=heading.rectTransform.rect.width+.01f,
+                    "The actual tooltip font fits and produces visible glyphs: "+kind+" rect="+heading.rectTransform.rect+
+                    " preferred="+new Vector2(heading.preferredWidth,heading.preferredHeight)+" visible="+
+                    heading.textInfo.characterInfo.Take(heading.textInfo.characterCount).Count(c=>c.isVisible)+" overflow="+heading.isTextOverflowing);
+                if(kind==MapEncounterKind.Opportunity)
+                {
+                    bool asynchronous=ShaderUtil.allowAsyncCompilation;
+                    try
+                    {
+                        ShaderUtil.allowAsyncCompilation=false;
+                        var canvas=map.SacrificePanel.GetComponentInParent<Canvas>().rootCanvas;
+                        MapSacrificeVerification.Capture(canvas,Camera.main,"node-opportunity",check);
+                    }
+                    finally { ShaderUtil.allowAsyncCompilation=asynchronous; }
+                }
+            }
+            interaction.Close();
+            int current=session.PlayerShield;
+            var instance=session.RunDeck.First(c=>!c.sacrificed && c.definition.overworldEffect.effectType==OverworldEffectType.GrantStartingShield);
+            int amount=Mathf.RoundToInt(instance.definition.overworldEffect.magnitude);
+            var card=Object.FindObjectsByType<MapCardView>(FindObjectsSortMode.None).Single(c=>c.InstanceId==instance.instanceId);
+            map.ShowCardDetail(card);yield return null;
+            check(map.SacrificePanel.confirm.interactable,"The real shield-card sacrifice button is available.");
+            map.SacrificePanel.confirm.onClick.Invoke();
+            yield return Until(()=>map.CanInteract && !map.SacrificePanel.IsBusy);
+            yield return null;
+            var view=Object.FindFirstObjectByType<MapPlayerStatusPanel>().View;
+            var label=view.ValueLabel(StatType.Shield);label.ForceMeshUpdate();
+            check(session.HasPendingModifier && session.PlayerShield==current && label.GetParsedText()==$"{current} +{amount}",
+                "Sacrificing shows current and pending shield separately without granting it early.");
+            check(label.text.Contains("<color=") && !label.isTextOverflowing,"Pending shield is highlighted and fits its existing status row.");
+            check(!session.TrySacrificeInstance(instance.instanceId) && session.PendingModifier.magnitude==amount,"Repeated sacrifice cannot duplicate the pending shield.");
+            var pending=session.PendingModifier;
+            var pendingField=typeof(RunSession).GetField("pendingModifier",BindingFlags.Instance|BindingFlags.NonPublic);
+            try
+            {
+                var largest=pending;
+                largest.magnitude=AssetDatabase.LoadAssetAtPath<CardPool>("Assets/Data/CardPool.asset").Cards
+                    .Where(c=>c.overworldEffect.effectType==OverworldEffectType.GrantStartingShield).Max(c=>c.overworldEffect.magnitude);
+                pendingField.SetValue(session,largest);yield return null;yield return null;label.ForceMeshUpdate();
+                check(label.GetParsedText()==$"{current} +{Mathf.RoundToInt(largest.magnitude)}" && !label.isTextOverflowing,
+                    "The largest configured shield offering also fits without changing the status layout.");
+            }
+            finally { pendingField.SetValue(session,pending); }
+            yield return null;yield return null;
+            var status=Object.FindFirstObjectByType<MapPlayerStatusPanel>();
+            Capture(status,status.GetComponentInParent<Canvas>().rootCanvas,Camera.main,check);
+            SceneManager.LoadScene("Map");yield return ReadyMap();yield return null;
+            map=Object.FindFirstObjectByType<MapController>();view=Object.FindFirstObjectByType<MapPlayerStatusPanel>().View;
+            view.ValueLabel(StatType.Shield).ForceMeshUpdate();
+            check(map.Session==session && view.ValueLabel(StatType.Shield).GetParsedText()==$"{current} +{amount}","Reloading Map preserves the pending-shield display.");
+            map.SelectNode(map.Nodes.First(n=>n.IsAvailable && session.Progress.KindOf(n.NodeId)==MapEncounterKind.Battle));
+            yield return Until(()=>SceneManager.GetActiveScene().name=="Deinosavros" && TimeTickSystem.Active?.IsStarted==true);
+            var player=BattleHud.FindPlayer(SceneManager.GetActiveScene());
+            check(!session.HasPendingModifier && player.shield==amount,"Battle readiness consumes and grants the previewed shield exactly once.");
+            yield return null;
+            check(BattleHud.Find(SceneManager.GetActiveScene()).Status.ValueLabel(StatType.Shield).text==player.shield.ToString(),
+                "Combat shows actual shield without carrying over a pending Map label.");
+        }
+        finally
+        {
+            if(interaction!=null) { interaction.Close();interaction.enabled=interactionEnabled; }
+            if(input!=null) input.enabled=inputEnabled;
+        }
+        Directory.CreateDirectory("Library/MapStatus");
+        File.WriteAllText("Library/MapStatus/hover-shield.txt","PASS: four concise hover types, visible TMP glyphs, real shield-card sacrifice, pending-state display, repeated-click rejection, Map reload and single combat application.\n");
     }
 
     private static void CheckValues(PlayerStatusView view, RunSession session, Action<bool, string> check)
@@ -96,8 +183,10 @@ public static class MapStatusVerification
         var mode = canvas.renderMode; var assignedCamera = canvas.worldCamera; bool scaleEnabled = scaler.enabled;
         var position = rect.localPosition; var rotation = rect.localRotation; var localScale = rect.localScale; var delta = rect.sizeDelta;
         float scale = canvas.scaleFactor, aspect = camera.aspect; var target = camera.targetTexture; var active = RenderTexture.active;
+        bool asynchronous=ShaderUtil.allowAsyncCompilation;
         try
         {
+            ShaderUtil.allowAsyncCompilation=false;
             scaler.enabled = false; canvas.renderMode = RenderMode.WorldSpace; canvas.worldCamera = camera; canvas.scaleFactor = 1;
             foreach (var size in new[] { new Vector2Int(1920,1080), new Vector2Int(2560,1440), new Vector2Int(1920,1200) })
             {
@@ -126,6 +215,7 @@ public static class MapStatusVerification
                 {
                     rt.Create(); camera.targetTexture = rt;
                     RenderPipeline.SubmitRenderRequest(camera, new UniversalRenderPipeline.SingleCameraRequest { destination = rt });
+                    RenderPipeline.SubmitRenderRequest(camera, new UniversalRenderPipeline.SingleCameraRequest { destination = rt });
                     RenderTexture.active = rt; image = new Texture2D(size.x,size.y,TextureFormat.RGB24,false);
                     image.ReadPixels(new Rect(0,0,size.x,size.y),0,0); image.Apply();
                     Directory.CreateDirectory(MapStatusSceneAuthoring.Results);
@@ -137,6 +227,7 @@ public static class MapStatusVerification
         finally
         {
             camera.aspect = aspect; canvas.renderMode = mode; canvas.worldCamera = assignedCamera; canvas.scaleFactor = scale;
+            ShaderUtil.allowAsyncCompilation=asynchronous;
             rect.localPosition = position; rect.localRotation = rotation; rect.localScale = localScale; rect.sizeDelta = delta;
             scaler.enabled = scaleEnabled; Canvas.ForceUpdateCanvases();
         }
