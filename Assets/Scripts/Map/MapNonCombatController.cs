@@ -88,7 +88,7 @@ public class MapNonCombatController : MonoBehaviour
     }
     private IEnumerator RevealRecovery()
     {
-        for (float t = 0; t < .6f; t += Time.unscaledDeltaTime)
+        for (float t = 0; t < .6f; t += PauseMenu.PresentationDeltaTime)
         { DisplayReceipt(Receipt, Mathf.SmoothStep(0, 1, t / .6f)); yield return null; }
         DisplayReceipt(Receipt, 1); ContinueButton.interactable = true;
     }
@@ -114,7 +114,7 @@ public class MapNonCombatController : MonoBehaviour
     }
     protected virtual void Continue()
     {
-        if (!IsActivated || session == null) return;
+        if (PauseMenu.IsPaused || !IsActivated || session == null) return;
         if (MapTravelCoordinator.Ensure(session).ContinueNonCombat(this, EncounterId)) ContinueButton.interactable = false;
     }
     public virtual void ShowReturnError(string message)

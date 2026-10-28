@@ -13,7 +13,6 @@ MonoBehaviour:
   m_Name: Travel
   m_EditorClassIdentifier: Assembly-CSharp::MapTravelProfile
   symbolMaterial: {fileID: 2100000, guid: ad15930112fbad842b0b334120a898fa, type: 2}
-  glowMaterial: {fileID: 2100000, guid: 6d4b0f9cdbf9ef548bf8a514ac472f7e, type: 2}
   quadMesh: {fileID: 4300000, guid: 7934b09f1b024414199141def643075e, type: 2}
   nodeInformation: {fileID: 11400000, guid: 78e41e6cbad52fc44a61339b4c29e24e, type: 2}
   amber: {r: 0.906, g: 0.714, b: 0.416, a: 1}

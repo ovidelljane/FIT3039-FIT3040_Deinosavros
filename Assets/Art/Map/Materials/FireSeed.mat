@@ -29,8 +29,12 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _FlameMotion: 1
     - _Emission: 1.05
+    - _FlameFlicker: 0.08
+    - _FlameMotion: 1
+    - _FlameSpeed: 1.15
+    - _FlameTime: -1
+    - _FlameWarp: 0.075
     - _Head: 0
     - _Mode: 0
     - _Opacity: 1

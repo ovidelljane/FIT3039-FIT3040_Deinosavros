@@ -21,7 +21,7 @@ public sealed class PlayerStatusView : MonoBehaviour
     public BuffCards PreviewCard { get; private set; }
     private BattleScript player;
     private RunSession session;
-    private int oldShield=int.MinValue,oldDamage=int.MinValue;
+    private int oldShield=int.MinValue,oldPendingShield=int.MinValue,oldDamage=int.MinValue;
     private float oldInterval=float.NaN;
     private bool oldIntervalDisplay, oldSpeedUnit;
     public TMP_Text ValueLabel(StatType stat) => stat == StatType.Damage ? damage :
@@ -79,8 +79,14 @@ public sealed class PlayerStatusView : MonoBehaviour
         if (healthCost && !affordable) Health.Hint.text=$"Requires {cost} Health to play";
         else if (healthCost && hp <= cost) Health.Hint.text=$"-{cost} Health  |  Lethal cost";
         int shieldValue=combat?player.shield:session.PlayerShield, damageValue=combat?player.AttackDamage:session.PlayerDamage;
+        int pendingShield=!combat && session.HasPendingModifier && session.PendingModifier.effectType==OverworldEffectType.GrantStartingShield
+            ? Mathf.Max(0,Mathf.RoundToInt(session.PendingModifier.magnitude)) : 0;
         float interval=combat?player.AttackIntervalSeconds:session.PlayerAttackSpeed;
-        if (shieldValue!=oldShield) { oldShield=shieldValue; shield.text=Mathf.Max(0,shieldValue).ToString(); }
+        if (shieldValue!=oldShield || pendingShield!=oldPendingShield)
+        {
+            oldShield=shieldValue; oldPendingShield=pendingShield; shield.richText=true;
+            shield.text=Mathf.Max(0,shieldValue).ToString()+(pendingShield>0 ? $" <color=#85BDD4>+{pendingShield}</color>" : "");
+        }
         if (damageValue!=oldDamage) { oldDamage=damageValue; damage.text=damageValue.ToString(); }
         SetAttackSpeedDisplay(interval);
     }

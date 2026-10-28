@@ -16,173 +16,61 @@ using Object = UnityEngine.Object;
 // Disposable play-session verification, with captures preserving the actual map camera projection.
 public static class MapSacrificeVerification
 {
-    public static IEnumerator Run(Action<bool, string> check)
+    public static IEnumerator Run(Action<bool, string> check) => MapCardDetailVerification.Run(check);
+
+    public static IEnumerator VerifyMaterialAppearance(MapSacrificePanel panel, Action<bool,string> check)
     {
-        var menu = Object.FindFirstObjectByType<MainMenuController>();
-        menu.GetType().GetMethod("StartRun", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(menu, null);
-        yield return Until(() => SceneManager.GetActiveScene().name == "Deinosavros" && TimeTickSystem.Active?.IsStarted == true);
-        foreach (var enemy in BattleScript.FindFighters("Enemy")) enemy.TakeDamage(10000);
-        yield return Until(() => Object.FindFirstObjectByType<RewardScreenController>()?.IsPresented == true);
-        Field<Button>(Object.FindFirstObjectByType<RewardScreenController>(), "skipButton").onClick.Invoke();
-        yield return Until(() => SceneManager.GetActiveScene().name == "Map" && Object.FindFirstObjectByType<MapController>()?.CanInteract == true);
-        var map = Object.FindFirstObjectByType<MapController>(); var session = map.Session; var panel = map.SacrificePanel;
-        var canvas = panel.GetComponentInParent<Canvas>().rootCanvas;
-        var views = Object.FindObjectsByType<MapCardView>(FindObjectsSortMode.None);
-        var speed = views.First(v => v.Definition.overworldEffect.effectType == OverworldEffectType.ImprovePlayerAttackSpeed);
-        string id = speed.InstanceId;
-        int capacity = session.DeckCapacity; float interval = session.PlayerAttackSpeed;
-        var deck = Field<Transform>(map, "deckContainer"); var layout = deck.GetComponent<HorizontalLayoutGroup>(); float spacing = layout.spacing;
-        var nodeTransforms = map.Nodes.Select(n => (n.NodeId, n.transform.position, n.transform.localScale)).ToArray();
-        var scope = panel.panel.Find("Scope") as RectTransform;
-        Vector2 scopePosition = scope != null ? scope.anchoredPosition : Vector2.zero;
-        check(panel.IsReady && !panel.IsOpen, "The authored inspector is ready and initially hidden.");
-        foreach (var symbol in new[] { StatusSymbol.Elixir, StatusSymbol.Shield })
-        {
-            var view = views.First(v => MapSacrificePreview.For(session, v.Definition, v.InstanceId).Symbol == symbol);
-            var hover = new PointerEventData(EventSystem.current)
-            { position = RectTransformUtility.WorldToScreenPoint(null, view.transform.position), button = PointerEventData.InputButton.Left };
-            view.OnPointerEnter(hover); yield return Delay(.4f);
-            CheckArtwork(Field<StatusIcon>(view, "offeringIcon"), symbol, check);
-            Capture(canvas, Camera.main, "artwork-" + symbol.ToString().ToLowerInvariant() + "-back", check);
-            view.OnPointerClick(hover); yield return null;
-            CheckArtwork(panel.effectIcon, symbol, check);
-            Capture(canvas, Camera.main, "artwork-" + symbol.ToString().ToLowerInvariant() + "-panel", check);
-            view.OnPointerExit(hover); panel.Close(); yield return Until(() => map.CanInteract); yield return Delay(.35f);
-        }
-        var pointer = new PointerEventData(EventSystem.current) { position = RectTransformUtility.WorldToScreenPoint(null, speed.transform.position), button = PointerEventData.InputButton.Left };
-        speed.OnPointerEnter(pointer); yield return Delay(.4f);
-        check(Field<GameObject>(speed, "backFace").activeSelf && !panel.IsOpen, "Hover flips to a concise back without opening a modal.");
-        Capture(canvas, Camera.main, "back", check);
-        speed.OnPointerClick(pointer); yield return null;
-        check(panel.IsOpen && !map.CanInteract && panel.SelectedInstanceId == id, "Click pins the exact instance and blocks map input.");
-        check(!panel.combatText.gameObject.activeSelf && (scope == null || scope.anchoredPosition == scopePosition),
-            "The detail card has no central text and preserves the optional authored scope heading.");
-        check(panel.confirm.interactable && panel.benefitValue.text == MapSacrificePreview.For(session, speed.Definition, id).BackValue,
-            "The panel shows one concise, configured benefit.");
-        check(new[] { panel.capacity, panel.benefitTitle, panel.benefitDetails, panel.benefitLimit, panel.reason }
-            .All(label => !label.isActiveAndEnabled || string.IsNullOrWhiteSpace(label.text)),
-            "The available panel has no capacity comparison, removal notice or redundant subtitles.");
-        check(session.DeckCapacity == capacity && session.PlayerAttackSpeed == interval && !session.SacrificeUsed, "Inspecting has no gameplay side effects.");
-        Capture(canvas, Camera.main, "offering", check);
-        yield return VerifyBurn(panel, canvas, check);
-        speed.OnPointerExit(pointer); yield return Delay(.35f);
-        check(panel.IsOpen, "Leaving the card does not close the stable inspector.");
-        panel.close.onClick.Invoke(); check(!panel.IsOpen && !map.CanInteract, "Close suppresses same-frame map clicks.");
-        yield return Until(() => map.CanInteract);
-        check(session.DeckCapacity == capacity && !session.HasPendingModifier, "Cancel does not sacrifice or prepare an effect.");
-        speed.OnPointerEnter(pointer); yield return Delay(.08f); speed.OnPointerClick(pointer);
-        check(panel.IsOpen && panel.SelectedInstanceId == id, "A click during a partial flip still selects the correct instance.");
-        panel.Close(); yield return Until(() => map.CanInteract); yield return Delay(.4f);
-        check(Field<GameObject>(speed, "frontFace").activeSelf, "Closing permits a smooth return to the front.");
-
-        // Exercise every definition with a pure view clone; these previews cannot be committed.
-        var definitions = AssetDatabase.FindAssets("t:CardDefinition", new[] { "Assets/Data/Cards" })
-            .Select(g => AssetDatabase.LoadAssetAtPath<CardDefinition>(AssetDatabase.GUIDToAssetPath(g))).ToArray();
-        var overflow = new System.Collections.Generic.List<string>();
-        foreach (var definition in definitions)
-        {
-            var view = Object.Instantiate(speed, canvas.transform); view.Initialize(map, definition, "preview-only");
-            ((RectTransform)view.transform).anchoredPosition = new(-4000, 0);
-            var preview = MapSacrificePreview.For(session, definition, "preview-only");
-            map.RequestSacrifice(view); yield return null; Canvas.ForceUpdateCanvases();
-            CheckArtwork(Field<StatusIcon>(view, "offeringIcon"), preview.Symbol, check);
-            CheckArtwork(panel.effectIcon, preview.Symbol, check);
-            panel.flightIcon.SetSymbol(panel.effectIcon.symbol, panel.effectIcon.color);
-            CheckArtwork(panel.flightIcon, preview.Symbol, check);
-            check(panel.benefitValue.text == preview.BackValue && panel.frame.sprite == definition.frontBorder && panel.illustration.sprite == definition.FrontIllustration,
-                definition.name + ": shared data and single front frame.");
-            foreach (var label in panel.panel.GetComponentsInChildren<TMP_Text>())
-            { label.ForceMeshUpdate(); if (label.isTextOverflowing) overflow.Add(definition.name + ": " + label.name + " (" + label.preferredHeight + "/" + label.rectTransform.rect.height + ")"); }
-            check(!panel.confirm.interactable, definition.name + ": foreign instance cannot be sacrificed.");
-            check(panel.burnEffect.Begin(panel.cardPreview), definition.name + ": the complete face can use the burn shader.");
-            panel.burnEffect.Evaluate(panel.burnEffect.BurnStart + panel.burnEffect.ignitionDuration + panel.burnEffect.burnDuration*.5f);
-            panel.burnEffect.Clear();
-            panel.Close(); Object.Destroy(view.gameObject); yield return Until(() => map.CanInteract);
-        }
-        check(overflow.Count == 0, "All eleven panels fit: " + string.Join("; ", overflow));
-
-        check(session.TryAddCard(speed.Definition, out _), "A same-definition instance can be added for duplicate isolation testing.");
-        yield return null; yield return null;
-        var duplicate = session.RunDeck.Last(c => !c.sacrificed && c.definition == speed.Definition);
-        views = Object.FindObjectsByType<MapCardView>(FindObjectsSortMode.None);
-        var original = views.Single(v => v.InstanceId == id);
-        capacity = session.DeckCapacity;
-        var player = panel.playerSymbol;
-        Vector3 floor = player.FloorPosition;
-        float backdrop = panel.feedbackBackdrop.color.a;
-        map.RequestSacrifice(original); panel.Confirm(); panel.Confirm();
-        check(panel.IsBusy && panel.burnEffect.IsPlaying && panel.cardGroup.alpha == 0,
-            "A successful sacrifice starts one shader snapshot while hiding only its original preview.");
-        panel.Close();
-        check(panel.IsOpen && !map.CanInteract && !panel.confirm.interactable,
-            "The burn cannot be cancelled midway or pass input to the map.");
-        check(session.RunDeck.Single(c => c.instanceId == id).sacrificed && !duplicate.sacrificed, "Only the selected same-name instance is removed.");
-        check(session.DeckCapacity == capacity - original.Definition.capacityCost && session.HasPendingModifier, "A double click commits capacity and offering only once.");
-        check(session.PlayerAttackSpeed == interval, "Preparing an offering does not apply it to the player early.");
-        yield return Until(() => !panel.IsBusy || panel.burnEffect.Progress >= .38f);
-        check(panel.IsBusy && panel.burnEffect.IsPlaying, "The real confirmation holds its modal lock through the visible burn.");
-        Capture(canvas, Camera.main, "burn-live", check);
-        yield return Until(() => !panel.IsBusy || player.SacrificePulse > .7f);
-        check(panel.IsBusy && player.SacrificePulse > .7f && !panel.flightIcon.gameObject.activeSelf,
-            "The transfer reaches the real player fire before its empowerment pulse.");
-        check(player.transform.Find("Pulse").GetComponent<MeshRenderer>().enabled,
-            "The received offering produces a readable expanding meander around the player.");
-        check(player.FloorPosition == floor && session.PlayerAttackSpeed == interval && session.HasPendingModifier,
-            "The empowerment is visual only: position and attack interval do not change.");
-        check(panel.feedbackBackdrop.color.a < backdrop, "The dimmer reveals the player during its impact beat.");
-        Capture(canvas, Camera.main, "player-empowered", check);
-        yield return Until(() => map.CanInteract);
-        check(player.SacrificePulse == 0 && !player.transform.Find("Pulse").GetComponent<MeshRenderer>().enabled && panel.feedbackBackdrop.color.a == backdrop,
-            "Completion restores the player presentation and authored backdrop.");
-        check(!panel.IsBusy && !panel.IsOpen && panel.statusText.text.StartsWith("Next battle:"), "Feedback ends with a persistent prepared-benefit indicator.");
-        check(!panel.burnEffect.IsPlaying && panel.burnEffect.VisibleParticles == 0 && panel.cardGroup.alpha == 1,
-            "Completion clears the burn, restores the preview and retains the prepared benefit.");
-        Capture(canvas, Camera.main, "prepared", check);
-        var another = Object.FindObjectsByType<MapCardView>(FindObjectsSortMode.None).First();
-        map.RequestSacrifice(another); yield return null;
-        check(panel.IsOpen && !panel.confirm.interactable && panel.reason.gameObject.activeInHierarchy && panel.reason.text.Contains("Already sacrificed"), "Used sacrifices remain inspectable with an explicit unavailable reason.");
-        panel.Confirm();
-        check(!panel.burnEffect.IsPlaying && !panel.IsBusy, "A denied sacrifice never starts the burn or locks the panel.");
-        Capture(canvas, Camera.main, "unavailable", check);
-        panel.Close(); yield return Until(() => map.CanInteract);
-        panel.statusButton.onClick.Invoke(); yield return null;
-        check(panel.statusPopup.activeSelf && panel.statusDetails.text.Contains("Attack interval"), "Prepared benefit can be inspected without a second sacrifice.");
-        var prepared = session.PendingModifier;
-        var pendingField = typeof(RunSession).GetField("pendingModifier", BindingFlags.Instance | BindingFlags.NonPublic);
+        var source = panel.DetailMaterial;
+        float radius = source.GetFloat("_CornerRadius"), height = source.GetFloat("_ShadeHeight"),
+            opacity = source.GetFloat("_ShadeOpacity"), softness = source.GetFloat("_ShadeSoftness");
+        var effect = panel.burnEffect;
         try
         {
-            foreach (var card in session.RunDeck.Select(c => c.definition).Distinct())
+            source.SetFloat("_ShadeHeight",.50f); source.SetFloat("_ShadeOpacity",1); source.SetFloat("_ShadeSoftness",.25f);
+            foreach (float testRadius in new[] { 0f,200f })
             {
-                pendingField.SetValue(session, new PendingEncounterModifier { sourceCardId = card.cardId,
-                    effectType = card.overworldEffect.effectType, magnitude = card.overworldEffect.magnitude, isValid = true });
-                panel.RefreshStatus(); panel.statusDetails.ForceMeshUpdate();
-                check(!panel.statusDetails.isTextOverflowing, card.name + ": pending summary fits.");
+                source.SetFloat("_CornerRadius",testRadius);
+                yield return null; yield return null;
+                check(Mathf.Approximately(panel.illustration.material.GetFloat("_CornerRadius"),testRadius),
+                    "Material corner radius remains editable at zero and above the previous slider limit.");
+                check(effect.Begin(panel.cardPreview),"Capture the real composed card to verify black opacity and rounded clipping.");
+                var target = (RenderTexture)effect.GetComponentsInChildren<RawImage>().Single(image => image.texture is RenderTexture).texture;
+                var previous = RenderTexture.active;
+                var sample = new Texture2D(target.width,target.height,TextureFormat.RGBA32,false);
+                try
+                {
+                    RenderTexture.active = target;
+                    sample.ReadPixels(new Rect(0,0,target.width,target.height),0,0); sample.Apply();
+                    File.WriteAllBytes(MapSacrificeAuthoring.Results+"/black-mask-radius-"+testRadius+".png",sample.EncodeToPNG());
+                    var bounds = Field<Rect>(effect,"bounds");
+                    Color ArtworkPixel(float x,float y)
+                    {
+                        var artwork = panel.illustration.rectTransform;
+                        var point = panel.cardPreview.InverseTransformPoint(artwork.TransformPoint(
+                            new Vector3(Mathf.Lerp(artwork.rect.xMin,artwork.rect.xMax,x),Mathf.Lerp(artwork.rect.yMin,artwork.rect.yMax,y),0)));
+                        return sample.GetPixel(Mathf.Clamp(Mathf.RoundToInt((point.x-bounds.xMin)/bounds.width*target.width),0,target.width-1),
+                            Mathf.Clamp(Mathf.RoundToInt((point.y-bounds.yMin)/bounds.height*target.height),0,target.height-1));
+                    }
+                    var black = ArtworkPixel(.5f,.125f);
+                    check(Mathf.Max(black.r,Mathf.Max(black.g,black.b)) < .01f && black.a > .98f,
+                        "Opacity one produces actual opaque black across the lower card, not only the bottom edge.");
+                    var corner = ArtworkPixel(.06f,.04f);
+                    check(testRadius == 0 ? corner.a > .98f : corner.a < .02f,
+                        "Rendered corner pixels change from square to rounded without script overrides. radius="+testRadius+" alpha="+corner.a+" size="+target.width+"x"+target.height);
+                }
+                finally { RenderTexture.active = previous; Object.Destroy(sample); effect.Clear(); }
             }
         }
-        finally { pendingField.SetValue(session, prepared); panel.RefreshStatus(); }
-        Capture(canvas, Camera.main, "pending-details", check);
-        panel.statusButton.onClick.Invoke();
-        check(layout.spacing == spacing && nodeTransforms.SequenceEqual(map.Nodes.Select(n => (n.NodeId, n.transform.position, n.transform.localScale))), "Deck spacing and all node transforms remain unchanged.");
-        check(map.TryRestartRunForTesting(), "A new run can reset after the inspector closes.");
-        yield return null;
-        check(!session.SacrificeUsed && !session.HasPendingModifier && !panel.IsOpen, "Restart clears offering UI and data.");
-        yield return VerifyDeparture(map, check);
-        Directory.CreateDirectory(MapSacrificeAuthoring.Results);
-        File.WriteAllText(MapSacrificeAuthoring.Results + "/checks.txt", "PASS: all definitions, three resolutions, stable hover, cancellation, exact-instance removal, repeated commit, disabled state, pending summary and restart.\n");
+        finally
+        {
+            effect.Clear(); source.SetFloat("_CornerRadius",radius); source.SetFloat("_ShadeHeight",height);
+            source.SetFloat("_ShadeOpacity",opacity); source.SetFloat("_ShadeSoftness",softness);
+        }
+        yield return null; yield return null;
     }
 
-    private static void CheckArtwork(StatusIcon icon, StatusSymbol symbol, Action<bool, string> check)
-    {
-        string path = symbol == StatusSymbol.Elixir ? "Assets/UI/ElixirDrop 1.png" :
-            symbol == StatusSymbol.Shield ? "Assets/UI/Shield 1.png" : null;
-        var expected = path != null ? AssetDatabase.LoadAssetAtPath<Sprite>(path) : null;
-        check(icon.symbol == symbol && icon.Artwork == expected && (path == null || expected != null),
-            icon.name + ": scene-authored artwork follows " + symbol);
-        check(!icon.raycastTarget && (expected == null || icon.mainTexture == expected.texture),
-            icon.name + ": artwork uses the correct texture without intercepting input.");
-    }
 
-    private static IEnumerator VerifyBurn(MapSacrificePanel panel, Canvas canvas, Action<bool, string> check)
+    public static IEnumerator VerifyBurn(MapSacrificePanel panel, Canvas canvas, Action<bool, string> check)
     {
         var effect = panel.burnEffect;
         check(effect != null && effect.IsReady && !ShaderUtil.ShaderHasError(effect.cardTemplate.material.shader),
@@ -196,14 +84,14 @@ public static class MapSacrificeVerification
         panel.cardGroup.alpha = 0;
         yield return null;
         var image = effect.GetComponentsInChildren<RawImage>().Single(i => i.texture is RenderTexture);
-        effect.Evaluate(effect.moveDuration * .5f);
-        check(effect.Progress == 0 && effect.VisibleParticles == 0, "The card travels intact before ignition.");
+        effect.EvaluateFrame(new SacrificeTimelineFrame { move = .5f, burnAge = -1, burnDuration = 1 });
+        check(effect.Progress == 0 && effect.VisibleParticles == 0, "The card travels intact before the burn starts.");
         Capture(canvas, Camera.main, "center-01-travel", check);
-        effect.Evaluate(effect.moveDuration);
+        effect.EvaluateFrame(new SacrificeTimelineFrame { move = 1, burnAge = -1, burnDuration = 1 });
         check(Vector3.Distance(image.transform.position, effect.focusAnchor.position) < .01f,
             "The intact card arrives at the authored center anchor.");
-        check(Mathf.Abs(image.transform.lossyScale.x / panel.cardPreview.lossyScale.x - effect.focusScale) < .001f,
-            "Only the visual snapshot enlarges by the Inspector scale.");
+        check(Mathf.Abs(image.transform.lossyScale.x / panel.cardPreview.lossyScale.x - 1) < .001f,
+            "The visual snapshot reaches the center before it expands.");
         Capture(canvas, Camera.main, "center-02-held", check);
         var texture = (RenderTexture)image.texture;
         var active = RenderTexture.active;
@@ -217,12 +105,12 @@ public static class MapSacrificeVerification
             File.WriteAllBytes(MapSacrificeAuthoring.Results + "/burn-face.png", sample.EncodeToPNG());
         }
         finally { RenderTexture.active = active; Object.Destroy(sample); }
-        float[] ages = { effect.BurnStart+effect.ignitionDuration*.6f, effect.BurnStart+effect.ignitionDuration+effect.burnDuration*.30f,
-            effect.BurnStart+effect.ignitionDuration+effect.burnDuration*.63f, effect.BurnStart+effect.ignitionDuration+effect.burnDuration+.08f };
-        string[] names = { "burn-01-ignite", "burn-02-char", "burn-03-through", "burn-04-ash" };
+        float[] ages = { .08f, .30f, .63f, 1.08f };
+        string[] names = { "burn-01-start", "burn-02-char", "burn-03-through", "burn-04-ash" };
         for (int i = 0; i < ages.Length; i++)
         {
-            effect.Evaluate(ages[i]); Canvas.ForceUpdateCanvases();
+            effect.EvaluateFrame(new SacrificeTimelineFrame { elapsed = ages[i], move = 1, expand = 1,
+                burn = Mathf.Clamp01(ages[i]), burnAge = ages[i], burnDuration = 1 }); Canvas.ForceUpdateCanvases();
             Capture(canvas, Camera.main, names[i], check);
             if (i == 2) check(effect.VisibleParticles > 0 && effect.VisibleParticles <= effect.particleCount,
                 "The burn emits a bounded set of ash and sparks.");
@@ -253,7 +141,7 @@ public static class MapSacrificeVerification
         player.enabled = true;
     }
 
-    private static IEnumerator VerifyDeparture(MapController map, Action<bool, string> check)
+    public static IEnumerator VerifyDeparture(MapController map, Action<bool, string> check)
     {
         var session = map.Session; var panel = map.SacrificePanel;
         var definitions = AssetDatabase.LoadAssetAtPath<CardPool>("Assets/Data/CardPool.asset").Cards;
@@ -318,7 +206,7 @@ public static class MapSacrificeVerification
                 var panel = canvas.GetComponentInChildren<MapSacrificePanel>(true);
                 if (panel != null && panel.IsBusy) panel.RefreshFeedbackPresentation();
                 else if (panel != null && panel.burnEffect != null && panel.burnEffect.IsPlaying)
-                    panel.burnEffect.Evaluate(panel.burnEffect.Elapsed);
+                    panel.burnEffect.EvaluateFrame(panel.burnEffect.CurrentFrame);
                 Canvas.ForceUpdateCanvases();
                 if (panel != null && panel.IsOpen)
                 {
@@ -351,7 +239,7 @@ public static class MapSacrificeVerification
             var panel = canvas.GetComponentInChildren<MapSacrificePanel>(true);
             if (panel != null && panel.IsBusy) panel.RefreshFeedbackPresentation();
             else if (panel != null && panel.burnEffect != null && panel.burnEffect.IsPlaying)
-                panel.burnEffect.Evaluate(panel.burnEffect.Elapsed);
+                panel.burnEffect.EvaluateFrame(panel.burnEffect.CurrentFrame);
         }
     }
     private static IEnumerator Until(Func<bool> condition)

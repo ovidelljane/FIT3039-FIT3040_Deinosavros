@@ -1,27 +1,18 @@
-using System;
 using UnityEngine;
 using UnityEngine.Rendering;
-using UnityEngine.SceneManagement;
 
 [ExecuteAlways]
 [DisallowMultipleComponent]
 [RequireComponent(typeof(Camera))]
 public sealed class MapCameraCloudOverlay : MonoBehaviour
 {
-    private const string MapSceneName = "Map";
     private const string ShaderResourcePath = "Map/MapCameraClouds";
     private const string OverlayObjectName = "Map Camera Clouds";
 
-    [SerializeField] private Color cloudColor = new(0.82f, 0.82f, 0.79f, 1.0f);
-    [SerializeField] private Color shadowColor = new(0.30f, 0.34f, 0.38f, 1.0f);
-    [SerializeField, Range(0.0f, 0.5f)] private float opacity = 0.26f;
-    [SerializeField, Range(0.3f, 0.8f)] private float coverage = 0.56f;
-    [SerializeField, Range(0.02f, 0.35f)] private float edgeSoftness = 0.09f;
-    [SerializeField, Range(0.2f, 5.0f)] private float primaryScale = 1.35f;
-    [SerializeField, Range(1.0f, 12.0f)] private float detailScale = 4.8f;
-    [SerializeField] private Vector2 primarySpeed = new(0.016f, 0.0015f);
-    [SerializeField] private Vector2 detailSpeed = new(-0.008f, 0.003f);
-    [SerializeField, Range(0.0f, 1.0f)] private float centerClarity = 0.25f;
+    [SerializeField, Tooltip("Alpha controls cloud opacity.")] private Color color = new(.82f,.82f,.79f,.14f);
+    [SerializeField, Min(.1f)] private float cloudScale = 3.4f;
+    [SerializeField, Tooltip("Horizontal and vertical movement in viewport units per second.")] private Vector2 flow = new(.024f,.006f);
+    [SerializeField, Range(0,1)] private float centerClarity = .8f;
 
     private Camera targetCamera;
     private GameObject overlayObject;
@@ -30,65 +21,25 @@ public sealed class MapCameraCloudOverlay : MonoBehaviour
     private bool missingShaderReported;
     private readonly Vector3[] frustumCorners = new Vector3[4];
 
-    public void Configure(float alpha, float clarity, Vector2 speed)
-    {
-        opacity = alpha;
-        centerClarity = clarity;
-        primarySpeed = speed;
-        detailSpeed = new Vector2(-0.008f, 0.003f);
-        cloudColor = new Color(0.82f, 0.82f, 0.79f, 1);
-        shadowColor = new Color(0.30f, 0.34f, 0.38f, 1);
-        Refresh();
-    }
-
     public void Refresh()
     {
         if (!isActiveAndEnabled) return;
         EnsureResources();
     }
 
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    private static void InstallForMapScene()
-    {
-        if (!string.Equals(SceneManager.GetActiveScene().name, MapSceneName, StringComparison.Ordinal))
-        {
-            return;
-        }
-
-        Ensure(Camera.main);
-    }
-
-    public static MapCameraCloudOverlay Ensure(Camera camera)
-    {
-        if (camera == null)
-        {
-            return null;
-        }
-
-        MapCameraCloudOverlay overlay = camera.GetComponent<MapCameraCloudOverlay>();
-        if (overlay == null)
-        {
-            overlay = camera.gameObject.AddComponent<MapCameraCloudOverlay>();
-        }
-        overlay.EnsureResources();
-        return overlay;
-    }
-
     private void OnEnable()
     {
         EnsureResources();
+        #if UNITY_EDITOR
+        UnityEditor.EditorApplication.update += Preview;
+        #endif
     }
 
     private void OnValidate()
     {
-        opacity = Mathf.Clamp(opacity, 0.0f, 0.5f);
-        coverage = Mathf.Clamp(coverage, 0.3f, 0.8f);
-        edgeSoftness = Mathf.Clamp(edgeSoftness, 0.02f, 0.35f);
-        primaryScale = Mathf.Clamp(primaryScale, 0.2f, 5.0f);
-        detailScale = Mathf.Clamp(detailScale, 1.0f, 12.0f);
+        color.a = Mathf.Clamp01(color.a);
+        cloudScale = Mathf.Max(.1f,cloudScale);
         centerClarity = Mathf.Clamp01(centerClarity);
-        ApplyMaterialSettings();
-        UpdateOverlayTransform();
     }
 
     private void LateUpdate()
@@ -98,8 +49,22 @@ public sealed class MapCameraCloudOverlay : MonoBehaviour
 
     private void OnDisable()
     {
+        #if UNITY_EDITOR
+        UnityEditor.EditorApplication.update -= Preview;
+        #endif
         ReleaseResources();
     }
+
+    #if UNITY_EDITOR
+    private double nextPreview;
+    private void Preview()
+    {
+        if (Application.isPlaying || UnityEditor.EditorApplication.timeSinceStartup < nextPreview) return;
+        nextPreview = UnityEditor.EditorApplication.timeSinceStartup + 1.0/30;
+        Refresh();
+        UnityEditor.EditorApplication.QueuePlayerLoopUpdate();
+    }
+    #endif
 
     private void EnsureResources()
     {
@@ -194,15 +159,10 @@ public sealed class MapCameraCloudOverlay : MonoBehaviour
             return;
         }
 
-        overlayMaterial.SetColor("_CloudColor", cloudColor);
-        overlayMaterial.SetColor("_ShadowColor", shadowColor);
-        overlayMaterial.SetFloat("_Opacity", opacity);
-        overlayMaterial.SetFloat("_Coverage", coverage);
-        overlayMaterial.SetFloat("_Softness", edgeSoftness);
-        overlayMaterial.SetFloat("_PrimaryScale", primaryScale);
-        overlayMaterial.SetFloat("_DetailScale", detailScale);
-        overlayMaterial.SetVector("_PrimarySpeed", new Vector4(primarySpeed.x, primarySpeed.y, 0.0f, 0.0f));
-        overlayMaterial.SetVector("_DetailSpeed", new Vector4(detailSpeed.x, detailSpeed.y, 0.0f, 0.0f));
+        Shader.SetGlobalFloat("_MapCloudTime",Time.realtimeSinceStartup);
+        overlayMaterial.SetColor("_CloudColor",color);
+        overlayMaterial.SetFloat("_CloudScale",cloudScale);
+        overlayMaterial.SetVector("_Flow",new Vector4(flow.x,flow.y,0,0));
         overlayMaterial.SetFloat("_CenterClarity", centerClarity);
         overlayMaterial.SetFloat("_Aspect", Mathf.Max(0.1f, targetCamera.aspect));
     }
