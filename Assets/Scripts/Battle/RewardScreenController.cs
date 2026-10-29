@@ -12,6 +12,13 @@ public sealed class RewardScreenController : MonoBehaviour
     [SerializeField] private CardPool cardPool;
     [SerializeField] private Button skipButton;
     [SerializeField, Min(1)] private int rewardOptionCount = 3;
+    [Header("Scene Text")]
+    [SerializeField] private ResultTextView victory;
+    [SerializeField] private ResultTextView defeat;
+    [SerializeField] private ResultTextView replacement;
+    [SerializeField] private TMP_Text returnError;
+    [Header("Button Labels")]
+    [SerializeField] private TMP_Text victoryButtonLabel, defeatButtonLabel, replacementButtonLabel, retryButtonLabel;
     [Header("Presentation")]
     [SerializeField] private Color backgroundColor = new Color(.31f, .28f, .25f, 1);
     [SerializeField] private Color cardColor = new Color(.205f, .18f, .155f, 1);
@@ -29,7 +36,25 @@ public sealed class RewardScreenController : MonoBehaviour
     private bool presentationReady;
     private Vector2 previousPanelSize;
     private TMP_Text title;
+    private string returnErrorTemplate;
     public bool IsPresented => presented;
+    public Transform PresentationRoot => rewardPanel != null ? rewardPanel.transform : null;
+
+    [Serializable]
+    public sealed class ResultTextView
+    {
+        public GameObject root;
+        public TMP_Text title;
+        [Tooltip("Optional tokens: {capacity}, {limit}, {card}.")]
+        public TMP_Text message;
+        private string template;
+
+        public string FormatMessage(int capacity, int limit, string card = "")
+        {
+            template ??= message.text;
+            return template.Replace("{capacity}",capacity.ToString()).Replace("{limit}",limit.ToString()).Replace("{card}",card);
+        }
+    }
 
     private void Start()
     {
@@ -43,7 +68,7 @@ public sealed class RewardScreenController : MonoBehaviour
         session = owner; encounterId = id; presented = true;
         rewardPanel.SetActive(true);
         rewardPanel.transform.SetAsLastSibling();
-        PreparePresentation("Victory");
+        PreparePresentation(victory);
         SetChoiceMessage();
         ClearOffers();
         foreach (var offer in offers)
@@ -52,7 +77,7 @@ public sealed class RewardScreenController : MonoBehaviour
             instance.GetComponent<RewardCardView>().Initialize(offer, ChooseCard);
         }
         UpdatePresentationLayout();
-        SetSkip("Skip", SkipReward);
+        SetSkip(victoryButtonLabel, SkipReward);
     }
 
     public void PresentDefeat(Action returnToMenu)
@@ -61,9 +86,8 @@ public sealed class RewardScreenController : MonoBehaviour
         presented = true; rewardPanel.SetActive(true);
         rewardPanel.transform.SetAsLastSibling();
         ClearOffers();
-        PreparePresentation("Defeat");
-        SetMessage("This adventure has ended");
-        SetSkip("Return to Menu", () =>
+        PreparePresentation(defeat);
+        SetSkip(defeatButtonLabel, () =>
         {
             skipButton.interactable = false;
             returnToMenu?.Invoke();
@@ -81,8 +105,8 @@ public sealed class RewardScreenController : MonoBehaviour
     {
         pendingCard = incoming;
         rewardCardContainer.gameObject.SetActive(false);
-        title.text = "Replace a Card";
-        SetMessage(incoming.displayName + " - Capacity " + session.DeckCapacity + "/" + RunSession.CapacityLimit);
+        PreparePresentation(replacement);
+        SetMessage(replacement.FormatMessage(session.DeckCapacity,RunSession.CapacityLimit,incoming.displayName));
         if (replacementRoot != null) Destroy(replacementRoot);
         replacementRoot = new GameObject("RewardReplacement", typeof(RectTransform), typeof(Image), typeof(RectMask2D), typeof(ScrollRect));
         var viewport = (RectTransform)replacementRoot.transform;
@@ -108,7 +132,7 @@ public sealed class RewardScreenController : MonoBehaviour
             view.Initialize(card.definition, _ => TryClaim(pendingCard, instanceId));
         }
         UpdatePresentationLayout();
-        SetSkip("Cancel Replacement", CancelReplacement);
+        SetSkip(replacementButtonLabel, CancelReplacement);
     }
 
     private void CancelReplacement()
@@ -117,9 +141,9 @@ public sealed class RewardScreenController : MonoBehaviour
         replacementRoot = null;
         pendingCard = null;
         rewardCardContainer.gameObject.SetActive(true);
-        title.text = "Victory";
+        PreparePresentation(victory);
         SetChoiceMessage();
-        SetSkip("Skip", SkipReward);
+        SetSkip(victoryButtonLabel, SkipReward);
     }
 
     private void TryClaim(CardDefinition incoming, string outgoingId)
@@ -139,72 +163,58 @@ public sealed class RewardScreenController : MonoBehaviour
     {
         foreach (var button in rewardPanel.GetComponentsInChildren<Button>()) button.interactable = false;
         if (!MapTravelCoordinator.Ensure(session).ContinueBattleReward(this, encounterId))
-            ShowReturnError("Your reward is saved. Retry returning to the map.");
+            ShowReturnError(null);
     }
 
     public void ShowReturnError(string text)
     {
         rewardCardContainer.gameObject.SetActive(false);
         if (replacementRoot != null) replacementRoot.SetActive(false);
-        SetMessage(text);
-        SetSkip("Retry Return", () =>
+        victory.message.gameObject.SetActive(false);
+        defeat.message.gameObject.SetActive(false);
+        replacement.message.gameObject.SetActive(false);
+        returnError.gameObject.SetActive(true);
+        message = returnError;
+        SetMessage(string.IsNullOrEmpty(text) ? returnErrorTemplate : text);
+        SetSkip(retryButtonLabel, () =>
         {
             if (MapTravelCoordinator.Ensure(session).ContinueBattleReward(this, encounterId))
                 skipButton.interactable = false;
         });
     }
 
-    private void SetSkip(string title, UnityEngine.Events.UnityAction action)
+    private void SetSkip(TMP_Text label, UnityEngine.Events.UnityAction action)
     {
         skipButton.onClick.RemoveAllListeners();
         skipButton.onClick.AddListener(action);
         skipButton.interactable = true;
-        var label = skipButton.GetComponentInChildren<TMP_Text>();
-        if (label != null) label.text = title;
+        foreach (var candidate in new[] { victoryButtonLabel, defeatButtonLabel, replacementButtonLabel, retryButtonLabel })
+            candidate.gameObject.SetActive(candidate == label);
     }
 
     private void SetMessage(string text)
     {
-        if (message == null)
-        {
-            var root = new GameObject("RewardMessage", typeof(RectTransform));
-            var rect = (RectTransform)root.transform;
-            rect.SetParent(rewardPanel.transform, false);
-            rect.anchorMin = new Vector2(.07f, .78f); rect.anchorMax = new Vector2(.93f, .85f);
-            rect.offsetMin = rect.offsetMax = Vector2.zero;
-            message = root.AddComponent<TextMeshProUGUI>();
-            GameFonts.Apply(message, GameFontRole.Body); message.fontSize = 30;
-            message.enableAutoSizing = true; message.fontSizeMin = 23; message.fontSizeMax = 30;
-            message.alignment = TextAlignmentOptions.Center; message.raycastTarget = false;
-            message.color = new Color(.95f, .88f, .7f);
-        }
         message.text = text;
     }
 
-    private void SetChoiceMessage() => SetMessage("Choose one card - Deck capacity " + session.DeckCapacity + "/" + RunSession.CapacityLimit);
+    private void SetChoiceMessage() => SetMessage(victory.FormatMessage(session != null ? session.DeckCapacity : 0,RunSession.CapacityLimit));
 
-    private void PreparePresentation(string heading)
+    private void PreparePresentation(ResultTextView content)
     {
         if (!presentationReady)
         {
             presentationReady = true;
             rewardPanel.GetComponent<Image>().color = backgroundColor;
-            title = rewardPanel.transform.Find("Title").GetComponent<TMP_Text>();
-            Stretch(title.rectTransform, new Vector2(.06f, .85f), new Vector2(.94f, .96f));
-            GameFonts.Apply(title, GameFontRole.Heading);
-            title.fontSize = 56; title.color = accentColor; title.raycastTarget = false;
-            Stretch((RectTransform)rewardCardContainer, new Vector2(.04f, .18f), new Vector2(.96f, .77f));
-            var buttonRect = skipButton.GetComponent<RectTransform>();
-            buttonRect.anchorMin = buttonRect.anchorMax = new Vector2(.5f, .08f);
-            buttonRect.anchoredPosition = Vector2.zero; buttonRect.sizeDelta = new Vector2(380, 72);
-            skipButton.GetComponent<Image>().color = cardColor;
-            var border = skipButton.gameObject.AddComponent<Outline>();
-            border.effectColor = accentColor; border.effectDistance = new Vector2(1.5f, -1.5f);
-            var label = skipButton.GetComponentInChildren<TMP_Text>();
-            GameFonts.Apply(label); label.fontSize = 25; label.color = accentColor;
-            label.enableAutoSizing = true; label.fontSizeMin = 19; label.fontSizeMax = 25;
+            returnErrorTemplate = returnError.text;
         }
-        title.text = heading;
+        victory.root.SetActive(content == victory);
+        defeat.root.SetActive(content == defeat);
+        replacement.root.SetActive(content == replacement);
+        returnError.gameObject.SetActive(false);
+        title = content.title;
+        message = content.message;
+        message.gameObject.SetActive(true);
+        SetMessage(content.FormatMessage(session != null ? session.DeckCapacity : 0,RunSession.CapacityLimit));
     }
 
     private void LateUpdate()

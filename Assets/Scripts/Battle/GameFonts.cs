@@ -44,11 +44,12 @@ public static class GameFonts
         text.fontStyle = text.name == "CostText" ? FontStyles.Bold : FontStyles.Normal;
         text.characterSpacing = role == GameFontRole.Heading ? 1.2f : 0f;
     }
-    public static void ApplyHierarchy(Transform root, Transform preserveRoot = null)
+    public static void ApplyHierarchy(Transform root, Transform preserveRoot = null, Transform preserveResultRoot = null)
     {
         foreach (var text in root.GetComponentsInChildren<TMP_Text>(true))
         {
             if (preserveRoot != null && text.transform.IsChildOf(preserveRoot)) continue;
+            if (preserveResultRoot != null && text.transform.IsChildOf(preserveResultRoot)) continue;
             if (text.GetComponentInParent<PauseMenu>(true) != null ||
                 text.GetComponentInParent<MapSacrificePanel>(true) != null ||
                 text.GetComponentInParent<MapPlayerStatusPanel>(true) != null ||
@@ -72,6 +73,15 @@ public static class GameFonts
         // Encounter pages keep their scene-authored font and typography settings.
         if (scene.name != "MainMenu" && scene.name != "Map" && scene.name != "Deinosavros") return;
         Transform preserveRoot = scene.name == "Deinosavros" ? BattleHud.Find(scene)?.StatusRoot : null;
-        foreach (var root in scene.GetRootGameObjects()) ApplyHierarchy(root.transform, preserveRoot);
+        Transform preserveResultRoot = null;
+        if (scene.name == "Deinosavros")
+            foreach (var root in scene.GetRootGameObjects())
+            {
+                var result = root.GetComponentInChildren<RewardScreenController>(true);
+                if (result == null) continue;
+                preserveResultRoot = result.PresentationRoot;
+                break;
+            }
+        foreach (var root in scene.GetRootGameObjects()) ApplyHierarchy(root.transform, preserveRoot, preserveResultRoot);
     }
 }

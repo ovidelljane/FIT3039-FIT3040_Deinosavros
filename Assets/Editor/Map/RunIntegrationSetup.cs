@@ -81,6 +81,9 @@ public static class RunIntegrationSetup
             else if (action == "author-attack-countdowns") CombatAttackCountdownAuthoring.ApplyAndVerify();
             else if (action == "attack-countdowns") RunIntegrationPlayVerification.RunAttackCountdowns();
             else if (action == "menu-background") MenuBackgroundAuthoring.ApplyAndVerify();
+            else if (action == "result-background") MenuBackgroundAuthoring.VerifyResultBackground();
+            else if (action == "author-result-text") MenuBackgroundAuthoring.AuthorResultText();
+            else if (action == "verify-result-text") MenuBackgroundAuthoring.VerifyResultTextEditing();
             else if (action == "menu-embers") MenuBackgroundAuthoring.ApplyEmbers();
             else if (action == "menu-embers-play") RunIntegrationPlayVerification.RunMenuEmbers();
             else if (action == "author-card-feedback") CombatCardFeedbackAuthoring.Apply();
@@ -91,6 +94,7 @@ public static class RunIntegrationSetup
             else if (action == "author-sacrifice") MapSacrificeAuthoring.Apply();
             else if (action == "card-detail-reset") MapCardDetailAuthoring.Apply();
             else if (action == "card-hover") RunIntegrationPlayVerification.RunCardHover();
+            else if (action == "card-detail-fade") MapCardDetailAuthoring.ApplyDetailFade();
             else if (action == "card-detail-hierarchy") MapCardDetailAuthoring.ApplyCurrent();
             else if (action == "verify-card-detail-hierarchy") MapCardDetailAuthoring.VerifyHierarchyEditing();
             else if (action == "simplify-card-gradient") MapCardDetailAuthoring.SimplifyGradient();

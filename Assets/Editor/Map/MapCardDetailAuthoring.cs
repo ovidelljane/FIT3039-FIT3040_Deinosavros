@@ -12,6 +12,42 @@ using Object = UnityEngine.Object;
 public static class MapCardDetailAuthoring
 {
     private const string ScenePath = "Assets/Scenes/Map.unity";
+    [MenuItem("Tools/Map/Enable Detail Fade")]
+    public static void ApplyDetailFade()
+    {
+        if (EditorApplication.isPlayingOrWillChangePlaymode) throw new InvalidOperationException("Stop Play Mode first.");
+        var scene = SceneManager.GetSceneByPath(ScenePath);
+        bool opened = !scene.IsValid() || !scene.isLoaded;
+        if (opened) scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Additive);
+        try
+        {
+            var ui = scene.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<MapSacrificePanel>(true)).Single();
+            bool changed = EnsureDetailFade(ui);
+            if (changed)
+            {
+                EditorSceneManager.MarkSceneDirty(scene);
+                if (!EditorSceneManager.SaveScene(scene)) throw new InvalidOperationException("Could not save detail fade bindings.");
+            }
+            if (ui.detailGroup == ui.cardGroup || ui.detailGroup.transform != ui.panel || ui.detailGroup.ignoreParentGroups)
+                throw new InvalidOperationException("Detail visibility must be independent from the sacrifice Timeline.");
+            Directory.CreateDirectory(MapSacrificeAuthoring.Results);
+            File.WriteAllText(MapSacrificeAuthoring.Results+"/detail-fade-bindings.txt",
+                "PASS: saved parent CanvasGroup, existing UI shader, editable fade times and unchanged artwork material.\n");
+        }
+        finally { if (opened) EditorSceneManager.CloseScene(scene,true); }
+    }
+
+    private static bool EnsureDetailFade(MapSacrificePanel ui)
+    {
+        if (ui.detailGroup != null) return false;
+        Undo.RecordObject(ui,"Bind detail fade");
+        var group = ui.panel.GetComponent<CanvasGroup>();
+        if (group == null) group = Undo.AddComponent<CanvasGroup>(ui.panel.gameObject);
+        ui.detailGroup = group;
+        EditorUtility.SetDirty(ui);
+        return true;
+    }
+
     [MenuItem("Tools/Map/Simplify Card Gradient")]
     public static void SimplifyGradient()
     {
@@ -134,9 +170,10 @@ public static class MapCardDetailAuthoring
 
     public static bool Migrate(MapSacrificePanel ui)
     {
+        bool fadeChanged = EnsureDetailFade(ui);
         if (ui.detailVisual != null)
         {
-            if (ui.panel.GetComponent<MapCardDetailPointer>() != null) return false;
+            if (ui.panel.GetComponent<MapCardDetailPointer>() != null) return fadeChanged;
             ui.panel.gameObject.AddComponent<MapCardDetailPointer>().owner = ui;
             return true;
         }

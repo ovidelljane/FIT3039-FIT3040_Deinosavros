@@ -27,7 +27,7 @@ public sealed class MapCardDetailInspector : Editor
         detail = EditorGUILayout.Foldout(detail,"Card Detail",true);
         if (detail)
         {
-            Fields("artworkFocus","cardContent","hideDelay","hoverSwitchDelay","detailTransferTime","detailTransferPadding","hoverMotionTolerance");
+            Fields("artworkFocus","cardContent","fadeInDuration","fadeOutDuration","hideDelay","hoverSwitchDelay","detailTransferTime","detailTransferPadding","hoverMotionTolerance");
             DrawGradient(ui);
         }
         ceremony = EditorGUILayout.Foldout(ceremony,"Sacrifice",true);
@@ -35,7 +35,7 @@ public sealed class MapCardDetailInspector : Editor
         colors = EditorGUILayout.Foldout(colors,"Colors",true);
         if (colors) Fields("bodyColor","accentGold","warningColor","attackSpeedColor","shieldColor","enemyHealthColor","elixirColor");
         bindings = EditorGUILayout.Foldout(bindings,"Bindings",true);
-        if (bindings) Fields("overlay","panel","cardPreview","cardGroup","illustration","cardName","combatText","reason","statusText","statusDetails",
+        if (bindings) Fields("overlay","panel","cardPreview","cardGroup","detailGroup","illustration","cardName","combatText","reason","statusText","statusDetails",
             "flightIcon","flightHeartCut","confirm","statusButton","statusPopup","burnEffect","playerSymbol","feedbackBackdrop","detailVisual",
             "departureWarning","departurePanel","departureMessage","departureContinue","departureBack");
         bool changed = EditorGUI.EndChangeCheck();
