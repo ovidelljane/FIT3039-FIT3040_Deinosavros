@@ -47,19 +47,18 @@ public static class CombatCardVfxAuthoring
                 var drain = Source("DebuffParticle", "BebuffDrain");
                 vfx.bindings = new[]
                 {
-                    Bind("Haste", true, new[] { StatType.AttackSpeed }, Part(spiral, -.25f, .10f, true)),
-                    Bind("MultiHit", true, new[] { StatType.ExtraHits }, Part(aura, -.40f, .045f, true), Part(spiral, -.25f, .10f, true)),
-                    Bind("Cataclysm", true, new[] { StatType.Cataclysm }, Part(aura, -.40f, .045f, true)),
-                    Bind("Damage", true, new[] { StatType.Damage }, Part(Source("AttackEnemyParticle", "WaterAura"), -.40f, .045f, true),
-                        Part(Source("AttackEnemyParticle", "Ripple"), -.42f, .15f, true)),
-                    Bind("Shield", true, new[] { StatType.Shield }, Part(Source("ShieldParticle", "ShieldGather"), 0, .15f, false),
-                        Part(Source("ShieldParticle", "Shield"), 0, .18f, true)),
+                    Bind("Haste", true, new[] { StatType.AttackSpeed }, Part(spiral)),
+                    Bind("MultiHit", true, new[] { StatType.ExtraHits }, Part(aura), Part(spiral)),
+                    Bind("Cataclysm", true, new[] { StatType.Cataclysm }, Part(aura)),
+                    Bind("Damage", true, new[] { StatType.Damage }, Part(Source("AttackEnemyParticle", "WaterAura")),
+                        Part(Source("AttackEnemyParticle", "Ripple"))),
+                    Bind("Shield", true, new[] { StatType.Shield }, Part(Source("ShieldParticle", "ShieldGather")),
+                        Part(Source("ShieldParticle", "Shield"))),
                     Bind("Elixir", false, new[] { StatType.Elixir, StatType.ElixirRegen },
-                        Part(Source("ElixirParticle", "ElixirRise"), -.35f, .18f, false), Part(Source("ElixirParticle", "Flash"), .10f, .12f, false)),
-                    Bind("Slow", true, new[] { StatType.EnemySlow, StatType.FrequencySlow }, Part(ground, -.23f, .12f, true), Part(drain, -.10f, .18f, true))
+                        Part(Source("ElixirParticle", "ElixirRise")), Part(Source("ElixirParticle", "Flash"))),
+                    Bind("Slow", true, new[] { StatType.EnemySlow, StatType.FrequencySlow }, Part(ground), Part(drain))
                 };
-                vfx.attackImpact = Part(Source("MainAttack", "Claw"), .05f, .24f, false);
-                vfx.attackImpact.playbackSpeed = 3;
+                vfx.attackImpact = Part(Source("MainAttack", "Claw"));
                 EditorUtility.SetDirty(vfx);
             }
             // Keep the teammate's assets as editable templates, not free-running demonstrations.
@@ -86,8 +85,8 @@ public static class CombatCardVfxAuthoring
         finally { if (opened) EditorSceneManager.CloseScene(scene, true); }
     }
 
-    private static CombatCardVfx.Part Part(ParticleSystem template, float height, float scale, bool loop) =>
-        new() { template = template, offset = new Vector3(0, height, 0), scale = scale, loop = loop };
+    private static CombatCardVfx.Part Part(ParticleSystem template) =>
+        new() { template = template };
     private static CombatCardVfx.Binding Bind(string name, bool sustained, StatType[] stats, params CombatCardVfx.Part[] parts) =>
         new() { name = name, sustained = sustained, stats = stats, parts = parts };
     private static void Require(bool condition, string message) { if (!condition) throw new InvalidOperationException(message); }
@@ -104,7 +103,7 @@ public static class CombatCardVfxAuthoring
             if (actor.enabled) report.Add(actor.name + " bounds=" + actor.GetComponent<Renderer>()?.bounds);
         foreach (var part in vfx.bindings.SelectMany(b => b.parts).Concat(new[] { vfx.attackImpact }))
             report.Add(part.template.name + " size=" + part.template.main.startSize.constantMax + " lifetime=" +
-                part.template.main.startLifetime.constantMax + " sourceScale=" + part.template.transform.localScale + " scale=" + part.scale);
+                part.template.main.startLifetime.constantMax + " sourceScale=" + part.template.transform.localScale);
         File.WriteAllLines(Report + "/bindings.txt", report);
     }
 
@@ -116,6 +115,8 @@ public static class CombatCardVfxAuthoring
         var hud = BattleHud.Find(SceneManager.GetActiveScene());
         var deck = hud.Deck; var player = deck.Player;
         var vfx = Object.FindFirstObjectByType<CombatCardVfx>();
+        int authoredParticleCount = vfx.GetComponentsInChildren<ParticleSystem>(true).Length;
+        int authoredObjectCount = vfx.GetComponentsInChildren<Transform>(true).Length;
         var enemies = BattleScript.FindFighters("Enemy");
         check(vfx != null && vfx.ActiveVisualCount == 0, "No demonstration particles play before a card or attack.");
         foreach (var enemy in enemies) { enemy.health = enemy.maxHealth = 10000; enemy.attackDmg = 0; enemy.attackSpd = 10000; }
@@ -135,6 +136,9 @@ public static class CombatCardVfxAuthoring
             card.OnPointerClick(new PointerEventData(EventSystem.current));
             card.OnPointerClick(new PointerEventData(EventSystem.current));
             yield return null;
+                check(vfx.GetComponentsInChildren<ParticleSystem>(true).Length == authoredParticleCount &&
+                    vfx.GetComponentsInChildren<Transform>(true).Length == authoredObjectCount,
+                    "Scene-instance playback creates no objects: " + definition.cardId);
             check(deck.Hand.Count == handCount - 1, "Single accepted play: " + definition.cardId);
             switch (values.Stat)
             {
@@ -143,7 +147,7 @@ public static class CombatCardVfxAuthoring
                 case StatType.JudgementDay:
                     check(enemies.All(e => vfx.IsShowing(e, StatType.FrequencySlow)) && vfx.IsShowing(player, StatType.FrequencySlow), "Judgement slows all combatants, including the player."); break;
                 case StatType.DamageAllEnemies:
-                    check(vfx.BurstCount == bursts, "Thunderbolt uses the existing damage impact, not a water or claw burst."); break;
+                    check(vfx.BurstCount == bursts + 1 && vfx.IsShowing(player, StatType.DamageAllEnemies), "Thunderbolt plays one water burst."); break;
                 case StatType.Elixir:
                 case StatType.ElixirRegen:
                     check(vfx.BurstCount == bursts + 1, "One Elixir burst per accepted card."); break;
@@ -205,6 +209,12 @@ public static class CombatCardVfxAuthoring
         yield return null;
         vfx.enabled = false; yield return null;
         check(vfx.ActiveVisualCount == 0, "Disabling the controller cleans up visuals and subscriptions.");
+        {
+            check(vfx.GetComponentsInChildren<ParticleSystem>(true).Length == authoredParticleCount,
+                "Disabling preserves all authored scene particles.");
+            check(!vfx.GetComponentsInChildren<ParticleSystem>(true).Any(s => s.isPlaying),
+                "Disabling stops every scene particle in use.");
+        }
         vfx.enabled = true;
         AddEffect(player, StatType.Damage, 2, 3);
         foreach (var enemy in enemies) enemy.TakeDamage(100000, player);

@@ -1096,7 +1096,7 @@ ParticleSystem:
   ringBufferMode: 0
   ringBufferLoopRange: {x: 0, y: 1}
   emitterVelocityMode: 1
-  looping: 1
+  looping: 0
   prewarm: 0
   playOnAwake: 0
   useUnscaledTime: 0
@@ -25329,7 +25329,7 @@ ParticleSystem:
   ringBufferMode: 0
   ringBufferLoopRange: {x: 0, y: 1}
   emitterVelocityMode: 1
-  looping: 1
+  looping: 0
   prewarm: 0
   playOnAwake: 0
   useUnscaledTime: 0
@@ -36694,7 +36694,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1173552934
 Transform:
   m_ObjectHideFlags: 0
@@ -36805,7 +36805,7 @@ ParticleSystem:
   ringBufferMode: 0
   ringBufferLoopRange: {x: 0, y: 1}
   emitterVelocityMode: 1
-  looping: 1
+  looping: 0
   prewarm: 0
   playOnAwake: 0
   useUnscaledTime: 0
@@ -70542,6 +70542,7 @@ MonoBehaviour:
     scale: 0.24
     playbackSpeed: 5.01
     loop: 0
+  useSceneInstances: 1
   maximumBursts: 16
   cameraOffset: 0.04
 --- !u!1 &1953967746
@@ -73081,13 +73082,21 @@ PrefabInstance:
       propertyPath: 'm_Materials.Array.data[1]'
       value: 
       objectReference: {fileID: 2100000, guid: 42e48000bdee7594abf358170a2a1d2d, type: 2}
+    - target: {fileID: 5433232912259002224, guid: 27501aaee7896364eb8e5f02dc5ecbf3, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7290381769195503525, guid: 27501aaee7896364eb8e5f02dc5ecbf3, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8410616872634574306, guid: 27501aaee7896364eb8e5f02dc5ecbf3, type: 3}
       propertyPath: m_Name
       value: ShieldParticle
       objectReference: {fileID: 0}
     - target: {fileID: 8410616872634574306, guid: 27501aaee7896364eb8e5f02dc5ecbf3, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

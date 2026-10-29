@@ -292,6 +292,7 @@ public class BuffCards : MonoBehaviour, IPointerClickHandler, IPointerEnterHandl
                     foreach (BattleScript enemy in LivingEnemies()) SpawnEffect(enemy);
                     break;
                 case StatType.DamageAllEnemies:
+                    CardEffectFeedback.Publish(new CardEffectFeedback(player, stat, 0, amount, CardFeedbackPhase.Applied));
                     foreach (BattleScript enemy in LivingEnemies()) enemy.TakeDamage((int)amount, player);
                     break;
                 case StatType.Heal: player.health = Mathf.Min(player.health + (int)amount, player.maxHealth); break;
