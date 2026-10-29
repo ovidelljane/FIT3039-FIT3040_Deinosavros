@@ -23,6 +23,7 @@ public sealed class MapSacrificePanel : MonoBehaviour
     public GameObject overlay;
     public RectTransform panel, cardPreview;
     public CanvasGroup cardGroup;
+    public CanvasGroup detailGroup;
     public Image illustration;
     public TMP_Text cardName, combatText, reason, statusText, statusDetails;
     public StatusIcon flightIcon;
@@ -34,6 +35,8 @@ public sealed class MapSacrificePanel : MonoBehaviour
     public Image feedbackBackdrop;
     public RectTransform detailVisual;
     [Header("Detail Hover")]
+    [Min(0)] public float fadeInDuration = .18f;
+    [Min(0)] public float fadeOutDuration = .14f;
     [Min(0)] public float hideDelay = .30f;
     [Min(0), Tooltip("Time over another card before replacing the current detail.")]
     public float hoverSwitchDelay = .20f;
@@ -74,8 +77,12 @@ public sealed class MapSacrificePanel : MonoBehaviour
     private string departureNodeId;
     private int selectionKey = int.MinValue, statusKey = int.MinValue;
     private MapCardView selectedView;
+    private MapCardView switchingView;
+    private string switchingId;
     private Material artworkMaterial, artworkSourceMaterial;
     private bool detailHovered, displayedBack, canConfirm;
+    private bool fadingOut;
+    private float visibility;
     private float hideAt = -1;
     private MapCardView hoverCandidate;
     private string hoverCandidateId;
@@ -91,7 +98,7 @@ public sealed class MapSacrificePanel : MonoBehaviour
     private sealed class TimelinePreviewState
     {
         public bool overlay, confirm, flight, heart;
-        public float alpha;
+        public float alpha, detailAlpha;
         public Color backdrop, flightColor;
         public Sprite sprite;
         public Material material, copy;
@@ -102,7 +109,7 @@ public sealed class MapSacrificePanel : MonoBehaviour
     }
     public bool IsTimelinePreview => timelinePreview != null;
     public SacrificeTimelineFrame LastTimelineFrame { get; private set; }
-    public bool IsOpen => overlay != null && overlay.activeSelf;
+    public bool IsOpen => overlay != null && overlay.activeSelf && !fadingOut;
     public bool IsDepartureWarningOpen => departureWarning != null && departureWarning.activeSelf;
     public bool IsBlocking => IsBusy || IsDepartureWarningOpen;
     public bool IsBusy { get; private set; }
@@ -129,12 +136,34 @@ public sealed class MapSacrificePanel : MonoBehaviour
     public void Open(MapCardView view)
     {
         if (IsBusy || view == null) return;
+        if (switchingView == view && switchingId == view.InstanceId) return;
         ClearHoverCandidate(); transferUntil = -1;
         if (pointerKnown) selectedPointer = pointerPosition;
-        bool same = selectedView == view && IsOpen;
+        bool different = selectedView != view || selectedId != view.InstanceId;
+        bool same = !different && IsOpen;
+        if (different && overlay.activeSelf && detailGroup != null && visibility > 0 && fadeOutDuration > 0)
+        {
+            switchingView = view; switchingId = view.InstanceId;
+            fadingOut = false; hideAt = -1;
+            confirm.interactable = false;
+            SetDetailVisibility(visibility, false);
+            return;
+        }
+        ClearDetailSwitch();
+        if (different) visibility = 0;
+        if (!overlay.activeSelf) visibility = 0;
+        if (fadeInDuration <= 0) visibility = 1;
+        fadingOut = false;
+        SetDetailVisibility(visibility, true);
         selectedView = view;
         hideAt = -1;
-        if (same) return;
+        if (same) { RefreshFace(); return; }
+        SetSelection(view);
+    }
+
+    private void SetSelection(MapCardView view)
+    {
+        selectedView = view;
         selected = view.Definition; selectedId = view.InstanceId;
         selectionKey = int.MinValue;
         statusPopup.SetActive(false); overlay.SetActive(true); overlay.transform.SetAsLastSibling();
@@ -146,11 +175,15 @@ public sealed class MapSacrificePanel : MonoBehaviour
         RefreshFace();
     }
 
+    private void ClearDetailSwitch() { switchingView = null; switchingId = null; }
+
     public void HoverCard(MapCardView view, PointerEventData eventData)
     {
         if (IsBusy || view == null || owner == null || !owner.CanInteract) return;
         float now = Time.unscaledTime;
         if (eventData != null) ObservePointer(eventData.position, now);
+        if (switchingView == view && switchingId == view.InstanceId)
+        { selectedPointer = pointerPosition; return; }
         if (!IsOpen || selectedView == view)
         {
             Open(view);
@@ -167,7 +200,7 @@ public sealed class MapSacrificePanel : MonoBehaviour
         if (hoverCandidate == view) ClearHoverCandidate();
         if (!IsOpen || detailHovered || IsBusy) return;
         hideAt = Time.unscaledTime + hideDelay;
-        if (selectedView != view || eventData == null || !pointerKnown || detailTransferTime <= 0) return;
+        if ((switchingView != null ? switchingView : selectedView) != view || eventData == null || !pointerKnown || detailTransferTime <= 0) return;
         transferOrigin = selectedPointer;
         var canvas = panel.GetComponentInParent<Canvas>().rootCanvas;
         var camera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.worldCamera;
@@ -187,6 +220,12 @@ public sealed class MapSacrificePanel : MonoBehaviour
     }
     public void OnPointerEnter(PointerEventData eventData)
     {
+        if (fadingOut && overlay.activeSelf && selectedView != null)
+        {
+            fadingOut = false;
+            if (fadeInDuration <= 0) visibility = 1;
+            SetDetailVisibility(visibility, true);
+        }
         if (!IsOpen) return;
         ClearHoverCandidate(); transferUntil = -1;
         detailHovered = true; hideAt = -1;
@@ -206,11 +245,47 @@ public sealed class MapSacrificePanel : MonoBehaviour
                 ApplyArtworkStyle(illustration.material,illustration.sprite,previewBack,previewCard.frontArtworkRegion);
             return;
         }
-        if (!IsOpen || IsBusy || PauseMenu.IsPaused) return;
+        if (IsBusy || PauseMenu.IsPaused) return;
+        TickDetailFade(Time.unscaledDeltaTime);
+        if (!IsOpen) return;
         if (selectedView == null || !selectedView.gameObject.activeInHierarchy || selectedView.InstanceId != selectedId) { Close(); return; }
         TickHover(Mouse.current != null ? Mouse.current.position.ReadValue() : pointerPosition, Time.unscaledTime);
         if (!IsOpen) return;
         RefreshFace();
+    }
+
+    private void TickDetailFade(float delta)
+    {
+        if (overlay == null || !overlay.activeSelf) return;
+        if (switchingId != null && (switchingView == null || !switchingView.gameObject.activeInHierarchy || switchingView.InstanceId != switchingId))
+        {
+            ClearDetailSwitch();
+            if (!detailHovered && (selectedView == null || !selectedView.IsHovered)) hideAt = Time.unscaledTime + hideDelay;
+        }
+        bool switching = switchingView != null;
+        bool disappearing = fadingOut || switching;
+        float duration = disappearing ? fadeOutDuration : fadeInDuration;
+        visibility = duration <= 0 ? (disappearing ? 0 : 1) :
+            Mathf.MoveTowards(visibility, disappearing ? 0 : 1, Mathf.Max(0, delta) / duration);
+        SetDetailVisibility(visibility, !disappearing);
+        if (switching && visibility <= 0)
+        {
+            var next = switchingView;
+            ClearDetailSwitch();
+            SetSelection(next);
+            if (fadeInDuration <= 0) visibility = 1;
+            SetDetailVisibility(visibility, true);
+        }
+        if (fadingOut && visibility <= 0) HideImmediate();
+    }
+
+    private void SetDetailVisibility(float amount, bool interactable)
+    {
+        if (detailGroup == null) return;
+        detailGroup.alpha = Mathf.SmoothStep(0, 1, amount);
+        detailGroup.interactable = interactable;
+        // Keep the visible card's hover region during fade-out, allowing pointer re-entry.
+        detailGroup.blocksRaycasts = amount > 0 || interactable;
     }
 
     private void TickHover(Vector2 position, float now)
@@ -279,7 +354,7 @@ public sealed class MapSacrificePanel : MonoBehaviour
         // Only crop and face orientation are runtime data. The material owns all appearance settings.
         artworkMaterial.CopyPropertiesFromMaterial(artworkSourceMaterial);
         ApplyArtworkStyle(artworkMaterial,illustration.sprite,displayedBack,new Rect(0,0,1,1));
-        confirm.interactable = canConfirm && !selectedView.IsFlipping;
+        confirm.interactable = canConfirm && !selectedView.IsFlipping && switchingView == null;
     }
 
     public void ApplyArtworkStyle(Material material, Sprite sprite, bool back, Rect region)
@@ -324,6 +399,7 @@ public sealed class MapSacrificePanel : MonoBehaviour
     {
         if (Application.isPlaying || previewCard == null || !IsReady) return;
         previewBack = back; overlay.SetActive(true); cardGroup.alpha = 1;
+        SetDetailVisibility(1, true);
         detailVisual.localRotation = Quaternion.identity;
         illustration.sprite = previewCard.frontArtwork;
         cardName.text = DetailName(previewCard); combatText.text = DetailEffect(previewCard,back);
@@ -360,7 +436,7 @@ public sealed class MapSacrificePanel : MonoBehaviour
         canConfirm = preview.CanConfirm;
         selectedSymbol = preview.Symbol; selectedColor = EffectColor(preview.Symbol);
         ShowReason(preview.CanConfirm ? "" : preview.Reason);
-        confirm.interactable = preview.CanConfirm;
+        confirm.interactable = preview.CanConfirm && switchingView == null;
     }
 
     private void ShowReason(string message)
@@ -372,7 +448,7 @@ public sealed class MapSacrificePanel : MonoBehaviour
 
     public void Confirm()
     {
-        if (!IsOpen || IsBusy || selectedView == null || selectedView.IsFlipping || !confirm.interactable) return;
+        if (!IsOpen || IsBusy || switchingView != null || selectedView == null || selectedView.IsFlipping || !confirm.interactable) return;
         if (sequenceDirector == null || sequenceDirector.playableAsset == null || burnEffect == null || !burnEffect.IsReady)
         { ShowReason("Sacrifice animation is not configured."); return; }
         IsBusy = true; confirm.interactable = false;
@@ -382,6 +458,8 @@ public sealed class MapSacrificePanel : MonoBehaviour
             RefreshSelection(); ShowReason(failure); return;
         }
         owner.LockSacrificeInput();
+        visibility = 1; fadingOut = false;
+        SetDetailVisibility(1, true);
         detailVisual.localRotation = Quaternion.identity;
         confirm.gameObject.SetActive(false);
         if (feedbackBackdrop != null)
@@ -446,7 +524,8 @@ public sealed class MapSacrificePanel : MonoBehaviour
             timelinePreview = new TimelinePreviewState
             {
                 overlay = overlay.activeSelf, confirm = confirm.gameObject.activeSelf, flight = flightIcon.gameObject.activeSelf,
-                heart = flightHeartCut.enabled, alpha = cardGroup.alpha, backdrop = feedbackBackdrop.color,
+                heart = flightHeartCut.enabled, alpha = cardGroup.alpha, detailAlpha = detailGroup != null ? detailGroup.alpha : 1,
+                backdrop = feedbackBackdrop.color,
                 sprite = illustration.sprite, material = illustration.material, title = cardName.text, effect = combatText.text,
                 flightPosition = rect.localPosition, flightScale = rect.localScale, flightRotation = rect.localRotation,
                 symbol = flightIcon.symbol, flightColor = flightIcon.color,
@@ -460,6 +539,7 @@ public sealed class MapSacrificePanel : MonoBehaviour
         }
         var state = timelinePreview;
         overlay.SetActive(true); confirm.gameObject.SetActive(false); cardGroup.alpha = 1;
+        if (detailGroup != null) detailGroup.alpha = 1;
         illustration.material = state.copy;
         state.copy.CopyPropertiesFromMaterial(state.material);
         if (previewCard != null)
@@ -491,6 +571,7 @@ public sealed class MapSacrificePanel : MonoBehaviour
         if (cardName != null) cardName.text = state.title;
         if (combatText != null) combatText.text = state.effect;
         if (cardGroup != null) cardGroup.alpha = state.alpha;
+        if (detailGroup != null) detailGroup.alpha = state.detailAlpha;
         if (feedbackBackdrop != null) feedbackBackdrop.color = state.backdrop;
         if (confirm != null) confirm.gameObject.SetActive(state.confirm);
         if (flightIcon != null)
@@ -535,7 +616,16 @@ public sealed class MapSacrificePanel : MonoBehaviour
     public void Close()
     {
         if (IsBusy || !IsOpen) return;
-        HideImmediate(); owner?.ReleaseSacrificeInput();
+        ClearDetailSwitch();
+        if (detailGroup == null || fadeOutDuration <= 0) HideImmediate();
+        else
+        {
+            fadingOut = true;
+            hideAt = -1;
+            ClearHoverCandidate(); transferUntil = -1;
+            SetDetailVisibility(visibility, false);
+        }
+        owner?.ReleaseSacrificeInput();
     }
 
     public void HideImmediate()
@@ -544,6 +634,9 @@ public sealed class MapSacrificePanel : MonoBehaviour
         if (IsBusy && sequenceDirector != null) sequenceDirector.Stop();
         if (IsBusy && flightIcon != null) flightIcon.rectTransform.localScale = flightBaseScale;
         feedback = null; IsBusy = false;
+        visibility = 0; fadingOut = false;
+        ClearDetailSwitch();
+        SetDetailVisibility(0, false);
         burnEffect?.Clear();
         playerSymbol?.ClearSacrificePulse();
         burning = false;
@@ -566,13 +659,14 @@ public sealed class MapSacrificePanel : MonoBehaviour
     private void ToggleStatus()
     {
         if (owner == null || !owner.CanInteract) return;
+        if (fadingOut || switchingView != null) HideImmediate();
         statusPopup.SetActive(!statusPopup.activeSelf);
         if (statusPopup.activeSelf) statusPopup.transform.SetAsLastSibling();
     }
 
     public void ShowDepartureWarning(string nodeId)
     {
-        if (IsOpen) HideImmediate();
+        if (overlay != null && overlay.activeSelf) HideImmediate();
         departureNodeId = nodeId;
         statusPopup.SetActive(false);
         departureMessage.text = "Capacity " + owner.Session.DeckCapacity + " / " + owner.Session.DeckCapacityLimit +

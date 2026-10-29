@@ -383,7 +383,8 @@ public static class RunIntegrationPlayVerification
         Check(cards.Length == 3 && session.DeckCapacity == 30, "The same three offers and a full test deck are presented.");
         Check(panel.GetComponent<Image>().color == Field<Color>(reward, "backgroundColor") && panel.GetComponent<Image>().color.a == 1,
             "The opaque gray-brown background hides the completed battle.");
-        Check(panel.Find("Title").GetComponent<TMPro.TMP_Text>().text == "Victory", "Only one heading names the victory.");
+        Check(Field<TMPro.TMP_Text>(reward,"title") == panel.Find("Victory/Title").GetComponent<TMPro.TMP_Text>(),
+            "The scene-authored victory heading is used without replacing its content.");
         CaptureRewardLayouts(reward, "reward-choice");
         var prefab = Field<GameObject>(reward, "rewardCardPrefab");
         Check(prefab.GetComponent<RectTransform>().sizeDelta == new Vector2(220, 300),

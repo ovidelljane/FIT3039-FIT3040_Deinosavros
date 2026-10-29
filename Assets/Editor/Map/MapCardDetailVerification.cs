@@ -206,6 +206,7 @@ public static class MapCardDetailVerification
         var pointer = new PointerEventData(EventSystem.current) { button = PointerEventData.InputButton.Left };
         var tick = typeof(MapSacrificePanel).GetMethod("TickHover",BindingFlags.Instance|BindingFlags.NonPublic);
         var refresh = typeof(MapSacrificePanel).GetMethod("RefreshFace",BindingFlags.Instance|BindingFlags.NonPublic);
+        var fade = typeof(MapSacrificePanel).GetMethod("TickDetailFade",BindingFlags.Instance|BindingFlags.NonPublic);
         var nodes = map.Nodes.Select(n => (n.NodeId,n.transform.position,n.transform.localScale)).ToArray();
         var deck = Field<Transform>(map,"deckContainer");
         float spacing = deck.GetComponent<HorizontalLayoutGroup>().spacing;
@@ -232,6 +233,80 @@ public static class MapCardDetailVerification
         }
         try
         {
+            float originalFadeIn = panel.fadeInDuration, originalFadeOut = panel.fadeOutDuration;
+            panel.fadeInDuration = .18f; panel.fadeOutDuration = .14f;
+            check(panel.detailGroup != null && panel.detailGroup.transform == panel.panel && panel.detailGroup != panel.cardGroup,
+                "Saved detail fade covers the full panel without sharing the sacrifice Timeline group.");
+            void Fade(float seconds) => fade.Invoke(panel,new object[] { seconds });
+            Reset();
+            check(panel.detailGroup.alpha == 0 && panel.IsOpen,"First hover starts the existing shader and text fully transparent.");
+            MapSacrificeVerification.Capture(panel.GetComponentInParent<Canvas>(),Camera.main,"detail-fade-start",check);
+            Fade(.09f);
+            check(panel.detailGroup.alpha > 0 && panel.detailGroup.alpha < 1 && panel.cardGroup.alpha == 1,
+                "Halfway fade changes the parent visibility, leaving the Timeline alpha untouched.");
+            MapSacrificeVerification.Capture(panel.GetComponentInParent<Canvas>(),Camera.main,"detail-fade-half",check);
+            float partial = panel.detailGroup.alpha;
+            panel.Close(); Fade(.02f);
+            check(!panel.IsOpen && panel.overlay.activeSelf && panel.detailGroup.alpha < partial && !panel.detailGroup.interactable,
+                "Closing fades the still-rendered detail and disables sacrifice immediately.");
+            partial = panel.detailGroup.alpha;
+            panel.Open(source);
+            check(panel.IsOpen && panel.detailGroup.alpha == partial,"Rapid hover re-entry reverses from the current opacity without a flash.");
+            Fade(.18f);
+            check(panel.detailGroup.alpha == 1,"The complete card, text and button reach full visibility.");
+            MapSacrificeVerification.Capture(panel.GetComponentInParent<Canvas>(),Camera.main,"detail-fade-full",check);
+            panel.Close(); Fade(.07f); partial = panel.detailGroup.alpha;
+            panel.OnPointerEnter(pointer);
+            check(panel.IsOpen && panel.detailGroup.alpha == partial,"Entering the fading detail itself also cancels its dismissal.");
+            panel.Close(); Fade(.15f);
+            check(!panel.overlay.activeSelf && panel.SelectedInstanceId == null && panel.detailGroup.alpha == 0 && !panel.detailGroup.blocksRaycasts,
+                "Completed fade-out releases references and leaves no invisible input blocker.");
+            panel.fadeInDuration = panel.fadeOutDuration = 0;
+            panel.Open(source);
+            check(panel.detailGroup.alpha == 1,"Zero fade-in duration shows detail immediately.");
+            panel.Close();
+            check(!panel.overlay.activeSelf,"Zero fade-out duration closes detail immediately.");
+            panel.fadeInDuration = originalFadeIn; panel.fadeOutDuration = originalFadeOut;
+            Reset(); Fade(.18f); panel.Close();
+            panel.ShowDepartureWarning(map.Nodes[0].NodeId); Fade(1);
+            check(panel.IsDepartureWarningOpen && !panel.overlay.activeSelf,"A pending detail fade cannot dismiss a new departure warning.");
+            panel.CancelDeparture();
+            // Closing intentionally blocks background interaction through the next frame.
+            yield return null; yield return null;
+            Reset(); Fade(panel.fadeInDuration + .01f);
+            int capacityBeforeSwitch = map.Session.DeckCapacity;
+            panel.Open(other); refresh.Invoke(panel,null);
+            panel.Confirm();
+            check(panel.SelectedInstanceId == source.InstanceId && !panel.confirm.interactable &&
+                !panel.detailGroup.interactable && map.Session.DeckCapacity == capacityBeforeSwitch,
+                "A visible-card switch retains the old content and blocks sacrifice until the new instance is shown.");
+            Fade(panel.fadeOutDuration * .5f);
+            check(panel.detailGroup.alpha > 0 && panel.detailGroup.alpha < 1 && panel.SelectedInstanceId == source.InstanceId &&
+                panel.illustration.sprite == source.Definition.FrontIllustration,
+                "The current card fades out before its artwork and text are replaced.");
+            panel.Open(third); Fade(panel.fadeOutDuration + .01f);
+            check(panel.detailGroup.alpha == 0 && panel.SelectedInstanceId == third.InstanceId &&
+                panel.illustration.sprite == third.Definition.FrontIllustration,
+                "Rapid retargeting shows only the latest requested instance at the transparent midpoint.");
+            Fade(panel.fadeInDuration * .5f);
+            check(panel.detailGroup.alpha > 0 && panel.detailGroup.alpha < 1 && panel.SelectedInstanceId == third.InstanceId,
+                "The replacement card fades in using the same editable timings.");
+            Fade(panel.fadeInDuration);
+            panel.Open(other); Fade(panel.fadeOutDuration * .25f);
+            partial = panel.detailGroup.alpha;
+            panel.Open(third);
+            check(panel.SelectedInstanceId == third.InstanceId && panel.detailGroup.alpha == partial,
+                "Returning to the displayed card cancels the pending switch without an opacity jump.");
+            Fade(panel.fadeInDuration);
+            panel.Open(other); panel.statusButton.onClick.Invoke(); Fade(1);
+            check(panel.statusPopup.activeSelf && !panel.overlay.activeSelf && Field<MapCardView>(panel,"switchingView") == null,
+                "Opening the status popup cancels a queued detail switch instead of being dismissed by it.");
+            panel.statusButton.onClick.Invoke();
+            Reset(); Fade(panel.fadeInDuration + .01f);
+            panel.Open(other); panel.Close(); Fade(panel.fadeOutDuration + .01f); Fade(1);
+            check(!panel.overlay.activeSelf && Field<MapCardView>(panel,"switchingView") == null,
+                "Closing mid-switch clears the queued card and cannot reopen it later.");
+            yield return null; yield return null;
             Reset();
             check(panel.IsOpen && panel.SelectedInstanceId == source.InstanceId && !source.TargetBack,
                 "First hover immediately shows the front without flipping.");
