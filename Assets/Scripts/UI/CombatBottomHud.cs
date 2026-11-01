@@ -97,7 +97,7 @@ public sealed class CombatBottomHud : MonoBehaviour
         if (hp != shownHealth || maxHp != shownMaxHealth)
         { shownHealth = hp; shownMaxHealth = maxHp; healthText.text = $"{hp:0} / {maxHp:0}"; }
         if (energy != shownElixir || maxEnergy != shownMaxElixir)
-        { shownElixir = energy; shownMaxElixir = maxEnergy; elixirText.text = $"{energy:0.0} / {maxEnergy:0}"; }
+        { shownElixir = energy; shownMaxElixir = maxEnergy; elixirText.text = $"{energy:0} / {maxEnergy:0}"; }
         if (shield != shownShield) { shownShield = shield; shieldText.text = shield.ToString(); }
     }
 
