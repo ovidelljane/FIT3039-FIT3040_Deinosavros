@@ -1,6 +1,9 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 
 // Presentation only. Effect and BattleScript remain the owners of combat state.
 [DisallowMultipleComponent]
@@ -33,6 +36,11 @@ public sealed class CombatCardVfx : MonoBehaviour
     private readonly HashSet<string> missingSceneParts = new();
     private bool sceneReady;
     private Binding areaDamageBinding;
+    private Coroutine judgementVignette;
+    private int vignetteVersion;
+    private readonly Dictionary<Vignette, VignetteState> vignetteOriginals = new();
+    private readonly Binding judgementGlobal = new() { name = "Judgement Global", stats = new[] { StatType.JudgementDay } };
+    private readonly Binding judgementCharacter = new() { name = "Judgement Character", stats = new[] { StatType.JudgementDay } };
     public int ActiveVisualCount => sceneVisuals.Count;
     public int BurstCount { get; private set; }
 
@@ -60,7 +68,7 @@ public sealed class CombatCardVfx : MonoBehaviour
     {
         // Include effects installed by the encounter receiver before this component started.
         foreach (var effect in Effect.ActiveEffects)
-            if (effect != null && effect.IsApplied && Find(effect.effectType)?.sustained == true)
+            if (effect != null && effect.IsApplied && effect.effectType != StatType.FrequencySlow && Find(effect.effectType)?.sustained == true)
                 Show(effect.target, Find(effect.effectType));
     }
 
@@ -77,23 +85,154 @@ public sealed class CombatCardVfx : MonoBehaviour
     private void OnEffect(CardEffectFeedback feedback)
     {
         if (feedback.Phase != CardFeedbackPhase.Applied || !Accepts(feedback.Target)) return;
+        if (feedback.Stat == StatType.FrequencySlow) return; // Judgement uses its own selected-target visuals.
+        if (feedback.Stat == StatType.JudgementDay)
+        {
+            if (judgementVignette != null) StopCoroutine(judgementVignette);
+            judgementVignette = StartCoroutine(TransitionJudgementVignette(++vignetteVersion));
+            PlayJudgementParticles(feedback.Target);
+            return;
+        }
         if ((feedback.Stat == StatType.Elixir || feedback.Stat == StatType.Shield) && feedback.After <= feedback.Before) return;
         var binding = Find(feedback.Stat);
         // Instant area damage reuses the authored water without becoming a lasting stat buff.
         if (binding == null && feedback.Stat == StatType.DamageAllEnemies)
         {
-            var water = Find(StatType.Damage);
+            var water = transform.Find("AttackEnemyParticle");
             if (water != null)
             {
                 areaDamageBinding ??= new Binding
                 {
                     name = "AreaDamageWater", stats = new[] { StatType.DamageAllEnemies }, sustained = false
                 };
-                areaDamageBinding.parts = water.parts;
+                areaDamageBinding.parts = GroupParts(water);
                 binding = areaDamageBinding;
             }
         }
         Show(feedback.Target, binding);
+    }
+
+    private static Part[] GroupParts(Transform group)
+    {
+        var parts = new List<Part>();
+        foreach (var system in group.GetComponentsInChildren<ParticleSystem>(true))
+        {
+            bool nested = false;
+            for (var parent = system.transform.parent; parent != null && parent != group.parent; parent = parent.parent)
+                if (parent.GetComponent<ParticleSystem>() != null) { nested = true; break; }
+            if (!nested) parts.Add(new Part { template = system });
+        }
+        return parts.ToArray();
+    }
+
+    private void PlayJudgementParticles(BattleScript target)
+    {
+        // Authored slots: 0 Enemy (2), 1 Enemy (1), 2 Enemy, 3 Player, 4 Boss.
+        int slot = target.name switch
+        {
+            "Enemy (2)" => 0, "Enemy (1)" => 1, "Enemy" => 2, "Player" => 3, "Boss" => 4, _ => -1
+        };
+        var global = transform.Find("JudgementDay(Global)");
+        string name = slot == 0 ? "JudgementDay(Character)" : "JudgementDay(Character) (" + slot + ")";
+        var character = slot >= 0 ? transform.Find(name) : null;
+        // Restart a cast as a single global burst and one exact character group.
+        for (int i = sceneVisuals.Count - 1; i >= 0; i--)
+            if (sceneVisuals[i].binding == judgementGlobal || sceneVisuals[i].binding == judgementCharacter) RemoveScene(i);
+        if (global != null) ShowScene(target, judgementGlobal, GroupParts(global), global);
+        else Debug.LogWarning("Missing scene group JudgementDay(Global).", this);
+        if (character != null) ShowScene(target, judgementCharacter, GroupParts(character), character);
+        else if (slot >= 0) Debug.LogWarning("Missing Judgement character group for " + target.name + ": " + name, this);
+    }
+
+    private IEnumerator TransitionJudgementVignette(int version)
+    {
+        var targets = new List<(Vignette effect, float intensity, float smoothness)>();
+        foreach (var root in gameObject.scene.GetRootGameObjects())
+            foreach (var volume in root.GetComponentsInChildren<Volume>())
+            {
+                if (!volume.isActiveAndEnabled || !volume.isGlobal || volume.name != "Global Volume") continue;
+                // profile is the runtime copy; never edit the shared profile asset.
+                var profile = volume.profile;
+                if (!profile.TryGet<Vignette>(out var vignette)) vignette = profile.Add<Vignette>();
+                if (!vignetteOriginals.ContainsKey(vignette))
+                    vignetteOriginals.Add(vignette, new VignetteState
+                    {
+                        intensity = vignette.intensity.value, smoothness = vignette.smoothness.value,
+                        active = vignette.active, intensityOverride = vignette.intensity.overrideState,
+                        smoothnessOverride = vignette.smoothness.overrideState
+                    });
+                vignette.active = true;
+                vignette.intensity.overrideState = true;
+                vignette.smoothness.overrideState = true;
+                targets.Add((vignette, vignette.intensity.value, vignette.smoothness.value));
+            }
+        if (targets.Count == 0)
+        {
+            Debug.LogWarning("Judgement Day could not find an active Global Volume in this scene.", this);
+            yield break;
+        }
+        const float duration = .3f;
+        float elapsed = 0;
+        while (elapsed < duration)
+        {
+            if (version != vignetteVersion) yield break;
+            elapsed += Time.deltaTime;
+            float blend = Mathf.SmoothStep(0, 1, Mathf.Clamp01(elapsed / duration));
+            foreach (var target in targets)
+            {
+                if (target.effect == null) continue;
+                target.effect.intensity.value = Mathf.Lerp(target.intensity, .5f, blend);
+                target.effect.smoothness.value = Mathf.Lerp(target.smoothness, 1, blend);
+            }
+            yield return null;
+        }
+        // Count the hold from card play, including the initial fade-in.
+        yield return new WaitForSeconds(Mathf.Max(0, 1.5f - elapsed));
+        if (version != vignetteVersion) yield break;
+        // Retain this transition's original values rather than looking them up each frame:
+        // battle cleanup or a newer cast can clear the shared restoration dictionary.
+        var restoring = new List<(Vignette effect, float intensity, float smoothness, VignetteState original)>();
+        foreach (var original in vignetteOriginals)
+            if (original.Key != null)
+                restoring.Add((original.Key, original.Key.intensity.value, original.Key.smoothness.value, original.Value));
+        elapsed = 0;
+        while (elapsed < duration)
+        {
+            if (version != vignetteVersion) yield break;
+            elapsed += Time.deltaTime;
+            float blend = Mathf.SmoothStep(0, 1, Mathf.Clamp01(elapsed / duration));
+            foreach (var target in restoring)
+            {
+                if (target.effect == null) continue;
+                var original = target.original;
+                target.effect.intensity.value = Mathf.Lerp(target.intensity, original.intensity, blend);
+                target.effect.smoothness.value = Mathf.Lerp(target.smoothness, original.smoothness, blend);
+            }
+            yield return null;
+        }
+        if (version != vignetteVersion) yield break;
+        RestoreJudgementVignette();
+        judgementVignette = null;
+    }
+
+    private void RestoreJudgementVignette()
+    {
+        foreach (var entry in vignetteOriginals)
+        {
+            if (entry.Key == null) continue;
+            entry.Key.intensity.value = entry.Value.intensity;
+            entry.Key.smoothness.value = entry.Value.smoothness;
+            entry.Key.intensity.overrideState = entry.Value.intensityOverride;
+            entry.Key.smoothness.overrideState = entry.Value.smoothnessOverride;
+            entry.Key.active = entry.Value.active;
+        }
+        vignetteOriginals.Clear();
+    }
+
+    private sealed class VignetteState
+    {
+        public float intensity, smoothness;
+        public bool active, intensityOverride, smoothnessOverride;
     }
 
     private void OnAttack(BattleScript source, BattleScript target)
@@ -136,6 +275,10 @@ public sealed class CombatCardVfx : MonoBehaviour
 
     private void Clear()
     {
+        ++vignetteVersion;
+        if (judgementVignette != null) StopCoroutine(judgementVignette);
+        judgementVignette = null;
+        RestoreJudgementVignette();
         for (int i = sceneVisuals.Count - 1; i >= 0; i--) RemoveScene(i);
     }
 
@@ -152,6 +295,9 @@ public sealed class CombatCardVfx : MonoBehaviour
         if (bindings != null) foreach (var binding in bindings)
             if (binding?.parts != null) parts.AddRange(SceneParts(binding, binding.parts));
         if (attackImpact != null) parts.Add(attackImpact);
+        foreach (Transform group in transform)
+            if (group.name == "AttackEnemyParticle" || group.name == "JudgementDay(Global)" || Family(group.name) == "JudgementDay(Character)")
+                parts.AddRange(GroupParts(group));
         var candidates = GetComponentsInChildren<ParticleSystem>(true);
         foreach (var part in parts)
         {
@@ -216,7 +362,7 @@ public sealed class CombatCardVfx : MonoBehaviour
     }
 
     private static bool IsBuffBinding(Binding binding) => binding != null &&
-        (binding.Matches(StatType.AttackSpeed) || binding.Matches(StatType.ExtraHits) || binding.Matches(StatType.Cataclysm));
+        (binding.Matches(StatType.Damage) || binding.Matches(StatType.AttackSpeed) || binding.Matches(StatType.ExtraHits) || binding.Matches(StatType.Cataclysm));
 
     // Buff cards play the whole authored BuffParticle group, including newly added children.
     private Part[] SceneParts(Binding binding, Part[] parts)
@@ -241,7 +387,7 @@ public sealed class CombatCardVfx : MonoBehaviour
         return expanded.ToArray();
     }
 
-    private void ShowScene(BattleScript target, Binding binding, Part[] parts)
+    private void ShowScene(BattleScript target, Binding binding, Part[] parts, Transform exactRoot = null)
     {
         PrepareSceneParticles();
         parts = SceneParts(binding, parts);
@@ -277,7 +423,7 @@ public sealed class CombatCardVfx : MonoBehaviour
             float closest = float.PositiveInfinity;
             foreach (var candidate in sceneParticles)
             {
-                if (candidate.family != family || candidate.path != path ||
+                if ((exactRoot != null && candidate.root != exactRoot) || candidate.family != family || candidate.path != path ||
                     (candidate.users > 0 && candidate.target != target)) continue;
                 float distance = Vector3.ProjectOnPlane(candidate.homePosition - target.transform.position, Vector3.up).sqrMagnitude;
                 if (distance < closest) { closest = distance; chosen = candidate; }
@@ -309,7 +455,8 @@ public sealed class CombatCardVfx : MonoBehaviour
     private void PositionScene(SceneParticle particle)
     {
         // Poseidon's water and ripple are staged in the scene, not centred on the buff recipient.
-        if (particle.family == "AttackEnemyParticle" || particle.family == "BuffParticle") return;
+        if (particle.family == "AttackEnemyParticle" || particle.family == "BuffParticle" ||
+            particle.family == "JudgementDay(Global)" || particle.family == "JudgementDay(Character)") return;
         if (particle.target != null)
             particle.system.transform.SetPositionAndRotation(
                 particle.position + particle.target.transform.position - particle.homePosition, particle.rotation);
@@ -334,7 +481,8 @@ public sealed class CombatCardVfx : MonoBehaviour
         {
             var visual = sceneVisuals[i];
             bool sustained = visual.binding != null && visual.binding.sustained;
-            if (!Accepts(visual.target) || (sustained && !StillApplied(visual.target, visual.binding)))
+            bool judgement = visual.binding == judgementGlobal || visual.binding == judgementCharacter;
+            if ((!judgement && !Accepts(visual.target)) || (sustained && !StillApplied(visual.target, visual.binding)))
             { RemoveScene(i); continue; }
             bool alive = false;
             foreach (var part in visual.parts)

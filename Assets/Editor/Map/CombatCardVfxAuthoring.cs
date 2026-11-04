@@ -50,8 +50,7 @@ public static class CombatCardVfxAuthoring
                     Bind("Haste", true, new[] { StatType.AttackSpeed }, Part(spiral)),
                     Bind("MultiHit", true, new[] { StatType.ExtraHits }, Part(aura), Part(spiral)),
                     Bind("Cataclysm", true, new[] { StatType.Cataclysm }, Part(aura)),
-                    Bind("Damage", true, new[] { StatType.Damage }, Part(Source("AttackEnemyParticle", "WaterAura")),
-                        Part(Source("AttackEnemyParticle", "Ripple"))),
+                    Bind("Damage", true, new[] { StatType.Damage }, Part(aura), Part(spiral)),
                     Bind("Shield", true, new[] { StatType.Shield }, Part(Source("ShieldParticle", "ShieldGather")),
                         Part(Source("ShieldParticle", "Shield"))),
                     Bind("Elixir", false, new[] { StatType.Elixir, StatType.ElixirRegen },
@@ -145,7 +144,11 @@ public static class CombatCardVfxAuthoring
                 case StatType.EnemySlow:
                     check(enemies.All(e => vfx.IsShowing(e, values.Stat)) && !vfx.IsShowing(player, values.Stat), "Clouded Minds targets enemies only."); break;
                 case StatType.JudgementDay:
-                    check(enemies.All(e => vfx.IsShowing(e, StatType.FrequencySlow)) && vfx.IsShowing(player, StatType.FrequencySlow), "Judgement slows all combatants, including the player."); break;
+                    check(enemies.Concat(new[] { player }).Count(e => vfx.IsShowing(e, StatType.JudgementDay)) == 1,
+                        "Judgement visuals identify exactly one selected target.");
+                    check(vfx.BurstCount == bursts + 2, "Judgement plays one global group and one character group.");
+                    check(!enemies.Concat(new[] { player }).Any(e => vfx.IsShowing(e, StatType.FrequencySlow)),
+                        "Judgement no longer plays the generic slow particles."); break;
                 case StatType.DamageAllEnemies:
                     check(vfx.BurstCount == bursts + 1 && vfx.IsShowing(player, StatType.DamageAllEnemies), "Thunderbolt plays one water burst."); break;
                 case StatType.Elixir:

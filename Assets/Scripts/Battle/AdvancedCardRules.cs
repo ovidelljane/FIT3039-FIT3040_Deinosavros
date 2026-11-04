@@ -22,6 +22,9 @@ public sealed class AdvancedCardRules : MonoBehaviour
 
     public void ResolveJudgement(BattleScript player, BattleScript selected, IReadOnlyList<BattleScript> combatants, int damage, float duration)
     {
+        // Publish the actual selected victim before damage, including lethal hits.
+        if (selected != null)
+            CardEffectFeedback.Publish(new CardEffectFeedback(selected, StatType.JudgementDay, 0, damage, CardFeedbackPhase.Applied));
         // Slow is installed before damage: lethal outcomes must not leave half-applied card effects.
         foreach (var actor in combatants)
             if (actor != null && actor.health > 0 && actor.isActiveAndEnabled)
