@@ -277,29 +277,28 @@ public sealed class RunSession : MonoBehaviour
     }
 
     public bool TryResolveBattleReward(string id, CardDefinition incoming, string outgoingInstanceId, out string reason)
+        => TryResolveBattleRewardWithReplacements(id, incoming,
+            string.IsNullOrEmpty(outgoingInstanceId) ? null : new[] { outgoingInstanceId }, out reason);
+
+    public bool TryResolveBattleRewardWithReplacements(string id, CardDefinition incoming, IReadOnlyCollection<string> outgoingIds, out string reason)
     {
         reason = null;
         if (!IsCurrentCombat(id) || !HasBattleReward || rewardEncounterId != id)
         { reason = "This reward is no longer active."; return false; }
-        RunCardInstance outgoing = null;
+        List<RunCardInstance> outgoing = null;
         if (incoming == null)
         {
-            if (!string.IsNullOrEmpty(outgoingInstanceId)) { reason = "A skipped reward cannot remove a card."; return false; }
+            if (outgoingIds != null && outgoingIds.Count > 0) { reason = "A skipped reward cannot remove a card."; return false; }
         }
         else
         {
             bool offered = false;
             foreach (var offer in rewardOffers) if (offer == incoming) offered = true;
             if (!offered || incoming.capacityCost < 0) { reason = "This card is not offered."; return false; }
-            if (!string.IsNullOrEmpty(outgoingInstanceId))
-                outgoing = runDeck.Find(card => card.instanceId == outgoingInstanceId && !card.sacrificed && card.definition != null);
-            if (!string.IsNullOrEmpty(outgoingInstanceId) && outgoing == null)
-            { reason = "The selected card is no longer in the deck."; return false; }
-            int capacity = DeckCapacity - (outgoing != null ? outgoing.definition.capacityCost : 0) + incoming.capacityCost;
-            if (capacity > DeckCapacityLimit) { reason = "Select a card to replace or skip this reward."; return false; }
+            if (!TryGetRewardReplacements(incoming, outgoingIds, out outgoing, out reason)) return false;
         }
         // Validate everything before mutating either card. Replacement is not a sacrifice.
-        if (outgoing != null) runDeck.Remove(outgoing);
+        if (outgoing != null) foreach (var card in outgoing) runDeck.Remove(card);
         if (incoming != null) runDeck.Add(new RunCardInstance { definition = incoming });
         rewardResolved = true;
         if (incoming != null) DeckChanged?.Invoke();
@@ -404,6 +403,10 @@ public sealed class RunSession : MonoBehaviour
     }
 
     public bool TryResolveOpportunityReward(string id, CardDefinition definition, string outgoingId, out string reason)
+        => TryResolveOpportunityRewardWithReplacements(id, definition,
+            string.IsNullOrEmpty(outgoingId) ? null : new[] { outgoingId }, out reason);
+
+    public bool TryResolveOpportunityRewardWithReplacements(string id, CardDefinition definition, IReadOnlyCollection<string> outgoingIds, out string reason)
     {
         reason = null;
         var receipt = GetNonCombatReceipt(id);
@@ -412,22 +415,37 @@ public sealed class RunSession : MonoBehaviour
         { reason = "This opportunity is no longer active."; return false; }
         if (definition == null)
         {
-            if (!string.IsNullOrEmpty(outgoingId)) { reason = "Skipping cannot remove a card."; return false; }
+            if (outgoingIds != null && outgoingIds.Count > 0) { reason = "Skipping cannot remove a card."; return false; }
             receipt.Skipped = true; receipt.Resolved = true; return true;
         }
         bool offered = false; foreach (var candidate in receipt.Offers) if (candidate == definition) offered = true;
         if (!offered || definition.capacityCost < 0 || !PoolContains(receipt.Pool, definition))
         { reason = "This card is not offered by this opportunity."; return false; }
-        var outgoing = string.IsNullOrEmpty(outgoingId) ? null :
-            runDeck.Find(card => card.instanceId == outgoingId && !card.sacrificed && card.definition != null);
-        if (!string.IsNullOrEmpty(outgoingId) && outgoing == null)
-        { reason = "The selected card is no longer in the deck."; return false; }
-        if (DeckCapacity - (outgoing != null ? outgoing.definition.capacityCost : 0) + definition.capacityCost > DeckCapacityLimit)
-        { reason = "Replace a card or skip this reward."; return false; }
-        if (outgoing != null) runDeck.Remove(outgoing);
+        if (!TryGetRewardReplacements(definition, outgoingIds, out var outgoing, out reason)) return false;
+        foreach (var card in outgoing) runDeck.Remove(card);
         var added = new RunCardInstance { definition = definition }; runDeck.Add(added);
         receipt.GrantedCard = added; receipt.Resolved = true;
         DeckChanged?.Invoke(); return true;
+    }
+
+    private bool TryGetRewardReplacements(CardDefinition incoming, IReadOnlyCollection<string> ids,
+        out List<RunCardInstance> outgoing, out string reason)
+    {
+        outgoing = new List<RunCardInstance>();
+        reason = null;
+        long capacity = (long)DeckCapacity + incoming.capacityCost;
+        var unique = new HashSet<string>();
+        if (ids != null) foreach (string id in ids)
+        {
+            if (string.IsNullOrEmpty(id) || !unique.Add(id))
+            { reason = "Invalid card selection."; return false; }
+            var card = runDeck.Find(item => item.instanceId == id && !item.sacrificed && item.definition != null);
+            if (card == null) { reason = "The selected card is no longer in the deck."; return false; }
+            outgoing.Add(card);
+            capacity -= Mathf.Max(0, card.definition.capacityCost);
+        }
+        if (capacity > DeckCapacityLimit) { reason = "Select more cards to make enough space."; return false; }
+        return true;
     }
     public bool TryResolveOpportunityRecovery(string id)
     {

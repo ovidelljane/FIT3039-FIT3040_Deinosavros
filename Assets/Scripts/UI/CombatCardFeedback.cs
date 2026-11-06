@@ -40,6 +40,7 @@ public sealed class CombatCardFeedback : MonoBehaviour
     [Header("Card Messages")]
     public RectTransform resourceMessageAnchor;
     public string insufficientElixirMessage = "not enough elixir";
+    public string insufficientHealthMessage = "not enough health";
     public TMP_FontAsset resourceMessageFont;
     public Color resourceMessageColor = new(1, .65f, .46f);
     [Min(1)] public float resourceMessageFontSize = 22;
@@ -175,15 +176,25 @@ public sealed class CombatCardFeedback : MonoBehaviour
 
     public void ShowInsufficientElixir()
     {
+        ShowResourceMessage(insufficientElixirMessage);
+    }
+
+    public void ShowInsufficientHealth()
+    {
+        ShowResourceMessage(insufficientHealthMessage);
+    }
+
+    private void ShowResourceMessage(string message)
+    {
         if (ended || pool == null || !isActiveAndEnabled) return;
         var anchor = resourceMessageAnchor != null ? resourceMessageAnchor : popupLayer;
         foreach (var popup in pool)
-            if (popup.active && popup.anchor == anchor && popup.text.text == insufficientElixirMessage)
+            if (popup.active && popup.anchor == anchor && popup.text.text == message)
             {
                 popup.age = 0; Position(popup);
                 return;
             }
-        Show(anchor, insufficientElixirMessage, resourceMessageColor, true);
+        Show(anchor, message, resourceMessageColor, true);
     }
 
     private void Show(RectTransform anchor, string value, Color tint, bool message = false)

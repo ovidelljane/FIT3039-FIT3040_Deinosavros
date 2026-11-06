@@ -143,6 +143,7 @@ MonoBehaviour:
   nameText: {fileID: 100036}
   effectText: {fileID: 100046}
   chooseButton: {fileID: 100008}
+  presentationOutlineColor: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &100020
 GameObject:
   m_ObjectHideFlags: 0

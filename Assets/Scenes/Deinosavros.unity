@@ -49875,7 +49875,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Outline
-  m_EffectColor: {r: 0.89, g: 0.73, b: 0.47, a: 1}
+  m_EffectColor: {r: 1, g: 1, b: 1, a: 1}
   m_EffectDistance: {x: 1.5, y: -1.5}
   m_UseGraphicAlpha: 1
 --- !u!1 &902800001
@@ -106806,6 +106806,41 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!1 &409859646
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 409859647}
+  m_Layer: 5
+  m_Name: MessageAnchor
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &409859647
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 409859646}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1524141617}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -31, y: -47}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!224 &1524141617
 RectTransform:
   m_ObjectHideFlags: 0
@@ -106820,6 +106855,7 @@ RectTransform:
   m_Children:
   - {fileID: 943603753}
   - {fileID: 1498285354}
+  - {fileID: 409859647}
   m_Father: {fileID: 848061774}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -106884,11 +106920,12 @@ MonoBehaviour:
   elixirColor: {r: 0.78, g: 0.63, b: 1, a: 1}
   costColor: {r: 1, g: 0.65, b: 0.46, a: 1}
   debuffColor: {r: 0.78, g: 0.64, b: 0.96, a: 1}
-  resourceMessageAnchor: {fileID: 0}
-  insufficientElixirMessage: not enough elixir
-  resourceMessageFont: {fileID: 0}
-  resourceMessageColor: {r: 1, g: 0.65, b: 0.46, a: 1}
-  resourceMessageFontSize: 22
+  resourceMessageAnchor: {fileID: 409859647}
+  insufficientElixirMessage: Not enough elixir
+  insufficientHealthMessage: not enough health
+  resourceMessageFont: {fileID: 11400000, guid: f5dd509897145104b9c087a22e401b8b, type: 2}
+  resourceMessageColor: {r: 0.951322, g: 0.87106913, b: 1, a: 1}
+  resourceMessageFontSize: 35
 --- !u!1 &1534205173
 GameObject:
   m_ObjectHideFlags: 0
@@ -136327,6 +136364,7 @@ Transform:
   - {fileID: 665658209}
   - {fileID: 571367578}
   - {fileID: 1398237344}
+  - {fileID: 1952788143}
   - {fileID: 1262908458}
   - {fileID: 802327215}
   - {fileID: 86773205}
@@ -136406,6 +136444,51 @@ MonoBehaviour:
   attackImpact:
     template: {fileID: 1173552936}
   maximumBursts: 16
+  judgementEffectSlot: {fileID: 1952788143}
+  placeJudgementOnTarget: 1
+  judgementArenaEffect: {fileID: 1398237344}
+  judgementTargetEffects:
+  - target: {fileID: 1079615868}
+    effect: {fileID: 549806110}
+  - target: {fileID: 274178450}
+    effect: {fileID: 2048389552}
+  - target: {fileID: 685612094}
+    effect: {fileID: 1982672524}
+  - target: {fileID: 780853730}
+    effect: {fileID: 289007051}
+  - target: {fileID: 1668013955}
+    effect: {fileID: 2098695167}
+--- !u!1 &1952788142
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1952788143}
+  m_Layer: 0
+  m_Name: Judgement Day VFX Slot
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!4 &1952788143
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1952788142}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1952788140}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1953967746
 GameObject:
   m_ObjectHideFlags: 0

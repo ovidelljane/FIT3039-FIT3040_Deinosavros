@@ -927,7 +927,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Outline
-  m_EffectColor: {r: 0.89, g: 0.73, b: 0.47, a: 0.65}
+  m_EffectColor: {r: 1, g: 1, b: 1, a: 1}
   m_EffectDistance: {x: 1.5, y: -1.5}
   m_UseGraphicAlpha: 1
 --- !u!114 &246996304
@@ -987,7 +987,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 0.21568628}
+  m_Color: {r: 0.205, g: 0.18, b: 0.155, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -1029,6 +1029,7 @@ MonoBehaviour:
   nameText: {fileID: 2021865218}
   effectText: {fileID: 1424459252}
   chooseButton: {fileID: 246996304}
+  presentationOutlineColor: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &268078924
 GameObject:
   m_ObjectHideFlags: 0
@@ -1708,8 +1709,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4282071867
-  m_fontColor: {r: 0.23270428, g: 0.23270428, b: 0.23270428, a: 1}
+    rgba: 4294967295
+  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -4146,6 +4147,7 @@ MonoBehaviour:
   nameText: {fileID: 786337472}
   effectText: {fileID: 1601732815}
   chooseButton: {fileID: 1376998094}
+  presentationOutlineColor: {r: 1, g: 1, b: 1, a: 1}
 --- !u!114 &1376998094
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4203,7 +4205,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 0.21568628}
+  m_Color: {r: 0.205, g: 0.18, b: 0.155, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -4255,7 +4257,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Outline
-  m_EffectColor: {r: 0.89, g: 0.73, b: 0.47, a: 0.65}
+  m_EffectColor: {r: 1, g: 1, b: 1, a: 1}
   m_EffectDistance: {x: 1.5, y: -1.5}
   m_UseGraphicAlpha: 1
 --- !u!222 &1376998098
@@ -4440,8 +4442,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4282532418
-  m_fontColor: {r: 0.2578616, g: 0.2578616, b: 0.2578616, a: 1}
+    rgba: 4294967295
+  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -5004,8 +5006,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4282532418
-  m_fontColor: {r: 0.2578616, g: 0.2578616, b: 0.2578616, a: 1}
+    rgba: 4294967295
+  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -5182,6 +5184,7 @@ MonoBehaviour:
   replacementContent: {fileID: 1457155305}
   replacementTemplate: {fileID: 1050003599265208689}
   controls: {fileID: 1920712096}
+  rewardFrameColor: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &1681755589
 GameObject:
   m_ObjectHideFlags: 0
@@ -6228,8 +6231,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4282071867
-  m_fontColor: {r: 0.23270428, g: 0.23270428, b: 0.23270428, a: 1}
+    rgba: 4294967295
+  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -6991,6 +6994,7 @@ MonoBehaviour:
   nameText: {fileID: 1050003599265208607}
   effectText: {fileID: 1050003599265208597}
   chooseButton: {fileID: 1050003599265208691}
+  presentationOutlineColor: {r: 1, g: 1, b: 1, a: 1}
 --- !u!114 &1050003599265208691
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7134,6 +7138,7 @@ MonoBehaviour:
   nameText: {fileID: 5442505560971569002}
   effectText: {fileID: 5442505560971568992}
   chooseButton: {fileID: 5442505560971568902}
+  presentationOutlineColor: {r: 1, g: 1, b: 1, a: 1}
 --- !u!114 &5442505560971568902
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7191,7 +7196,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 0.21568628}
+  m_Color: {r: 0.205, g: 0.18, b: 0.155, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -7273,7 +7278,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e19747de3f5aca642ab2be37e372fb86, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Outline
-  m_EffectColor: {r: 0.89, g: 0.73, b: 0.47, a: 0.65}
+  m_EffectColor: {r: 1, g: 1, b: 1, a: 1}
   m_EffectDistance: {x: 1.5, y: -1.5}
   m_UseGraphicAlpha: 1
 --- !u!1 &5442505560971568912
@@ -7414,8 +7419,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4282532418
-  m_fontColor: {r: 0.2578616, g: 0.2578616, b: 0.2578616, a: 1}
+    rgba: 4294967295
+  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -7551,8 +7556,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4282071867
-  m_fontColor: {r: 0.23270428, g: 0.23270428, b: 0.23270428, a: 1}
+    rgba: 4294967295
+  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -7763,7 +7768,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9b930ca8485b418d827dbacc2e72b608, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ButtonAudio
   sound: 2
   volume: 1
@@ -7777,7 +7782,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9b930ca8485b418d827dbacc2e72b608, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ButtonAudio
   sound: 2
   volume: 1
@@ -7791,7 +7796,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9b930ca8485b418d827dbacc2e72b608, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ButtonAudio
   sound: 2
   volume: 1
@@ -7805,7 +7810,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9b930ca8485b418d827dbacc2e72b608, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ButtonAudio
   sound: 2
   volume: 1
@@ -7819,7 +7824,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9b930ca8485b418d827dbacc2e72b608, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ButtonAudio
   sound: 2
   volume: 1
@@ -7833,7 +7838,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9b930ca8485b418d827dbacc2e72b608, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ButtonAudio
   sound: 2
   volume: 1

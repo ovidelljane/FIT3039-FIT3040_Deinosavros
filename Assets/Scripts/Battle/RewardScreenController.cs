@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -7,6 +8,7 @@ using UnityEngine.UI;
 // Presents rewards; RunSession owns claims and the coordinator owns completion and travel.
 public sealed class RewardScreenController : MonoBehaviour
 {
+    private readonly HashSet<string> replacementSelection = new();
     [SerializeField] private GameObject rewardPanel;
     [SerializeField] private Transform rewardCardContainer;
     [SerializeField] private GameObject rewardCardPrefab;
@@ -120,6 +122,7 @@ public sealed class RewardScreenController : MonoBehaviour
 
     private void ShowReplacement(CardDefinition incoming)
     {
+        replacementSelection.Clear();
         pendingCard = incoming;
         rewardCardContainer.gameObject.SetActive(false);
         PreparePresentation(replacement);
@@ -146,7 +149,7 @@ public sealed class RewardScreenController : MonoBehaviour
             if (card.sacrificed || card.definition == null) continue;
             string instanceId = card.instanceId;
             var view = Instantiate(rewardCardPrefab, rect).GetComponent<RewardCardView>();
-            view.Initialize(card.definition, _ => TryClaim(pendingCard, instanceId));
+            view.Initialize(card.definition, _ => SelectReplacement(instanceId, view));
         }
         UpdatePresentationLayout();
         SetSkip(replacementButtonLabel, CancelReplacement);
@@ -154,6 +157,7 @@ public sealed class RewardScreenController : MonoBehaviour
 
     private void CancelReplacement()
     {
+        replacementSelection.Clear();
         if (replacementRoot != null) Destroy(replacementRoot);
         replacementRoot = null;
         pendingCard = null;
@@ -161,6 +165,21 @@ public sealed class RewardScreenController : MonoBehaviour
         PreparePresentation(victory);
         SetChoiceMessage();
         SetSkip(victoryButtonLabel, SkipReward);
+    }
+
+    private void SelectReplacement(string instanceId, RewardCardView view)
+    {
+        if (session == null || pendingCard == null || !session.HasBattleReward) return;
+        if (!replacementSelection.Add(instanceId)) replacementSelection.Remove(instanceId);
+        view.SetReplacementSelected(replacementSelection.Contains(instanceId));
+        long remaining = (long)session.DeckCapacity + pendingCard.capacityCost - session.DeckCapacityLimit;
+        foreach (var card in session.RunDeck)
+            if (!card.sacrificed && card.definition != null && replacementSelection.Contains(card.instanceId))
+                remaining -= Mathf.Max(0, card.definition.capacityCost);
+        if (remaining > 0) { SetMessage($"Select cards to free {remaining} more capacity."); return; }
+        if (!session.TryResolveBattleRewardWithReplacements(encounterId, pendingCard, replacementSelection, out var reason))
+        { GameAudio.Play(GameSound.Error); SetMessage(reason); return; }
+        FinishReward();
     }
 
     private void TryClaim(CardDefinition incoming, string outgoingId)

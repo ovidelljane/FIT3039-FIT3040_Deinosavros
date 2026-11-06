@@ -114,11 +114,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7492377783938483649, guid: f58c99bc3df17c64c975b6fe9f96a7d7, type: 3}
       propertyPath: amount
-      value: 12
+      value: 10
       objectReference: {fileID: 0}
     - target: {fileID: 7492377783938483649, guid: f58c99bc3df17c64c975b6fe9f96a7d7, type: 3}
       propertyPath: elixirCost
-      value: 3
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 7492377783938483649, guid: f58c99bc3df17c64c975b6fe9f96a7d7, type: 3}
       propertyPath: effectDuration
@@ -163,3 +163,9 @@ MonoBehaviour:
   healthBonuses: {x: 70, y: 40, z: 15}
   shieldPerDefeat: 0
   intoxicationSlowPercent: 0
+  stackIncrement: 0
+  stackLimit: 0
+  damageReductionPercent: 0
+  delayedElixir: 0
+  bonusHealthThreshold: 0
+  lowHealthBonus: 0

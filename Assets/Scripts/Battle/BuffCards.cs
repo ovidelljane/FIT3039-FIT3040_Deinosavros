@@ -334,8 +334,9 @@ public class BuffCards : MonoBehaviour, IPointerClickHandler, IPointerEnterHandl
         else
         {
             GameAudio.Play(GameSound.Error);
-            if (!UsesHealthCost)
-                BattleHud.Find(gameObject.scene)?.StatusRoot?.GetComponentInChildren<CombatCardFeedback>()?.ShowInsufficientElixir();
+            var feedback = BattleHud.Find(gameObject.scene)?.StatusRoot?.GetComponentInChildren<CombatCardFeedback>();
+            if (UsesHealthCost) feedback?.ShowInsufficientHealth();
+            else feedback?.ShowInsufficientElixir();
         }
     }
 

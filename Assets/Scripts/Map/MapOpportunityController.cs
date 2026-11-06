@@ -31,8 +31,10 @@ public sealed class MapOpportunityController : MapNonCombatController
     [SerializeField] private RectTransform replacementContent;
     [SerializeField] private RewardCardView replacementTemplate;
     [SerializeField] private CanvasGroup controls;
+    [SerializeField] private Color rewardFrameColor = Color.white;
     public Button SecondaryButton => secondaryButton;
     private readonly List<RewardCardView> replacementCards = new List<RewardCardView>();
+    private readonly HashSet<string> replacementSelection = new HashSet<string>();
     private Vector2 resultPosition, resultSize;
     private Quaternion resultRotation;
     private TMP_Text revealValue, revealBody;
@@ -188,6 +190,15 @@ public sealed class MapOpportunityController : MapNonCombatController
         if (receipt?.Outcome == null) return;
         bool card = receipt.Outcome == MapOpportunityOutcome.Card;
         bool heal = receipt.Outcome == MapOpportunityOutcome.Recovery;
+        if (card)
+        {
+            var panelOutline = Panel.GetComponent<Outline>();
+            var continueOutline = ContinueButton.GetComponent<Outline>();
+            var secondaryOutline = SecondaryButton.GetComponent<Outline>();
+            if (panelOutline != null) panelOutline.effectColor = rewardFrameColor;
+            if (continueOutline != null) continueOutline.effectColor = rewardFrameColor;
+            if (secondaryOutline != null) secondaryOutline.effectColor = rewardFrameColor;
+        }
         SetContent(card ? cardContent : heal ? recoveryContent : battleContent);
         replacementRoot.SetActive(false);
         value.gameObject.SetActive(true); body.gameObject.SetActive(true); detail.gameObject.SetActive(true);
@@ -268,6 +279,7 @@ public sealed class MapOpportunityController : MapNonCombatController
         if (!CanAct()) return;
         if (IsReplacing)
         {
+            replacementSelection.Clear();
             selectedOffer = null;
             replacementRoot.SetActive(false);
             DisplayReceipt(Receipt, 1); return;
@@ -288,11 +300,12 @@ public sealed class MapOpportunityController : MapNonCombatController
     private void ShowReplacement()
     {
         if (IsReplacing || selectedOffer == null) return;
+        replacementSelection.Clear();
         cardContent.root.SetActive(false);
         capacity.gameObject.SetActive(false); detail.text = "";
         ContinueButton.gameObject.SetActive(false);
         secondaryText.text = "Cancel Replacement";
-        replacementLabel.text = "Replace a card for " + selectedOffer.displayName;
+        replacementLabel.text = "Select cards to replace for " + selectedOffer.displayName;
         replacementRoot.SetActive(true);
         int index = 0;
         foreach (var instance in session.RunDeck)
@@ -306,11 +319,27 @@ public sealed class MapOpportunityController : MapNonCombatController
             }
             var card = replacementCards[index++];
             card.gameObject.SetActive(true);
-            card.Initialize(instance.definition, _ => Claim(id), true);
+            card.Initialize(instance.definition, _ => SelectReplacement(id, card), true);
         }
         for (int i = index; i < replacementCards.Count; i++) replacementCards[i].gameObject.SetActive(false);
         Canvas.ForceUpdateCanvases();
         replacementContent.GetComponentInParent<ScrollRect>().verticalNormalizedPosition = 1;
+    }
+
+    private void SelectReplacement(string id, RewardCardView view)
+    {
+        if (!CanAct() || !IsReplacing || selectedOffer == null || Receipt.Resolved) return;
+        if (!replacementSelection.Add(id)) replacementSelection.Remove(id);
+        view.SetReplacementSelected(replacementSelection.Contains(id));
+        long remaining = (long)session.DeckCapacity + selectedOffer.capacityCost - session.DeckCapacityLimit;
+        foreach (var card in session.RunDeck)
+            if (!card.sacrificed && card.definition != null && replacementSelection.Contains(card.instanceId))
+                remaining -= Mathf.Max(0, card.definition.capacityCost);
+        if (remaining > 0) { replacementLabel.text = $"Select cards to free {remaining} more capacity."; return; }
+        if (!session.TryResolveOpportunityRewardWithReplacements(EncounterId, selectedOffer, replacementSelection, out var reason))
+        { GameAudio.Play(GameSound.Error); replacementLabel.text = reason; return; }
+        replacementRoot.SetActive(false); DisplayReceipt(Receipt, 1);
+        ReturnToMap();
     }
 
     private void ReturnToMap()

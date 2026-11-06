@@ -10,14 +10,19 @@ public sealed class RewardCardView : MonoBehaviour
     [SerializeField] private TMP_Text nameText;
     [SerializeField] private TMP_Text effectText;
     [SerializeField] private Button chooseButton;
+    [SerializeField] private Color presentationOutlineColor = Color.white;
 
     private CardDefinition definition;
     private Action<CardDefinition> onChosen;
+    private Color artworkColor;
+    private bool artworkColorCaptured;
 
     public void Initialize(CardDefinition cardDefinition, Action<CardDefinition> onChosenCallback, bool preserveTypography = false)
     {
         definition = cardDefinition;
         onChosen = onChosenCallback;
+        if (artwork != null && !artworkColorCaptured) { artworkColor = artwork.color; artworkColorCaptured = true; }
+        SetReplacementSelected(false);
         if (!preserveTypography)
         {
             GameFonts.Apply(nameText, GameFontRole.Heading);
@@ -34,6 +39,11 @@ public sealed class RewardCardView : MonoBehaviour
         chooseButton.onClick.AddListener(() => onChosen?.Invoke(definition));
     }
 
+    public void SetReplacementSelected(bool selected)
+    {
+        if (artwork != null) artwork.color = selected ? artworkColor * new Color(.5f, .5f, .5f, 1f) : artworkColor;
+    }
+
     // Opt-in for the battle reward screen; opportunity cards keep their authored layout.
     public void SetPresentation(Vector2 size, Color surface, Color accent)
     {
@@ -42,7 +52,7 @@ public sealed class RewardCardView : MonoBehaviour
         if (background != null) background.color = surface;
         var outline = GetComponent<Outline>();
         if (outline == null) outline = gameObject.AddComponent<Outline>();
-        outline.effectColor = new Color(accent.r, accent.g, accent.b, .65f);
+        outline.effectColor = presentationOutlineColor;
         outline.effectDistance = new Vector2(1.5f, -1.5f);
 
         float height = size.y * .64f;

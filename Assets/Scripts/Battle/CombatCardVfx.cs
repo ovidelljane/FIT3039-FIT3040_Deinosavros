@@ -26,9 +26,25 @@ public sealed class CombatCardVfx : MonoBehaviour
         public bool Matches(StatType stat) => stats != null && Array.IndexOf(stats, stat) >= 0;
     }
 
+    [Serializable]
+    private struct JudgementTargetEffect
+    {
+        public BattleScript target;
+        public Transform effect;
+    }
+
     public Binding[] bindings;
     public Part attackImpact;
     [Min(1)] public int maximumBursts = 16;
+
+    [Header("Judgement Day")]
+    [SerializeField, Tooltip("Optional replacement for the arena and character effects. Add a Particle System effect under this slot to use it.")]
+    private Transform judgementEffectSlot;
+    [SerializeField, Tooltip("Align the slot origin with the combatant hit by Judgement Day. Disable for a fixed arena effect.")]
+    private bool placeJudgementOnTarget = true;
+    [SerializeField] private Transform judgementArenaEffect;
+    [SerializeField] private JudgementTargetEffect[] judgementTargetEffects = Array.Empty<JudgementTargetEffect>();
+
     private readonly HashSet<BattleScript> actors = new();
     private bool finished;
     private readonly List<SceneParticle> sceneParticles = new();
@@ -48,6 +64,7 @@ public sealed class CombatCardVfx : MonoBehaviour
     private readonly Dictionary<Vignette, VignetteState> vignetteOriginals = new();
     private readonly Binding judgementGlobal = new() { name = "Judgement Global", stats = new[] { StatType.JudgementDay } };
     private readonly Binding judgementCharacter = new() { name = "Judgement Character", stats = new[] { StatType.JudgementDay } };
+    private Part[] judgementEffectParts = Array.Empty<Part>();
     public int ActiveVisualCount => sceneVisuals.Count;
     public int BurstCount { get; private set; }
 
@@ -199,21 +216,23 @@ public sealed class CombatCardVfx : MonoBehaviour
 
     private void PlayJudgementParticles(BattleScript target)
     {
-        // Authored slots: 0 Enemy (2), 1 Enemy (1), 2 Enemy, 3 Player, 4 Boss.
-        int slot = target.name switch
-        {
-            "Enemy (2)" => 0, "Enemy (1)" => 1, "Enemy" => 2, "Player" => 3, "Boss" => 4, _ => -1
-        };
-        var global = transform.Find("JudgementDay(Global)");
-        string name = slot == 0 ? "JudgementDay(Character)" : "JudgementDay(Character) (" + slot + ")";
-        var character = slot >= 0 ? transform.Find(name) : null;
-        // Restart a cast as a single global burst and one exact character group.
         for (int i = sceneVisuals.Count - 1; i >= 0; i--)
             if (sceneVisuals[i].binding == judgementGlobal || sceneVisuals[i].binding == judgementCharacter) RemoveScene(i);
-        if (global != null) ShowScene(target, judgementGlobal, GroupParts(global), global);
-        else Debug.LogWarning("Missing scene group JudgementDay(Global).", this);
-        if (character != null) ShowScene(target, judgementCharacter, GroupParts(character), character);
-        else if (slot >= 0) Debug.LogWarning("Missing Judgement character group for " + target.name + ": " + name, this);
+
+        if (judgementEffectSlot != null && judgementEffectParts.Length > 0)
+        {
+            ShowScene(target, judgementCharacter, judgementEffectParts, judgementEffectSlot);
+            return;
+        }
+
+        if (judgementArenaEffect != null)
+            ShowScene(target, judgementGlobal, GroupParts(judgementArenaEffect), judgementArenaEffect);
+        foreach (var targetEffect in judgementTargetEffects)
+        {
+            if (targetEffect.target != target || targetEffect.effect == null) continue;
+            ShowScene(target, judgementCharacter, GroupParts(targetEffect.effect), targetEffect.effect);
+            break;
+        }
     }
 
     private IEnumerator TransitionJudgementVignette(int version)
@@ -337,7 +356,11 @@ public sealed class CombatCardVfx : MonoBehaviour
 
     private void LateUpdate()
     {
-        if (finished) return;
+        if (finished)
+        {
+            TickSceneParticles();
+            return;
+        }
         // Initial encounter shields (including sacrifice) may arrive without a card receipt.
         var shield = Find(StatType.Shield);
         if (shield != null) foreach (var actor in actors)
@@ -365,10 +388,10 @@ public sealed class CombatCardVfx : MonoBehaviour
     {
         if (player == null || player.gameObject.scene != gameObject.scene) return;
         finished = true;
-        Clear();
+        Clear(keepJudgementBurst: true);
     }
 
-    private void Clear()
+    private void Clear(bool keepJudgementBurst = false)
     {
         if (thunderboltLighting != null) StopCoroutine(thunderboltLighting);
         RestoreThunderboltLighting();
@@ -377,7 +400,11 @@ public sealed class CombatCardVfx : MonoBehaviour
         if (judgementVignette != null) StopCoroutine(judgementVignette);
         judgementVignette = null;
         RestoreJudgementVignette();
-        for (int i = sceneVisuals.Count - 1; i >= 0; i--) RemoveScene(i);
+        for (int i = sceneVisuals.Count - 1; i >= 0; i--)
+        {
+            var binding = sceneVisuals[i].binding;
+            if (!keepJudgementBurst || (binding != judgementGlobal && binding != judgementCharacter)) RemoveScene(i);
+        }
     }
 
     // Scene sources are a fixed pool. Never create, destroy, reparent or rescale them.
@@ -406,8 +433,18 @@ public sealed class CombatCardVfx : MonoBehaviour
             parts.AddRange(healingBinding.parts);
         }
         foreach (Transform group in transform)
-            if (group.name == "AttackEnemyParticle" || group.name == "JudgementDay(Global)" || Family(group.name) == "JudgementDay(Character)" || IsHunterGroup(group.name))
+            if (group.name == "AttackEnemyParticle" || IsHunterGroup(group.name))
                 parts.AddRange(GroupParts(group));
+        var stagedJudgementGroups = new HashSet<Transform>();
+        if (judgementArenaEffect != null) stagedJudgementGroups.Add(judgementArenaEffect);
+        foreach (var targetEffect in judgementTargetEffects)
+            if (targetEffect.effect != null) stagedJudgementGroups.Add(targetEffect.effect);
+        foreach (var group in stagedJudgementGroups) parts.AddRange(GroupParts(group));
+        if (judgementEffectSlot != null && judgementEffectSlot.parent == transform)
+        {
+            judgementEffectParts = GroupParts(judgementEffectSlot);
+            parts.AddRange(judgementEffectParts);
+        }
         var candidates = GetComponentsInChildren<ParticleSystem>(true);
         foreach (var part in parts)
         {
@@ -442,7 +479,9 @@ public sealed class CombatCardVfx : MonoBehaviour
                     family = Family(effectRoot.name), path = RelativePath(system.transform, effectRoot),
                     position = system.transform.position, rotation = system.transform.rotation,
                     loops = Array.ConvertAll(systems, p => p.main.loop),
-                    homePosition = home != null ? home.transform.position : system.transform.position
+                    stagedJudgementPosition = stagedJudgementGroups.Contains(effectRoot),
+                    homePosition = effectRoot == judgementEffectSlot ? effectRoot.position :
+                        (home != null ? home.transform.position : system.transform.position)
                 });
             }
         }
@@ -567,10 +606,17 @@ public sealed class CombatCardVfx : MonoBehaviour
 
     private void PositionScene(SceneParticle particle)
     {
-        if (IsHunterGroup(particle.family) && (particle.target == null || !particle.target.TryGetComponent<BossCombat>(out _))) return;
-        // Poseidon's water and ripple are staged in the scene, not centred on the buff recipient.
-        if (particle.family == "AttackEnemyParticle" || particle.family == "BuffParticle" || particle.family == "LightningParticle" ||
-            particle.family == "JudgementDay(Global)" || particle.family == "JudgementDay(Character)") return;
+        if (particle.root == judgementEffectSlot)
+        {
+            if (!placeJudgementOnTarget) return;
+        }
+        else
+        {
+            if (IsHunterGroup(particle.family) && (particle.target == null || !particle.target.TryGetComponent<BossCombat>(out _))) return;
+            // These effects use their authored scene positions.
+            if (particle.stagedJudgementPosition || particle.family == "AttackEnemyParticle" ||
+                particle.family == "BuffParticle" || particle.family == "LightningParticle") return;
+        }
         if (particle.target != null)
             particle.system.transform.SetPositionAndRotation(
                 particle.position + particle.target.transform.position - particle.homePosition, particle.rotation);
@@ -631,6 +677,7 @@ public sealed class CombatCardVfx : MonoBehaviour
         public ParticleSystem system;
         public ParticleSystem[] systems;
         public bool[] loops;
+        public bool stagedJudgementPosition;
         public Transform root;
         public string family, path;
         public Vector3 position, homePosition;
