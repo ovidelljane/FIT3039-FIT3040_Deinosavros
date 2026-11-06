@@ -40,6 +40,9 @@ public sealed class CombatBottomHud : MonoBehaviour
 
     // The circle centre shared by the arc sprites, the dome and the hand fan.
     public RectTransform ArcCentre => arcCentre;
+    public Transform HealthReadout => healthText.transform;
+    public Transform ElixirBar => elixirFill.parent;
+    public Transform ElixirIcon => elixirFill.parent.parent.Find("ElixirIcon");
     public bool IsReady => status != null && arcCentre != null && healthFill != null && healthPreview != null &&
         shieldFill != null && shieldBadge != null && healthText != null && shieldText != null &&
         elixirText != null && elixirFill != null && elixirPreview != null && playerPanel != null;
@@ -97,7 +100,7 @@ public sealed class CombatBottomHud : MonoBehaviour
         if (hp != shownHealth || maxHp != shownMaxHealth)
         { shownHealth = hp; shownMaxHealth = maxHp; healthText.text = $"{hp:0} / {maxHp:0}"; }
         if (energy != shownElixir || maxEnergy != shownMaxElixir)
-        { shownElixir = energy; shownMaxElixir = maxEnergy; elixirText.text = $"{energy:0.0} / {maxEnergy:0}"; }
+        { shownElixir = energy; shownMaxElixir = maxEnergy; elixirText.text = $"{energy:0} / {maxEnergy:0}"; }
         if (shield != shownShield) { shownShield = shield; shieldText.text = shield.ToString(); }
     }
 

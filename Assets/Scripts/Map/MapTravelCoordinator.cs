@@ -7,6 +7,8 @@ using UnityEngine.UI;
 // Lives with RunSession so the transition survives destruction of scene-owned UI.
 public sealed class MapTravelCoordinator : MonoBehaviour
 {
+    // Real-time beat between the battle ending and the victory/defeat panel appearing.
+    private const float ResultPause = 1.5f;
     private RunSession session;
     private CanvasGroup curtain;
     private Coroutine routine;
@@ -291,8 +293,18 @@ public sealed class MapTravelCoordinator : MonoBehaviour
         battleResultPending = true;
         session.CapturePlayerStats(source);
         BattleHud.Find(source.gameObject.scene)?.StopCombat();
+        routine = StartCoroutine(PresentBattleResult(source.gameObject.scene, victory));
+        return true;
+    }
+
+    // Holds on the stopped fight so the final hits and defeat land before the result panel takes over.
+    private IEnumerator PresentBattleResult(Scene scene, bool victory)
+    {
+        for (float t = 0; t < ResultPause; t += Time.unscaledDeltaTime) yield return null;
+        routine = null;
+        if (!scene.isLoaded) yield break;
         Time.timeScale = 0f;
-        var receiver = FindRewardReceiver(source.gameObject.scene);
+        var receiver = FindRewardReceiver(scene);
         if (victory)
         {
             if (receiver != null) receiver.PresentVictory(session, encounterId);
@@ -309,7 +321,6 @@ public sealed class MapTravelCoordinator : MonoBehaviour
             if (receiver != null) receiver.PresentDefeat(ReturnToMainMenu);
             else ReturnToMainMenu();
         }
-        return true;
     }
 
     public bool ContinueBattleReward(RewardScreenController receiver, string id)

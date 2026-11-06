@@ -20,6 +20,7 @@ public sealed class BattleCountdown : MonoBehaviour
                 hud.ArmCountdown();
             yield return null;
         }
+        yield return GameTutorial.PlayFirstCombat(hud);
         TextMeshProUGUI text = CreateText();
         for (int number = countFrom; number > 0; number--)
         {

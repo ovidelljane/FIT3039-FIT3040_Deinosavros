@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -27,6 +28,7 @@ public sealed class RewardScreenController : MonoBehaviour
     [SerializeField, Min(0)] private float cardSpacing = 56;
     [SerializeField] private Vector2 replacementCardSize = new Vector2(280, 438);
     [SerializeField, Min(1)] private int replacementColumns = 4;
+    [SerializeField, Min(0)] private float revealTime = .4f;
     private RunSession session;
     private string encounterId;
     private TMP_Text message;
@@ -66,8 +68,7 @@ public sealed class RewardScreenController : MonoBehaviour
     {
         if (presented || owner == null || !owner.TryPrepareBattleReward(id, cardPool, rewardOptionCount, out var offers)) return;
         session = owner; encounterId = id; presented = true;
-        rewardPanel.SetActive(true);
-        rewardPanel.transform.SetAsLastSibling();
+        Reveal();
         PreparePresentation(victory);
         SetChoiceMessage();
         ClearOffers();
@@ -83,8 +84,7 @@ public sealed class RewardScreenController : MonoBehaviour
     public void PresentDefeat(Action returnToMenu)
     {
         if (presented) return;
-        presented = true; rewardPanel.SetActive(true);
-        rewardPanel.transform.SetAsLastSibling();
+        presented = true; Reveal();
         ClearOffers();
         PreparePresentation(defeat);
         SetSkip(defeatButtonLabel, () =>
@@ -92,6 +92,23 @@ public sealed class RewardScreenController : MonoBehaviour
             skipButton.interactable = false;
             returnToMenu?.Invoke();
         });
+    }
+
+    private void Reveal()
+    {
+        rewardPanel.SetActive(true);
+        rewardPanel.transform.SetAsLastSibling();
+        var group = rewardPanel.GetComponent<CanvasGroup>();
+        if (group == null) group = rewardPanel.AddComponent<CanvasGroup>();
+        StartCoroutine(FadeIn(group));
+    }
+
+    // Unscaled because the coordinator freezes time before presenting.
+    private IEnumerator FadeIn(CanvasGroup group)
+    {
+        for (float t = 0; t < revealTime; t += Time.unscaledDeltaTime)
+        { group.alpha = Mathf.SmoothStep(0, 1, t / revealTime); yield return null; }
+        group.alpha = 1;
     }
 
     private void ChooseCard(CardDefinition definition)
