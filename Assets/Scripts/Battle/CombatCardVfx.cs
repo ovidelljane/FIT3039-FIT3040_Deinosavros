@@ -36,6 +36,10 @@ public sealed class CombatCardVfx : MonoBehaviour
     private readonly HashSet<string> missingSceneParts = new();
     private bool sceneReady;
     private Binding areaDamageBinding;
+    private Binding thunderboltBinding;
+    private Coroutine thunderboltLighting;
+    private Light thunderboltSpot;
+    private float originalSpotIntensity;
     private Binding healingBinding;
     private readonly Binding hunterBinding = new() { name = "Hunter", stats = new[] { StatType.HuntWeakestEnemy } };
     private readonly Dictionary<BattleScript, float> delayedShields = new();
@@ -88,6 +92,12 @@ public sealed class CombatCardVfx : MonoBehaviour
     private void OnEffect(CardEffectFeedback feedback)
     {
         if (feedback.Phase != CardFeedbackPhase.Applied || !Accepts(feedback.Target)) return;
+        if (feedback.Stat == StatType.DamageAllEnemies && feedback.SourceCard != null && feedback.SourceCard.cardId == "thunderbolt")
+        {
+            Show(feedback.Target, thunderboltBinding);
+            PlayThunderboltLighting();
+            return;
+        }
         if (feedback.Stat == StatType.FrequencySlow) return; // Judgement uses its own selected-target visuals.
         if (feedback.Stat == StatType.HuntWeakestEnemy)
         {
@@ -133,6 +143,45 @@ public sealed class CombatCardVfx : MonoBehaviour
             }
         }
         Show(feedback.Target, binding);
+    }
+
+    private void PlayThunderboltLighting()
+    {
+        if (thunderboltLighting == null)
+        {
+            var camera = Camera.main;
+            if (camera == null || camera.gameObject.scene != gameObject.scene) return;
+            thunderboltSpot = camera.transform.Find("Spot Light")?.GetComponent<Light>();
+            if (thunderboltSpot == null || thunderboltSpot.type != LightType.Spot) return;
+            originalSpotIntensity = thunderboltSpot.intensity;
+        }
+        else StopCoroutine(thunderboltLighting);
+        thunderboltLighting = StartCoroutine(AnimateThunderboltLighting());
+    }
+
+    private IEnumerator AnimateThunderboltLighting()
+    {
+        const float fade = .2f;
+        const float restoreAt = 1.3f;
+        float startTime = Time.time;
+        float startIntensity = thunderboltSpot.intensity;
+        while (thunderboltSpot != null)
+        {
+            float elapsed = Time.time - startTime;
+            if (elapsed >= restoreAt + fade) break;
+            thunderboltSpot.intensity = elapsed < restoreAt
+                ? Mathf.SmoothStep(startIntensity, 10000f, elapsed / fade)
+                : Mathf.SmoothStep(10000f, originalSpotIntensity, (elapsed - restoreAt) / fade);
+            yield return null;
+        }
+        RestoreThunderboltLighting();
+    }
+
+    private void RestoreThunderboltLighting()
+    {
+        if (thunderboltSpot != null) thunderboltSpot.intensity = originalSpotIntensity;
+        thunderboltSpot = null;
+        thunderboltLighting = null;
     }
 
     private static Part[] GroupParts(Transform group)
@@ -321,6 +370,8 @@ public sealed class CombatCardVfx : MonoBehaviour
 
     private void Clear()
     {
+        if (thunderboltLighting != null) StopCoroutine(thunderboltLighting);
+        RestoreThunderboltLighting();
         delayedShields.Clear();
         ++vignetteVersion;
         if (judgementVignette != null) StopCoroutine(judgementVignette);
@@ -342,6 +393,12 @@ public sealed class CombatCardVfx : MonoBehaviour
         if (bindings != null) foreach (var binding in bindings)
             if (binding?.parts != null) parts.AddRange(SceneParts(binding, binding.parts));
         if (attackImpact != null) parts.Add(attackImpact);
+        var lightning = transform.Find("LightningParticle");
+        if (lightning != null)
+        {
+            thunderboltBinding = new Binding { name = "Thunderbolt", stats = new[] { StatType.DamageAllEnemies }, parts = GroupParts(lightning) };
+            parts.AddRange(thunderboltBinding.parts);
+        }
         var healing = transform.Find("HealingParticle");
         if (healing != null)
         {
@@ -510,9 +567,9 @@ public sealed class CombatCardVfx : MonoBehaviour
 
     private void PositionScene(SceneParticle particle)
     {
-        if (IsHunterGroup(particle.family) && (particle.target == null || particle.target.name != "Boss")) return;
+        if (IsHunterGroup(particle.family) && (particle.target == null || !particle.target.TryGetComponent<BossCombat>(out _))) return;
         // Poseidon's water and ripple are staged in the scene, not centred on the buff recipient.
-        if (particle.family == "AttackEnemyParticle" || particle.family == "BuffParticle" ||
+        if (particle.family == "AttackEnemyParticle" || particle.family == "BuffParticle" || particle.family == "LightningParticle" ||
             particle.family == "JudgementDay(Global)" || particle.family == "JudgementDay(Character)") return;
         if (particle.target != null)
             particle.system.transform.SetPositionAndRotation(
