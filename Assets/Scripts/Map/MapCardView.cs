@@ -12,12 +12,9 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
     [SerializeField] private Image backArtwork;
     [SerializeField] private TMP_Text titleText;
     [SerializeField] private TMP_Text effectText;
-    [SerializeField] private TMP_Text scopeText;
+    [SerializeField] private TMP_Text capacityText;
     [SerializeField] private GameObject selectionGlow;
-    [SerializeField] private GameObject sacrificedOverlay;
-    [SerializeField] private Button sacrificeButton;
     [SerializeField] private StatusIcon offeringIcon;
-    [SerializeField] private Image brokenHeartCut;
     [SerializeField] private Image backFill;
     [SerializeField] private float flipDuration = 0.28f;
     [SerializeField] private float hoverScale = 1.04f;
@@ -28,7 +25,13 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
     [SerializeField] private float tiltSmoothTime = 0.07f;
     [SerializeField] private CardDefinition definition;
     [SerializeField] private GameObject combatFrontInstance;
-    [SerializeField] private GameObject backInstance;
+
+    [Header("Offering Artwork")]
+    [SerializeField] private Sprite attackOfferingArtwork;
+    [SerializeField] private Sprite buffOfferingArtwork;
+    [SerializeField] private Sprite debuffOfferingArtwork;
+    [SerializeField] private Sprite defenseOfferingArtwork;
+    [SerializeField] private Sprite elixirOfferingArtwork;
 
     private MapController controller;
     private RectTransform rectTransform;
@@ -48,6 +51,7 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
     private bool interactionLocked;
     private float settleRemaining, settleDuration;
     private Vector3 settleOffset;
+    private Material backFillMaterial, backFillSource;
     public CardDefinition Definition => definition;
     public string InstanceId { get; private set; }
     public bool IsBack => showingBack;
@@ -73,7 +77,6 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
         frontArtwork.gameObject.SetActive(false);
         backFace.SetActive(false);
         selectionGlow.SetActive(false);
-        sacrificedOverlay.SetActive(false);
     }
 
     private void Update()
@@ -95,6 +98,7 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
         {
             SetFace(backVisible);
         }
+        if (showingBack) RefreshBackArtwork();
 
         currentTilt = Vector2.SmoothDamp(
             currentTilt,
@@ -140,9 +144,7 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
             definition = cardDefinition;
             // Views cloned from another card still hold that card's art, so rebuild it.
             if (combatFrontInstance != null) Destroy(combatFrontInstance);
-            if (backInstance != null) Destroy(backInstance);
             combatFrontInstance = null;
-            backInstance = null;
         }
         initialized = true;
         pointerHovered = false;
@@ -164,23 +166,23 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
         effectText.text = preview.BackValue;
         effectText.color = owner != null && owner.SacrificePanel != null ? owner.SacrificePanel.EffectColor(preview.Symbol) : preview.Accent;
         effectText.gameObject.SetActive(true);
-        scopeText.text = "Next battle";
-        if (offeringIcon != null) offeringIcon.SetSymbol(preview.Symbol, effectText.color);
-        if (brokenHeartCut != null) brokenHeartCut.enabled = preview.Symbol == StatusSymbol.Health;
+        var offeringArtwork = definition.overworldEffect.effectType switch
+        {
+            OverworldEffectType.DivinePunishment => attackOfferingArtwork,
+            OverworldEffectType.ImprovePlayerAttackSpeed => buffOfferingArtwork,
+            OverworldEffectType.ReduceEnemyStartingHealth or OverworldEffectType.ReduceEnemyAttackFrequency or
+                OverworldEffectType.ReduceEnemyAttackDamage => debuffOfferingArtwork,
+            OverworldEffectType.GrantStartingShield => defenseOfferingArtwork,
+            OverworldEffectType.IncreaseStartingElixir => elixirOfferingArtwork,
+            _ => null
+        };
+        if (offeringIcon != null) offeringIcon.SetSymbol(preview.Symbol, effectText.color, offeringArtwork);
         SetFace(showingBack);
         selectionGlow.SetActive(false);
-        sacrificedOverlay.SetActive(false);
-        if (sacrificeButton != null) sacrificeButton.gameObject.SetActive(false);
     }
 
     private void BuildBack()
     {
-        if (backInstance != null)
-        {
-            backInstance.SetActive(false);
-            Destroy(backInstance);
-            backInstance = null;
-        }
         // One rendering path for authored and dynamically cloned cards. These are the
         // same padded frame dimensions as the combat face, not the narrower layout cell.
         backArtwork.gameObject.SetActive(true);
@@ -189,7 +191,43 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
         backArtwork.color = Color.white;
         backArtwork.preserveAspect = true;
         backArtwork.raycastTarget = false;
+        if (backFill != null)
+        {
+            backFill.sprite = definition.FrontIllustration;
+            RefreshBackArtwork();
+        }
+        if (capacityText != null) capacityText.text = Mathf.Max(0, definition.capacityCost).ToString();
         // The authored template owns dimensions, typography and fill; binding only changes content.
+    }
+
+    private void RefreshBackArtwork()
+    {
+        if (backFill == null) return;
+        if (backFillMaterial == null || backFill.material != backFillMaterial)
+        {
+            backFillSource = backFill.material;
+            ReleaseBackMaterial();
+            backFillMaterial = new Material(backFillSource) { name = "Map Back Instance" };
+            backFill.material = backFillMaterial;
+        }
+        backFillMaterial.CopyPropertiesFromMaterial(backFillSource);
+        MapSacrificePanel.ApplyArtworkStyle(backFillMaterial, backFill, backFill.sprite, true,
+            new Rect(0,0,1,1), controller != null && controller.SacrificePanel != null
+                ? controller.SacrificePanel.artworkFocus : new Vector2(.5f,.5f));
+    }
+
+    private void ReleaseBackMaterial()
+    {
+        if (backFillMaterial == null) return;
+        if (Application.isPlaying) Destroy(backFillMaterial);
+        else DestroyImmediate(backFillMaterial);
+        backFillMaterial = null;
+    }
+
+    private void OnDestroy()
+    {
+        if (backFill != null && backFill.material == backFillMaterial) backFill.material = backFillSource;
+        ReleaseBackMaterial();
     }
 
     private void BuildCombatFront()
@@ -282,12 +320,6 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
         controller?.SacrificePanel?.LeaveCard(this, eventData);
     }
 
-    public void SetSacrificed()
-    {
-        sacrificedOverlay.SetActive(true);
-        if (sacrificeButton != null) sacrificeButton.interactable = false;
-    }
-
     public void SetInteractionLocked(bool value)
     {
         interactionLocked = value;
@@ -316,6 +348,7 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
             eventData.button == PointerEventData.InputButton.Left)
         {
             targetBack = !targetBack;
+            GameAudio.Play(GameSound.CardFlip);
             controller.RememberCardFace(InstanceId, targetBack);
             controller.ShowCardDetail(this);
         }
@@ -368,8 +401,7 @@ public sealed class MapCardView : MonoBehaviour, IPointerEnterHandler, IPointerE
         {
             selectionGlow.transform,
             frontFace.transform,
-            backFace.transform,
-            sacrificedOverlay.transform
+            backFace.transform
         };
 
         foreach (Transform visualChild in visualChildren)

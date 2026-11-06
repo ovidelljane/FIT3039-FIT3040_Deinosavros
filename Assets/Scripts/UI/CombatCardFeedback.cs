@@ -37,6 +37,12 @@ public sealed class CombatCardFeedback : MonoBehaviour
     public Color elixirColor = new(.78f, .63f, 1);
     public Color costColor = new(1, .65f, .46f);
     public Color debuffColor = new(.78f, .64f, .96f);
+    [Header("Card Messages")]
+    public RectTransform resourceMessageAnchor;
+    public string insufficientElixirMessage = "not enough elixir";
+    public TMP_FontAsset resourceMessageFont;
+    public Color resourceMessageColor = new(1, .65f, .46f);
+    [Min(1)] public float resourceMessageFontSize = 22;
 
     private sealed class Popup
     {
@@ -46,6 +52,7 @@ public sealed class CombatCardFeedback : MonoBehaviour
         public int lane;
         public Color color;
         public bool active;
+        public bool message;
     }
     private sealed class NumberState
     {
@@ -110,12 +117,12 @@ public sealed class CombatCardFeedback : MonoBehaviour
         bool expired = change.Phase == CardFeedbackPhase.Expired;
         float delta = change.After - change.Before;
         Color tint = cost ? costColor : change.Stat == StatType.Heal ? healColor :
-            change.Stat == StatType.Elixir || change.Stat == StatType.ElixirRegen ? elixirColor :
-            change.Stat == StatType.EnemySlow || change.Stat == StatType.FrequencySlow ? debuffColor : bonusColor;
+            change.Stat == StatType.Elixir || change.Stat == StatType.ElixirRegen || change.Stat == StatType.DelayedElixir ? elixirColor :
+            change.Stat == StatType.EnemySlow || change.Stat == StatType.FrequencySlow || change.Stat == StatType.DamageReduction ? debuffColor : bonusColor;
         if (isPlayer)
         {
-            StatType channel = change.Stat == StatType.ElixirRegen ? StatType.Elixir :
-                change.Stat == StatType.FrequencySlow ? StatType.AttackSpeed :
+            StatType channel = change.Stat == StatType.ElixirRegen || change.Stat == StatType.DelayedElixir ? StatType.Elixir :
+                change.Stat == StatType.FrequencySlow || change.Stat == StatType.CardMomentum ? StatType.AttackSpeed :
                 change.Stat == StatType.Cataclysm ? StatType.Damage : change.Stat;
             foreach (var number in numbers)
                 if (number.stat == channel)
@@ -125,7 +132,7 @@ public sealed class CombatCardFeedback : MonoBehaviour
                     number.flashColor = expired ? number.originalColor : tint;
                 }
         }
-        if (expired) return;
+        if (expired || change.Stat == StatType.DelayedElixir || change.Stat == StatType.DamageAndWeaken) return;
 
         string value;
         if (cost) value = Signed(delta) + (change.Stat == StatType.Heal ? " HP" : " Elixir");
@@ -143,6 +150,8 @@ public sealed class CombatCardFeedback : MonoBehaviour
             case StatType.EnemySlow: value = "Slowed"; break;
             case StatType.FrequencySlow: value = "Attack rate -" + change.Instance.amount.ToString("0.#") + "%"; break;
             case StatType.Cataclysm: value = "Cataclysm"; break;
+            case StatType.CardMomentum: value = "Attack rate +" + change.Instance.CurrentMagnitude.ToString("0.#") + "%"; break;
+            case StatType.DamageReduction: value = "Damage -" + change.Instance.amount.ToString("0.#") + "%"; break;
             default: value = Signed(delta); break;
         }
         RectTransform anchor = null;
@@ -150,7 +159,7 @@ public sealed class CombatCardFeedback : MonoBehaviour
         {
             StatType slot = change.Stat == StatType.ExtraHits ? StatType.Damage :
                 change.Stat == StatType.Cataclysm ? StatType.Damage :
-                change.Stat == StatType.FrequencySlow ? StatType.AttackSpeed :
+                change.Stat == StatType.FrequencySlow || change.Stat == StatType.CardMomentum ? StatType.AttackSpeed :
                 change.Stat == StatType.ElixirRegen ? StatType.Elixir : change.Stat;
             anchor = playerView.ValueLabel(slot)?.rectTransform;
             if (change.Stat == StatType.Heal || change.Stat == StatType.Elixir)
@@ -164,25 +173,56 @@ public sealed class CombatCardFeedback : MonoBehaviour
         if (anchor != null) Show(anchor, value, tint);
     }
 
-    private void Show(RectTransform anchor, string value, Color tint)
+    public void ShowInsufficientElixir()
+    {
+        if (ended || pool == null || !isActiveAndEnabled) return;
+        var anchor = resourceMessageAnchor != null ? resourceMessageAnchor : popupLayer;
+        foreach (var popup in pool)
+            if (popup.active && popup.anchor == anchor && popup.text.text == insufficientElixirMessage)
+            {
+                popup.age = 0; Position(popup);
+                return;
+            }
+        Show(anchor, insufficientElixirMessage, resourceMessageColor, true);
+    }
+
+    private void Show(RectTransform anchor, string value, Color tint, bool message = false)
     {
         Popup popup = pool[nextPopup]; nextPopup = (nextPopup + 1) % pool.Length;
         int lane = 0;
         for (int i = 0; i < pool.Length; i++)
             if (pool[i] != popup && pool[i].active && pool[i].anchor == anchor) lane++;
         popup.anchor = anchor; popup.age = 0; popup.color = tint;
-        popup.lane = lane % 3; popup.active = true;
+        popup.lane = lane % 3; popup.active = true; popup.message = message;
+        popup.text.font = popupTemplate.font;
+        popup.text.fontSharedMaterial = popupTemplate.fontSharedMaterial;
+        popup.text.fontWeight = popupTemplate.fontWeight;
+        popup.text.fontSize = popupTemplate.fontSize;
+        popup.text.fontStyle = popupTemplate.fontStyle;
+        popup.text.enableAutoSizing = popupTemplate.enableAutoSizing;
+        popup.text.rectTransform.sizeDelta = popupTemplate.rectTransform.sizeDelta;
         popup.text.text = value; popup.text.color = tint; popup.text.gameObject.SetActive(true);
         Position(popup);
     }
 
     private void Position(Popup popup)
     {
+        if (popup.message)
+        {
+            if (resourceMessageFont != null && popup.text.font != resourceMessageFont)
+                popup.text.font = resourceMessageFont;
+            popup.text.enableAutoSizing = false;
+            popup.text.fontSize = Mathf.Max(1,resourceMessageFontSize);
+            popup.text.fontStyle = resourceMessageFont != null ? popupTemplate.fontStyle & ~FontStyles.Bold : popupTemplate.fontStyle | FontStyles.Bold;
+            popup.text.fontWeight = FontWeight.Regular;
+            var preferred = popup.text.GetPreferredValues(popup.text.text,Mathf.Infinity,Mathf.Infinity);
+            popup.text.rectTransform.sizeDelta = Vector2.Max(popupTemplate.rectTransform.sizeDelta,preferred + new Vector2(12,8));
+        }
         Vector3 local = popupLayer.InverseTransformPoint(popup.anchor.TransformPoint(popup.anchor.rect.center));
         float progress = Mathf.Clamp01(popup.age / Mathf.Max(.1f, popupDuration));
         popup.text.rectTransform.anchoredPosition = (Vector2)local + popupOffset +
             new Vector2(popup.lane % 2 * 12, popup.lane * 24 + popupRise * (1 - (1 - progress) * (1 - progress)));
-        Color tint = popup.color;
+        Color tint = popup.message ? resourceMessageColor : popup.color;
         tint.a *= 1 - Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.5f, 1, progress));
         popup.text.color = tint;
     }
@@ -239,7 +279,8 @@ public sealed class CombatCardFeedback : MonoBehaviour
             if (effect != null && effect.IsApplied && effect.target == player &&
                 (effect.effectType == stat || (effect.effectType == StatType.Cataclysm &&
                 (stat == StatType.Damage || stat == StatType.AttackSpeed)) ||
-                (effect.effectType == StatType.FrequencySlow && stat == StatType.AttackSpeed))) return true;
+                ((effect.effectType == StatType.FrequencySlow || effect.effectType == StatType.CardMomentum) && stat == StatType.AttackSpeed) ||
+                (effect.effectType == StatType.DelayedElixir && stat == StatType.ElixirRegen))) return true;
         }
         return false;
     }
@@ -282,7 +323,8 @@ public sealed class CombatCardFeedback : MonoBehaviour
     public static string Title(StatType stat) => stat switch
     {
         StatType.Damage => "Damage", StatType.AttackSpeed => "Attack speed", StatType.ExtraHits => "Extra hits",
-        StatType.ElixirRegen => "Elixir regeneration", StatType.EnemySlow or StatType.FrequencySlow => "Slowed",
+        StatType.ElixirRegen => "Elixir effects", StatType.EnemySlow or StatType.FrequencySlow => "Slowed",
+        StatType.CardMomentum => "Momentum", StatType.DamageReduction => "Weakened", StatType.DelayedElixir => "Elixir echo",
         StatType.Cataclysm => "Cataclysm", _ => stat.ToString()
     };
     private static string EffectDescription(Effect effect) => effect.effectType switch
@@ -293,6 +335,10 @@ public sealed class CombatCardFeedback : MonoBehaviour
         StatType.Cataclysm => "+" + effect.CurrentHealthBonus.ToString("0.#") + "% damage and attack rate",
         StatType.ExtraHits => Signed(effect.amount) + " hits per attack",
         StatType.ElixirRegen => Signed(effect.amount) + " Elixir/s",
+        StatType.CardMomentum => "+" + effect.CurrentMagnitude.ToString("0.#") + "% attack rate (" + effect.TriggerStacks + "/" + effect.stackLimit + ")",
+        StatType.DamageReduction => "Attack damage -" + effect.amount.ToString("0.#") + "%",
+        StatType.DelayedElixir => "+" + effect.amount.ToString("0.#") + " Elixir; +" + effect.lowHealthBonus.ToString("0.#") +
+            " if HP < " + effect.bonusHealthThreshold.ToString("0.#") + "%",
         _ => Signed(effect.amount) + " damage"
     };
     private static string Signed(float value) => (value >= 0 ? "+" : "") + value.ToString("0.##", CultureInfo.InvariantCulture);

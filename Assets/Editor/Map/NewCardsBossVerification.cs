@@ -91,7 +91,7 @@ public static class NewCardsBossVerification
         Check(hud.TryPrepare(null, player), "Normal combat HUD, hand and countdown are ready.");
         var pool = AssetDatabase.LoadAssetAtPath<CardPool>("Assets/Data/CardPool.asset");
         var judgement = pool.Cards.Single(c => c.cardId == "judgement-day"); var cat = pool.Cards.Single(c => c.cardId == "cataclysm");
-        Check(pool.Cards.Count == 13 && judgement.BaseValues.Cost == 8 && cat.BaseValues.Cost == 3 &&
+        Check(pool.Cards.Distinct().Count() == pool.Cards.Count && judgement.BaseValues.Cost == 8 && cat.BaseValues.Cost == 3 &&
             judgement.capacityCost == 8 && cat.capacityCost == 5 && cat.BaseValues.Duration == 10, "Pool, costs, capacity and duration match the requested values.");
         Check(!judgement.GetCombatDescription().Contains("{") && !cat.GetCombatDescription().Contains("{"), "New card descriptions resolve all configurable tokens.");
         foreach (var enemy in enemies) { enemy.maxHealth = enemy.health = 10000; enemy.attackDmg = 0; enemy.attackSpd = 10000; }

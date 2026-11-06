@@ -19,7 +19,6 @@ MonoBehaviour:
   capacityCost: 3
   combatPrefab: {fileID: 3386567266915157623, guid: d27008d8a1764ea4922756a909fc1bec, type: 3}
   mapPrefab: {fileID: 0}
-  backPrefab: {fileID: 0}
   frontArtwork: {fileID: 21300000, guid: 1e58eaaf59497bf4f95ad88384781cde, type: 3}
   frontBorder: {fileID: 21300000, guid: def956a756ade1848bdaf3569b2b0ae9, type: 3}
   backArtwork: {fileID: 21300000, guid: 2e1a05b3b65acae499cad2d809ceeb57, type: 3}
@@ -28,4 +27,3 @@ MonoBehaviour:
     magnitude: 4
     title: Crossroads of Destiny
     description: "+{magnitude} maximum Elixir; restore {magnitude} Elixir."
-    scopeLabel: NEXT BATTLE - PERMANENT REMOVAL

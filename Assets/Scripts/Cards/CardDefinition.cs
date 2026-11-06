@@ -3,7 +3,7 @@ using System.Globalization;
 using UnityEngine;
 
 public enum MapCardType { Attack, Buff, Defense, Elixir, Debuff }
-public enum OverworldEffectType { ReduceEnemyStartingHealth, ImprovePlayerAttackSpeed, GrantStartingShield, IncreaseStartingElixir, DivinePunishment, ReduceEnemyAttackFrequency }
+public enum OverworldEffectType { ReduceEnemyStartingHealth, ImprovePlayerAttackSpeed, GrantStartingShield, IncreaseStartingElixir, DivinePunishment, ReduceEnemyAttackFrequency, ReduceEnemyAttackDamage }
 
 [Serializable]
 public struct OverworldEffectDefinition
@@ -13,7 +13,6 @@ public struct OverworldEffectDefinition
     [Min(1)] public int triggerEvery;
     public string title;
     [TextArea] public string description;
-    public string scopeLabel;
 }
 
 [CreateAssetMenu(menuName = "Deinosavros/Card Definition", fileName = "CardDefinition")]
@@ -27,7 +26,6 @@ public sealed class CardDefinition : ScriptableObject
     public int capacityCost;
     public GameObject combatPrefab;
     public GameObject mapPrefab;
-    public GameObject backPrefab;
     public Sprite frontArtwork;
     [Tooltip("Normalized illustration area. Exclude a baked-in frame before applying the shared card border.")]
     public Rect frontArtworkRegion = new Rect(0f, 0f, 1f, 1f);
@@ -84,13 +82,13 @@ public sealed class CardDefinition : ScriptableObject
         var baseline = BaseValues;
         var values = current ?? baseline;
         string text = template ?? combatEffectText ?? "";
-        if (combatPrefab != null && combatPrefab.TryGetComponent<AdvancedCardRules>(out var advanced)) text = advanced.Expand(text);
+        if (combatPrefab != null && combatPrefab.TryGetComponent<AdvancedCardRules>(out var advanced)) text = advanced.Expand(text, values.Amount);
         return text
             .Replace("{amount}", Number(values.Amount, baseline.Amount))
             .Replace("{duration}", Number(values.Duration, baseline.Duration))
             .Replace("{cost}", Number(values.Cost, baseline.Cost, true))
             .Replace("{capacity}", Number(capacityCost, capacityCost))
-            .Replace("{costResource}", values.Stat == StatType.Elixir ? "Health" : "Elixir");
+            .Replace("{costResource}", values.UsesHealthCost ? "Health" : "Elixir");
     }
 
     public string GetSacrificeDescription(RunSession session = null, string template = null)
@@ -118,11 +116,14 @@ public readonly struct CardEffectValues
     public readonly StatType Stat;
     public readonly float Amount, Duration;
     public readonly int Cost;
-    public CardEffectValues(StatType stat, float amount, int cost, float duration)
+    public readonly bool UsesHealthCost;
+    public CardEffectValues(StatType stat, float amount, int cost, float duration, bool? usesHealthCost = null)
     {
         Stat = stat; Cost = Mathf.Max(0, cost); Duration = Mathf.Max(0, duration);
+        UsesHealthCost = usesHealthCost ?? stat == StatType.Elixir;
         Amount = stat == StatType.AttackSpeed || stat == StatType.EnemySlow || stat == StatType.Elixir ||
-            stat == StatType.ElixirRegen ? amount : (int)amount;
+            stat == StatType.ElixirRegen || stat == StatType.DivineIntoxication || stat == StatType.CardMomentum ||
+            stat == StatType.DelayedElixir ? amount : (int)amount;
     }
 }
 

@@ -18,170 +18,118 @@ public static class MapCardDetailVerification
 {
     public static void VerifyTimelinePreview()
     {
-        var active = SceneManager.GetActiveScene(); bool dirty = active.isDirty;
-        string timelineBytes = File.ReadAllText("Assets/UI/MapSacrifice.playable");
         var scene = EditorSceneManager.OpenPreviewScene("Assets/Scenes/Map.unity");
-        bool asynchronous = ShaderUtil.allowAsyncCompilation;
-        Material material = null; TimelineAsset fixture = null;
+        var timelineBytes = File.ReadAllText("Assets/UI/MapSacrifice.playable");
         int checks = 0;
-        void Check(bool value,string message) { checks++; if (!value) throw new InvalidOperationException(message); }
+        void Check(bool value, string message) { checks++; if (!value) throw new InvalidOperationException(message); }
         try
         {
-            ShaderUtil.allowAsyncCompilation = false;
-            var panel = scene.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<MapSacrificePanel>(true)).Single();
+            var panel = scene.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<MapSacrificePanel>(true)).Single();
             var director = panel.sequenceDirector;
             var timeline = (TimelineAsset)director.playableAsset;
-            var track = timeline.GetOutputTracks().OfType<SacrificeTimelineTrack>().Single();
-            var move = track.GetClips().First(c => ((SacrificeTimelineClip)c.asset).phase == SacrificePhase.Move);
-            var burn = track.GetClips().First(c => ((SacrificeTimelineClip)c.asset).phase == SacrificePhase.Burn);
+            var tracks = timeline.GetOutputTracks().ToArray();
+            Check(tracks.OfType<AnimationTrack>().Count() == 5 && tracks.OfType<AudioTrack>().Count() == 1,
+                "The ceremony consists of five native animation tracks and one native audio track.");
+            Check(tracks.All(track => director.GetGenericBinding(track) != null), "All native tracks have saved scene bindings.");
+            foreach (var track in tracks.OfType<AnimationTrack>())
+                Check(track.GetClips().All(clip => clip.recordable && ((AnimationPlayableAsset)clip.asset).clip != null),
+                    track.name + " exposes editable native animation curves.");
+            var fire = tracks.OfType<AudioTrack>().Single().GetClips().Single();
+            Check(((AudioPlayableAsset)fire.asset).clip != null &&
+                director.GetGenericBinding(tracks.OfType<AudioTrack>().Single()) is AudioSource,
+                "The visible audio clip directly owns fire timing, fades and the scene audio source.");
             bool overlay = panel.overlay.activeSelf, button = panel.confirm.gameObject.activeSelf;
-            float alpha = panel.cardGroup.alpha; var sprite = panel.illustration.sprite; var sourceMaterial = panel.illustration.material;
-            var shade = panel.feedbackBackdrop.color; string title = panel.cardName.text;
-            var playerCore = panel.playerSymbol.transform.Find("Core"); var coreScale = playerCore.localScale;
-            var definition = panel.previewCard;
-            string cardJson = EditorJsonUtility.ToJson(definition);
-            director.SetGenericBinding(track,panel);
-            director.time = move.start + move.duration * .5; director.Evaluate();
-            Check(panel.IsTimelinePreview && !panel.IsBusy && panel.burnEffect.IsPlaying,"Native Edit Mode evaluation shows the ceremony without a sacrifice transaction.");
-            float expected = ((SacrificeTimelineClip)move.asset).progression.Evaluate(.5f);
-            Check(Mathf.Abs(panel.LastTimelineFrame.move - expected) < .001f,"The actual authored move curve controls preview progress.");
-            Check(!panel.confirm.gameObject.activeSelf && panel.cardGroup.alpha == 0,"Preview captures the full card without its button.");
-            panel.dimOpacity = .73f;
-            director.time = burn.start + burn.duration * .5; director.Evaluate();
-            Check(Mathf.Abs(panel.burnEffect.Progress - ((SacrificeTimelineClip)burn.asset).progression.Evaluate(.5f)) < .001f,
-                "Seeking into the real burn clip controls its shader.");
-            panel.burnEffect.focusAnchor.anchoredPosition += new Vector2(64,-25); panel.burnEffect.focusScale = 1.32f;
-            material = new Material(panel.burnEffect.cardTemplate.material);
-            panel.burnEffect.cardTemplate.material = material; material.SetColor("_EmberColor",Color.cyan);
-            director.Evaluate();
-            var face = panel.burnEffect.GetComponentsInChildren<RawImage>().Single(i => i.texture is RenderTexture);
-            Check(Vector3.Distance(face.transform.position,panel.burnEffect.focusAnchor.position) < .1f,"Moving the Hierarchy focus anchor changes the preview destination.");
-            Check(Mathf.Abs(face.transform.lossyScale.x / panel.cardPreview.lossyScale.x - 1.32f) < .01f,"The editable focus scale changes preview size.");
-            Check(face.material.GetColor("_EmberColor") == Color.cyan,"The material controls the burn color without a component override.");
-            Check(panel.DetailMaterial == sourceMaterial,"Gradient controls keep editing the real material during preview.");
-            var camera = scene.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<Camera>()).Single(c => c.CompareTag("MainCamera"));
-            camera.overrideSceneCullingMask = EditorSceneManager.GetSceneCullingMask(scene);
-            Directory.CreateDirectory(MapSacrificeAuthoring.Results);
-            MapSacrificeVerification.Capture(panel.GetComponentInParent<Canvas>(),camera,"timeline-edit-preview",Check);
-            var enhance = track.GetClips().First(c => ((SacrificeTimelineClip)c.asset).phase == SacrificePhase.Enhance);
-            director.time = enhance.start + enhance.duration * .45; director.Evaluate();
-            Check(playerCore.localScale.x > coreScale.x,"Player enhancement is visible while scrubbing in Edit Mode.");
-            director.time = 0; director.Evaluate();
-            Check(panel.burnEffect.Progress == 0 && panel.feedbackBackdrop.color.a == 0,"Seeking backward restores an intact card and clear screen.");
-            director.Stop();
-            if (director.playableGraph.IsValid()) director.playableGraph.Destroy();
+            var shade = panel.feedbackBackdrop.color; float alpha = panel.cardGroup.alpha;
+            var cardDefinition = AssetDatabase.LoadAssetAtPath<CardDefinition>("Assets/Data/Cards/SolarShield.asset");
+            string definition = EditorJsonUtility.ToJson(cardDefinition);
+            Check(panel.PrepareTimelinePreview(), "Editor preview captures the selected artwork without a sacrifice transaction.");
+            var card = NativeAnimation(timeline, "Card");
+            var burn = NativeAnimation(timeline, "Burn");
+            var scale = AnimationUtility.GetEditorCurve(card, EditorCurveBinding.FloatCurve("", typeof(Transform), "m_LocalScale.x"));
+            var progress = AnimationUtility.GetEditorCurve(burn, EditorCurveBinding.FloatCurve("", typeof(SacrificeBurnEffect), "burnProgress"));
+            float burnStart = progress.keys.Last(key => key.value <= 0).time;
+            float burnEnd = progress.keys.First(key => key.value >= 1).time;
+            float sampleTime = Mathf.Lerp(burnStart, burnEnd, .5f);
+            director.time = sampleTime; director.Evaluate(); panel.burnEffect.RefreshPresentation();
+            Check(panel.IsTimelinePreview && !panel.IsBusy && panel.burnEffect.IsPlaying,
+                "Native evaluation previews presentation without removing a card.");
+            Check(Mathf.Abs(panel.burnEffect.Progress - progress.Evaluate(sampleTime)) < .002f,
+                "The ordinary Animation Window burn curve directly controls the shader.");
+            Check(Mathf.Abs(panel.burnEffect.cardTemplate.rectTransform.localScale.x - scale.Evaluate(sampleTime)) < .002f,
+                "The ordinary transform scale curve directly controls expansion.");
+            var constraint = panel.burnEffect.cardTemplate.GetComponent<UnityEngine.Animations.PositionConstraint>();
+            Check(constraint != null && constraint.GetSource(0).sourceTransform == panel.cardPreview &&
+                constraint.GetSource(1).sourceTransform == panel.burnEffect.focusAnchor,
+                "Native position constraints expose both the detail source and editable center target.");
+            var motion = AnimationUtility.GetEditorCurve(card,
+                EditorCurveBinding.FloatCurve("", typeof(UnityEngine.Animations.PositionConstraint), "m_Sources.Array.data[1].weight"));
+            director.time = .4; director.Evaluate();
+            Check(Mathf.Abs(constraint.GetSource(1).weight - motion.Evaluate(.4f)) < .002f,
+                "Scrubbing changes the native position source weight without script interpolation.");
+            director.time = 0; director.Evaluate(); panel.burnEffect.RefreshPresentation();
+            Check(panel.burnEffect.Progress == 0 && panel.feedbackBackdrop.color.a == 0,
+                "Scrubbing backward restores an intact card and a clear screen. burn=" +
+                panel.burnEffect.Progress + " dim=" + panel.feedbackBackdrop.color.a);
+            director.Stop(); panel.EndTimelinePreview();
             Check(!panel.IsTimelinePreview && !panel.burnEffect.IsPlaying && panel.overlay.activeSelf == overlay &&
-                panel.confirm.gameObject.activeSelf == button && panel.cardGroup.alpha == alpha && panel.illustration.sprite == sprite &&
-                panel.illustration.material == sourceMaterial && panel.feedbackBackdrop.color == shade && panel.cardName.text == title,
-                "Closing preview restores the authored UI exactly. preview="+panel.IsTimelinePreview+" playing="+panel.burnEffect.IsPlaying+
-                " overlay="+(panel.overlay.activeSelf==overlay)+" button="+(panel.confirm.gameObject.activeSelf==button)+
-                " alpha="+(panel.cardGroup.alpha==alpha)+" art="+(panel.illustration.sprite==sprite)+" material="+(panel.illustration.material==sourceMaterial)+
-                " shade="+(panel.feedbackBackdrop.color==shade)+" title="+(panel.cardName.text==title));
-            Check(playerCore.localScale == coreScale && !panel.burnEffect.GetComponentsInChildren<SacrificeAshGraphic>(true).Any(),
-                "Preview cleanup restores the player and removes temporary graphics.");
-            Check(EditorJsonUtility.ToJson(definition) == cardJson,"Edit Mode preview does not modify card data.");
-            fixture = FixtureTimeline(out var fixtureTrack);
-            director.playableAsset = fixture; director.SetGenericBinding(fixtureTrack,panel);
-            var sample = fixtureTrack.GetClips().First(c => ((SacrificeTimelineClip)c.asset).phase == SacrificePhase.Move);
-            sample.duration = 2;
-            director.time = sample.start + .5; director.Evaluate();
-            Check(Mathf.Abs(panel.LastTimelineFrame.move - .25f) < .001f,"Changing clip duration changes native preview timing.");
-            ((SacrificeTimelineClip)sample.asset).progression = AnimationCurve.Linear(0,0,1,.6f);
-            director.time = sample.end; director.Evaluate();
-            Check(Mathf.Abs(panel.LastTimelineFrame.move - .6f) < .001f,"Curve endpoint values are respected instead of forced to one.");
-            Check(panel.LastTimelineFrame.dim == 0,"An omitted phase stays disabled.");
-            var lighting = fixture.CreateTrack<SacrificeTimelineTrack>(null,"Lighting");
-            var dim = lighting.CreateClip<SacrificeTimelineClip>(); dim.start = 0; dim.duration = .3;
-            ((SacrificeTimelineClip)dim.asset).phase = SacrificePhase.Dim;
-            director.SetGenericBinding(lighting,panel); director.RebuildGraph(); director.time = sample.end; director.Evaluate();
-            Check(panel.LastTimelineFrame.dim == 1 && Mathf.Abs(panel.LastTimelineFrame.move-.6f)<.001f,
-                "Separate phase tracks compose without resetting each other's values.");
-            lighting.muted = true; director.RebuildGraph(); director.time = sample.end; director.Evaluate();
-            Check(panel.LastTimelineFrame.dim == 0 && Mathf.Abs(panel.LastTimelineFrame.move-.6f)<.001f,
-                "Muting one phase track leaves the other phases intact.");
-            director.Stop();
-            Check(File.ReadAllText("Assets/UI/MapSacrifice.playable") == timelineBytes,"Existing user clip edits remain byte-for-byte unchanged.");
-            File.WriteAllText(MapSacrificeAuthoring.Results+"/timeline-preview.txt","PASS: "+checks+" checks; native Edit Mode seeking, editable timing/curve/anchor/scale/material, player feedback and exact cleanup.\n");
+                panel.confirm.gameObject.activeSelf == button && panel.cardGroup.alpha == alpha && panel.feedbackBackdrop.color == shade,
+                "Stopping preview restores the authored detail state.");
+            Check(EditorJsonUtility.ToJson(cardDefinition) == definition &&
+                File.ReadAllText("Assets/UI/MapSacrifice.playable") == timelineBytes, "Preview changes no card data or saved animation.");
+            Directory.CreateDirectory(MapSacrificeAuthoring.Results);
+            File.WriteAllText(MapSacrificeAuthoring.Results + "/timeline-preview.txt", "PASS: " + checks +
+                " checks; native animation and audio tracks, editable shader and transform curves, constraints, reverse seeking and cleanup.\n");
         }
-        finally
-        {
-            EditorSceneManager.ClosePreviewScene(scene);
-            ShaderUtil.allowAsyncCompilation = asynchronous;
-            if (material != null) Object.DestroyImmediate(material);
-            DisposeTimeline(fixture);
-        }
-        Check(SceneManager.GetActiveScene() == active && active.isDirty == dirty,"The open scene and its unsaved state remain intact.");
+        finally { EditorSceneManager.ClosePreviewScene(scene); }
     }
 
-    public static IEnumerator RunTimeline(Action<bool,string> check)
+    private static AnimationClip NativeAnimation(TimelineAsset timeline, string track) =>
+        ((AnimationPlayableAsset)timeline.GetOutputTracks().Single(item => item.name == track).GetClips().Single().asset).clip;
+
+    public static IEnumerator RunTimeline(Action<bool, string> check)
     {
         var menu = Object.FindFirstObjectByType<MainMenuController>();
-        typeof(MainMenuController).GetMethod("StartRun",BindingFlags.Instance|BindingFlags.NonPublic).Invoke(menu,null);
+        typeof(MainMenuController).GetMethod("StartRun", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(menu, null);
         yield return Until(() => TimeTickSystem.Active?.IsStarted == true);
         foreach (var enemy in BattleScript.FindFighters("Enemy")) enemy.TakeDamage(10000);
         yield return Until(() => Object.FindFirstObjectByType<RewardScreenController>()?.IsPresented == true);
-        Field<Button>(Object.FindFirstObjectByType<RewardScreenController>(),"skipButton").onClick.Invoke();
-        yield return Until(() => Object.FindFirstObjectByType<MapController>() is MapController m && m.NodeInteraction != null && m.CanInteract);
-        var map = Object.FindFirstObjectByType<MapController>(); var panel = map.SacrificePanel; var director = panel.sequenceDirector;
-        if (EventSystem.current.currentInputModule != null) EventSystem.current.currentInputModule.enabled = false;
-        string bytes = File.ReadAllText("Assets/UI/MapSacrifice.playable");
-        var fixture = FixtureTimeline(out var track);
-        var material = new Material(panel.burnEffect.cardTemplate.material);
-        try
-        {
-            director.playableAsset = fixture; director.SetGenericBinding(track,panel);
-            var card = Object.FindObjectsByType<MapCardView>(FindObjectsSortMode.None).First(c => c.gameObject.activeInHierarchy);
-            map.ShowCardDetail(card); yield return null;
-            string id = card.InstanceId; int capacity = map.Session.DeckCapacity;
-            panel.burnEffect.cardTemplate.material = material;
-            panel.confirm.onClick.Invoke(); panel.confirm.onClick.Invoke();
-            check(panel.IsBusy && map.Session.RunDeck.Single(c => c.instanceId == id).sacrificed &&
-                map.Session.DeckCapacity == capacity-card.Definition.capacityCost,"Native Timeline sacrifice commits one exact instance once.");
-            yield return Until(() => director.time > .15);
-            check(director.timeUpdateMode != DirectorUpdateMode.Manual && director.state == PlayState.Playing,"Native PlayableDirector advances the sequence.");
-            var burn = track.GetClips().Single(c => ((SacrificeTimelineClip)c.asset).phase == SacrificePhase.Burn);
-            burn.duration = 2.4;
-            ((SacrificeTimelineClip)burn.asset).progression = AnimationCurve.Linear(0,0,1,.8f);
-            director.RebuildGraph(); director.time = burn.start + 1.2; director.Evaluate();
-            check(Mathf.Abs(panel.burnEffect.Progress-.4f)<.005f,"Changed duration and curve control the live burn.");
-            double seek = director.time; yield return null; yield return null;
-            check(director.time >= seek && panel.burnEffect.Progress >= .4f,"A script clock does not overwrite manual Timeline seeking.");
-            panel.burnEffect.focusAnchor.anchoredPosition += new Vector2(50,-20); panel.burnEffect.focusScale = 1.28f;
-            material.SetColor("_EmberColor",Color.blue); director.Evaluate();
-            var face = panel.burnEffect.GetComponentsInChildren<RawImage>().Single(i => i.texture is RenderTexture);
-            check(Vector3.Distance(face.transform.position,panel.burnEffect.focusAnchor.position)<.1f &&
-                Mathf.Abs(face.transform.lossyScale.x/panel.cardPreview.lossyScale.x-1.28f)<.01f && face.material.GetColor("_EmberColor")==Color.blue,
-                "Hierarchy and material edits affect the live ceremony.");
-            director.Pause(); double paused = director.time; yield return Delay(.15f);
-            check(panel.IsBusy && director.time == paused,"Pausing the native director keeps its current presentation.");
-            director.Resume();
-            yield return Until(() => !panel.IsBusy && map.CanInteract);
-            check(!panel.IsOpen && panel.feedbackBackdrop.color.a==0 && !director.playableGraph.IsValid() && map.Session.HasPendingModifier,
-                "Native completion restores input and keeps the pending offering.");
-            check(File.ReadAllText("Assets/UI/MapSacrifice.playable")==bytes,"Runtime tests preserve the user's real Timeline.");
-            File.WriteAllText(MapSacrificeAuthoring.Results+"/timeline-runtime.txt","PASS: native playback, live duration/curve changes, seek, pause/resume, anchor/scale/material edits, single commit and cleanup.\n");
-        }
-        finally { director.Stop(); DisposeTimeline(fixture); Object.Destroy(material); }
-    }
-
-    private static TimelineAsset FixtureTimeline(out SacrificeTimelineTrack track)
-    {
-        var timeline = ScriptableObject.CreateInstance<TimelineAsset>();
-        track = timeline.CreateTrack<SacrificeTimelineTrack>(null,"Preview Test");
-        foreach (var spec in new[] { (SacrificePhase.Move,.4,.6), (SacrificePhase.Expand,1d,.6),
-            (SacrificePhase.Burn,1.1,1.2), (SacrificePhase.Transfer,2.3,.4), (SacrificePhase.Enhance,2.7,.7), (SacrificePhase.Brighten,2.7,1.2) })
-        {
-            var clip = track.CreateClip<SacrificeTimelineClip>(); clip.start = spec.Item2; clip.duration = spec.Item3;
-            var data = (SacrificeTimelineClip)clip.asset; data.phase = spec.Item1; data.progression = AnimationCurve.Linear(0,0,1,1);
-        }
-        return timeline;
-    }
-    private static void DisposeTimeline(TimelineAsset timeline)
-    {
-        if (timeline == null) return;
-        foreach (var track in timeline.GetRootTracks().ToArray())
-        { foreach (var clip in track.GetClips()) if (clip.asset != null) Object.DestroyImmediate(clip.asset); Object.DestroyImmediate(track); }
-        Object.DestroyImmediate(timeline);
+        Field<Button>(Object.FindFirstObjectByType<RewardScreenController>(), "skipButton").onClick.Invoke();
+        yield return Until(() => Object.FindFirstObjectByType<MapController>() is MapController m && m.CanInteract);
+        var map = Object.FindFirstObjectByType<MapController>(); var panel = map.SacrificePanel;
+        var director = panel.sequenceDirector; var timeline = (TimelineAsset)director.playableAsset;
+        var card = Object.FindObjectsByType<MapCardView>(FindObjectsSortMode.None).First(c => c.gameObject.activeInHierarchy);
+        map.ShowCardDetail(card); yield return null;
+        string id = card.InstanceId; int capacity = map.Session.DeckCapacity;
+        panel.confirm.onClick.Invoke(); panel.confirm.onClick.Invoke();
+        check(panel.IsBusy && map.Session.RunDeck.Single(c => c.instanceId == id).sacrificed &&
+            map.Session.DeckCapacity == capacity - card.Definition.capacityCost, "Native playback commits the exact instance only once.");
+        yield return Until(() => director.time >= .82);
+        yield return null;
+        var face = panel.burnEffect.cardTemplate;
+        check(panel.burnEffect.Progress > 0 && face.transform.localScale.x > 1,
+            "Real native playback burns while expanding.");
+        check(Vector3.Distance(face.transform.position, panel.burnEffect.focusAnchor.position) < 1,
+            "Native constraints bring the card to the center at the actual game resolution.");
+        var fire = timeline.GetOutputTracks().OfType<AudioTrack>().Single();
+        var source = (AudioSource)director.GetGenericBinding(fire);
+        check(source != null && source.isPlaying, "The native audio track plays during the burn.");
+        director.Pause();
+        float heldProgress = panel.burnEffect.Progress;
+        var heldPosition = face.transform.position;
+        yield return Delay(.12f);
+        check(Mathf.Approximately(panel.burnEffect.Progress, heldProgress) &&
+            Vector3.Distance(face.transform.position, heldPosition) < .001f,
+            "Pausing the native director holds both shader progress and card motion.");
+        director.Resume();
+        var canvas = panel.GetComponentInParent<Canvas>();
+        MapSacrificeVerification.Capture(canvas.rootCanvas, Camera.main, "native-timeline-burn", check);
+        yield return Until(() => director.time >= 2.1 || !panel.IsBusy);
+        check(panel.IsBusy && panel.playerSymbol.SacrificePulse > 0, "The native player curve produces visible enhancement.");
+        yield return Until(() => !panel.IsBusy && map.CanInteract);
+        check(!source.isPlaying && panel.playerSymbol.SacrificePulse == 0 &&
+            panel.feedbackBackdrop.color.a == 0 && !panel.IsOpen, "Completion releases audio, glow, dimmer and input.");
+        check(map.Session.HasPendingModifier && map.Session.RunDeck.Count(c => c.instanceId == id && c.sacrificed) == 1,
+            "Native presentation preserves the pending effect and exact-instance result.");
     }
 
     public static IEnumerator RunHover(Action<bool,string> check)
@@ -202,6 +150,13 @@ public static class MapCardDetailVerification
         map.NodeInteraction.enabled = false;
         var cards = Object.FindObjectsByType<MapCardView>(FindObjectsSortMode.None).Where(c => c.gameObject.activeInHierarchy)
             .OrderBy(c => c.transform.position.x).ToArray();
+        foreach (var view in cards)
+        {
+            var fill = Field<Image>(view,"backFill");
+            check(fill.sprite == view.Definition.FrontIllustration && fill.material.shader == panel.illustration.material.shader &&
+                fill.material.GetFloat("_Mirror") == 1 && fill.color == Color.white,
+                view.Definition.name + ": the deck back reuses the mirrored detail illustration and shader.");
+        }
         var source = cards.Last(); var other = cards[cards.Length / 2]; var third = cards.First();
         var pointer = new PointerEventData(EventSystem.current) { button = PointerEventData.InputButton.Left };
         var tick = typeof(MapSacrificePanel).GetMethod("TickHover",BindingFlags.Instance|BindingFlags.NonPublic);
@@ -358,13 +313,21 @@ public static class MapCardDetailVerification
             check(other.IsBack && panel.combatText.text == panel.DetailEffect(other.Definition,true) &&
                 panel.illustration.material.GetFloat("_Mirror") == 1 && panel.confirm.interactable,
                 "After clicking, detail and card still show the same face and sacrifice data.");
+            MapSacrificeVerification.Capture(panel.GetComponentInParent<Canvas>(),Camera.main,"detail-back-artwork",check);
             other.OnPointerClick(pointer); yield return Delay(.32f); refresh.Invoke(panel,null);
-            check(!other.IsBack && panel.combatText.text == panel.DetailEffect(other.Definition,false),"Repeated click flips both views back normally.");
+            check(!other.IsBack && panel.combatText.text == panel.DetailEffect(other.Definition,false) && !panel.confirm.gameObject.activeSelf && !panel.confirm.interactable,
+                "Returning to the front hides and disables the detail sacrifice action.");
             check(spacing == deck.GetComponent<HorizontalLayoutGroup>().spacing && children == panel.GetComponentsInChildren<Transform>(true).Length &&
                 nodes.SequenceEqual(map.Nodes.Select(n => (n.NodeId,n.transform.position,n.transform.localScale))),
                 "The protection uses no overlay objects and preserves all layout and node transforms.");
             panel.enabled = true;
             string offered = other.InstanceId; int capacity = map.Session.DeckCapacity;
+            panel.confirm.onClick.Invoke();
+            check(!panel.IsBusy && map.Session.DeckCapacity == capacity && !map.Session.SacrificeUsed,
+                "A programmatic front-face submit cannot sacrifice a card.");
+            other.OnPointerClick(pointer); yield return Delay(.32f); refresh.Invoke(panel,null);
+            check(other.IsBack && panel.confirm.gameObject.activeSelf && panel.confirm.interactable,
+                "Only the detail back exposes a usable sacrifice action.");
             panel.confirm.onClick.Invoke(); panel.confirm.onClick.Invoke();
             check(panel.IsBusy && map.Session.RunDeck.Single(c => c.instanceId == offered).sacrificed &&
                 map.Session.DeckCapacity == capacity - other.Definition.capacityCost && !map.Session.RunDeck.Single(c => c.instanceId == source.InstanceId).sacrificed,
@@ -491,11 +454,17 @@ public static class MapCardDetailVerification
         }
         first.OnPointerEnter(pointer); panel.OnPointerEnter(pointer);
         first.OnPointerClick(pointer); yield return Delay(.32f);
-        check(!first.IsBack && panel.confirm.interactable,"The front has a usable Sacrifice action.");
+        check(!first.IsBack && !panel.confirm.gameObject.activeSelf && !panel.confirm.interactable,
+            "The front hides and disables the sacrifice action.");
         capacity = session.DeckCapacity;
+        panel.confirm.onClick.Invoke();
+        check(!panel.IsBusy && session.DeckCapacity == capacity,"Submitting from the front leaves the deck unchanged.");
+        first.OnPointerClick(pointer); yield return Delay(.32f);
+        check(first.IsBack && panel.confirm.gameObject.activeSelf && panel.confirm.interactable,
+            "The detail back exposes the sacrifice action.");
         panel.confirm.onClick.Invoke(); panel.confirm.onClick.Invoke();
         check(panel.IsBusy && panel.burnEffect.IsPlaying && !map.CanInteract && !panel.confirm.gameObject.activeSelf,
-            "The front commits once, locks input and captures the card without its button.");
+            "The back commits once, locks input and captures the card without its button.");
         check(session.RunDeck.Single(c => c.instanceId == firstId).sacrificed && !duplicate.sacrificed &&
             session.DeckCapacity == capacity-first.Definition.capacityCost && session.HasPendingModifier,
             "Only the selected instance is removed and one modifier is prepared.");
@@ -509,7 +478,9 @@ public static class MapCardDetailVerification
         yield return Until(() => panel.sequenceDirector.time >= .82);
         var timelineFace = panel.burnEffect.GetComponentsInChildren<RawImage>().Single(i => i.texture is RenderTexture);
         float expansion = timelineFace.transform.lossyScale.x / panel.cardPreview.lossyScale.x;
-        check(expansion > 1 && expansion < panel.burnEffect.focusScale && panel.burnEffect.Progress > 0,
+        var maximumScale = AnimationUtility.GetEditorCurve(NativeAnimation((TimelineAsset)panel.sequenceDirector.playableAsset, "Card"),
+            EditorCurveBinding.FloatCurve("", typeof(Transform), "m_LocalScale.x")).keys.Max(key => key.value);
+        check(expansion > 1 && expansion <= maximumScale + .002f && panel.burnEffect.Progress > 0,
             "Burn and expansion overlap after the card arrives at screen center.");
         check(Vector3.Distance(timelineFace.transform.position,panel.burnEffect.focusAnchor.position) < .01f,
             "The expanding card remains at the full-screen center.");
@@ -520,7 +491,9 @@ public static class MapCardDetailVerification
         var burnImage = panel.burnEffect.GetComponentsInChildren<RawImage>().Single(i => i.texture is RenderTexture);
         check(burnImage.texture != null && !burnImage.raycastTarget,"Burn uses a non-interactive composed snapshot.");
         yield return Until(() => panel.sequenceDirector.time >= 2.18 || !panel.IsBusy);
-        check(panel.IsBusy && panel.feedbackBackdrop.color.a > 0 && panel.feedbackBackdrop.color.a < panel.dimOpacity &&
+        check(panel.IsBusy && panel.feedbackBackdrop.color.a > 0 && panel.feedbackBackdrop.color.a < AnimationUtility.GetEditorCurve(
+                NativeAnimation((TimelineAsset)panel.sequenceDirector.playableAsset, "Screen"),
+                EditorCurveBinding.FloatCurve("", typeof(Image), "m_Color.a")).keys.Max(key => key.value) &&
             panel.burnEffect.Progress == 1,"The screen brightens gradually after the card is consumed.");
         Capture(canvas,"timeline-03-brighten",check);
         yield return Until(() => !panel.IsBusy && map.CanInteract);

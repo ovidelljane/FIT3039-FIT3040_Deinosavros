@@ -360,6 +360,7 @@ GameObject:
   - component: {fileID: 1100588368259979423}
   - component: {fileID: 2770786252566393716}
   - component: {fileID: 2531867299772162046}
+  - component: {fileID: 7400000000000000135}
   - component: {fileID: 3848406835860457130}
   m_Layer: 5
   m_Name: MainMenu
@@ -644,6 +645,7 @@ GameObject:
   - component: {fileID: 4557213641488095}
   - component: {fileID: 457164669757127647}
   - component: {fileID: 5885297796478918926}
+  - component: {fileID: 7400000000000000136}
   - component: {fileID: 5438715206812618137}
   m_Layer: 5
   m_Name: Leave
@@ -1380,6 +1382,7 @@ GameObject:
   - component: {fileID: 4862619066933084658}
   - component: {fileID: 8390559719021234169}
   - component: {fileID: 7415061504727716633}
+  - component: {fileID: 7400000000000000137}
   - component: {fileID: 2232636446236130989}
   m_Layer: 5
   m_Name: Quit
@@ -2701,6 +2704,7 @@ GameObject:
   - component: {fileID: 2871408093088898617}
   - component: {fileID: 1369230717998309824}
   - component: {fileID: 914509257205396971}
+  - component: {fileID: 7400000000000000138}
   - component: {fileID: 7780142473048615749}
   m_Layer: 5
   m_Name: Open
@@ -2837,6 +2841,7 @@ GameObject:
   - component: {fileID: 2195223701179975628}
   - component: {fileID: 9168985902903979001}
   - component: {fileID: 5473012187277742723}
+  - component: {fileID: 7400000000000000139}
   - component: {fileID: 4856470120610920046}
   m_Layer: 5
   m_Name: Resume
@@ -3201,6 +3206,7 @@ GameObject:
   - component: {fileID: 6691090296889412441}
   - component: {fileID: 5042930162317584103}
   - component: {fileID: 1758919733954495162}
+  - component: {fileID: 7400000000000000140}
   - component: {fileID: 8044303794094335331}
   m_Layer: 5
   m_Name: Back
@@ -3399,3 +3405,87 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &7400000000000000135
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1342997439565504752}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b930ca8485b418d827dbacc2e72b608, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::ButtonAudio
+  sound: 2
+  volume: 1
+--- !u!114 &7400000000000000136
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1656624739736916526}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b930ca8485b418d827dbacc2e72b608, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::ButtonAudio
+  sound: 2
+  volume: 1
+--- !u!114 &7400000000000000137
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4476305197049994617}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b930ca8485b418d827dbacc2e72b608, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::ButtonAudio
+  sound: 2
+  volume: 1
+--- !u!114 &7400000000000000138
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8294564010065859167}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b930ca8485b418d827dbacc2e72b608, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::ButtonAudio
+  sound: 2
+  volume: 1
+--- !u!114 &7400000000000000139
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8473709543450621872}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b930ca8485b418d827dbacc2e72b608, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::ButtonAudio
+  sound: 2
+  volume: 1
+--- !u!114 &7400000000000000140
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9161751916943868760}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b930ca8485b418d827dbacc2e72b608, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::ButtonAudio
+  sound: 2
+  volume: 1

@@ -26,11 +26,11 @@ public readonly struct CardEffectFeedback
 
     public static float Read(BattleScript target, StatType stat) => stat switch
     {
-        StatType.Damage or StatType.Cataclysm => target.AttackDamage,
-        StatType.AttackSpeed or StatType.EnemySlow or StatType.FrequencySlow => target.AttackIntervalSeconds,
+        StatType.Damage or StatType.Cataclysm or StatType.DamageReduction => target.AttackDamage,
+        StatType.AttackSpeed or StatType.EnemySlow or StatType.FrequencySlow or StatType.CardMomentum => target.AttackIntervalSeconds,
         StatType.Heal => target.health,
         StatType.Shield => target.shield,
-        StatType.Elixir => target.elixir,
+        StatType.Elixir or StatType.DelayedElixir => target.elixir,
         StatType.ExtraHits => target.hitsPerAttack,
         StatType.ElixirRegen => target.elixirRegen,
         _ => 0

@@ -21,6 +21,15 @@ MonoBehaviour:
   buffGain: 1.86
   debuffGain: 1.78
   defenseGain: 1.81
+  cardFlick: {fileID: 8300000, guid: a0fefb92c73d15b49ad776ad7585f111, type: 3}
+  cardFlip: {fileID: 8300000, guid: 0fa8735453443cc4abb233ea1b26eded, type: 3}
+  menuClick: {fileID: 8300000, guid: ab7ea6a7508e86445aba70e16021be11, type: 3}
+  error: {fileID: 8300000, guid: 8a177bef27543a948b92c43222a0c891, type: 3}
+  interactionVolume: 1
+  cardFlickGain: 1.6
+  cardFlipGain: 1.6
+  menuClickGain: 1.6
+  errorGain: 1
   music: {fileID: 8300000, guid: 8093961cfc7770149b2c63472176e1c5, type: 3}
   musicVolume: 0.306
   musicFadeSeconds: 0.8

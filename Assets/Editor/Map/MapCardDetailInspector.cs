@@ -1,5 +1,4 @@
 using UnityEditor;
-using UnityEditor.SceneManagement;
 using UnityEngine;
 
 [CustomEditor(typeof(MapSacrificePanel))]
@@ -10,19 +9,6 @@ public sealed class MapCardDetailInspector : Editor
     {
         var ui = (MapSacrificePanel)target;
         serializedObject.Update();
-        Fields("previewCard");
-        using (new EditorGUI.DisabledScope(Application.isPlaying || ui.IsTimelinePreview))
-        {
-            EditorGUILayout.BeginHorizontal();
-            if (GUILayout.Button("Preview Front")) Preview(ui,false);
-            if (GUILayout.Button("Preview Back")) Preview(ui,true);
-            if (GUILayout.Button("Hide Preview"))
-            {
-                Undo.RecordObject(ui.overlay,"Hide card preview");
-                ui.overlay.SetActive(false); EditorSceneManager.MarkSceneDirty(ui.gameObject.scene);
-            }
-            EditorGUILayout.EndHorizontal();
-        }
         EditorGUI.BeginChangeCheck();
         detail = EditorGUILayout.Foldout(detail,"Card Detail",true);
         if (detail)
@@ -31,20 +17,16 @@ public sealed class MapCardDetailInspector : Editor
             DrawGradient(ui);
         }
         ceremony = EditorGUILayout.Foldout(ceremony,"Sacrifice",true);
-        if (ceremony) Fields("sequenceDirector","dimOpacity","transferArc","transferEndScale","deckSettleDuration");
+        if (ceremony) Fields("sequenceDirector","deckSettleDuration");
         colors = EditorGUILayout.Foldout(colors,"Colors",true);
         if (colors) Fields("bodyColor","accentGold","warningColor","attackSpeedColor","shieldColor","enemyHealthColor","elixirColor");
         bindings = EditorGUILayout.Foldout(bindings,"Bindings",true);
         if (bindings) Fields("overlay","panel","cardPreview","cardGroup","detailGroup","illustration","cardName","combatText","reason","statusText","statusDetails",
-            "flightIcon","flightHeartCut","confirm","statusButton","statusPopup","burnEffect","playerSymbol","feedbackBackdrop","detailVisual",
+            "flightIcon","flightHeartCut","transferTarget","confirm","statusButton","statusPopup","burnEffect","playerSymbol","feedbackBackdrop","detailVisual",
             "departureWarning","departurePanel","departureMessage","departureContinue","departureBack");
         bool changed = EditorGUI.EndChangeCheck();
         serializedObject.ApplyModifiedProperties();
-        if (changed && !Application.isPlaying)
-        {
-            if (ui.IsTimelinePreview) ui.sequenceDirector.Evaluate();
-            else if (ui.IsOpen) Preview(ui,ui.previewBack);
-        }
+        if (changed && !Application.isPlaying && ui.IsTimelinePreview) ui.sequenceDirector.Evaluate();
     }
     private void Fields(params string[] names)
     { foreach (string name in names) EditorGUILayout.PropertyField(serializedObject.FindProperty(name),true); }
@@ -69,14 +51,6 @@ public sealed class MapCardDetailInspector : Editor
             SceneView.RepaintAll();
         }
         EditorGUILayout.Space();
-    }
-    private static void Preview(MapSacrificePanel ui,bool back)
-    {
-        if (ui.previewCard == null) return;
-        Undo.RecordObjects(new Object[]{ui,ui.overlay,ui.illustration,ui.cardName,ui.combatText,ui.illustration.material},"Preview Map card");
-        ui.PreviewEditorCard(back);
-        EditorUtility.SetDirty(ui); EditorUtility.SetDirty(ui.illustration.material);
-        EditorSceneManager.MarkSceneDirty(ui.gameObject.scene); SceneView.RepaintAll();
     }
 }
 

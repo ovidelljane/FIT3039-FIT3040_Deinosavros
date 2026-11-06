@@ -312,7 +312,7 @@ public static class RunIntegrationPlayVerification
             Finish("PASS: " + assertions + " runtime checks; " + (SessionState.GetBool(Key + ".combatVfxOnly", false)
                 ? "card particles follow accepted effects, stacking, shield consumption, expiration, basic attacks, pause and battle cleanup.\n"
                 : SessionState.GetBool(Key + ".timelineOnly", false)
-                ? "native sacrifice Timeline playback, seeking, pause/resume, editable timing, curves, transforms and materials; exact-instance commit and cleanup.\n"
+                ? "native sacrifice animation and audio, constrained center motion, three resolutions, player feedback, exact-instance commit and cleanup.\n"
                 : SessionState.GetBool(Key + ".cardHoverOnly", false)
                 ? "immediate first preview, hover dwell, protected pointer travel, deliberate switching, click priority, synchronized flips, exact-instance sacrifice and unchanged layout.\n"
                 : SessionState.GetBool(Key + ".pauseOnly", false)
@@ -776,6 +776,20 @@ public static class RunIntegrationPlayVerification
         var sounds = Field<AudioSource>(audio, "cardSource");
         Check(profile != null && profile.music != null && music.loop && music.spatialBlend == 0 &&
             sounds.spatialBlend == 0 && !sounds.loop && !sounds.playOnAwake, "Music and effects have separate 2D sources.");
+        foreach (var clip in new[] { profile.cardFlick, profile.cardFlip, profile.menuClick, profile.error })
+            Check(clip != null && ((AudioImporter)AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(clip))).defaultSampleSettings.preloadAudioData,
+                "Interaction audio is assigned and preloaded: " + clip?.name);
+        var uiSounds = Field<AudioSource>(audio, "interfaceSource");
+        var startButton = Field<Button>(Find<MainMenuController>(), "startButton");
+        var press = startButton.GetComponent<ButtonAudio>();
+        Check(press != null, "The menu button retains its editable audio component.");
+        press.OnPointerDown(new PointerEventData(EventSystem.current) { button = PointerEventData.InputButton.Left });
+        yield return Until(() => uiSounds.isPlaying, "Menu press sound played");
+        uiSounds.Stop();
+        startButton.interactable = false;
+        press.OnPointerDown(new PointerEventData(EventSystem.current) { button = PointerEventData.InputButton.Left });
+        Check(!uiSounds.isPlaying, "Disabled menu buttons stay silent.");
+        startButton.interactable = true;
         Check(((AudioImporter)AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(profile.music))).defaultSampleSettings.loadType ==
             AudioClipLoadType.Streaming, "The long music track streams instead of allocating full decoded audio.");
         var definitions = AssetDatabase.LoadAssetAtPath<CardPool>("Assets/Data/CardPool.asset").Cards;
@@ -832,7 +846,7 @@ public static class RunIntegrationPlayVerification
                 {
                     if (card.UsesHealthCost) deck.Player.health = card.Cost - 1;
                     card.OnPointerClick(pointer);
-                    Check(audio.CardSoundCount == count && hand.Contains(card), "Rejected plays remain silent.");
+                    Check(audio.CardSoundCount == count && hand.Contains(card), "Rejected plays do not emit a successful card effect.");
                 }
                 deck.Player.health = 1000; deck.Player.elixir = 100;
                 card.OnPointerClick(pointer);

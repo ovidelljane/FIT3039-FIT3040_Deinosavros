@@ -19,7 +19,6 @@ MonoBehaviour:
   capacityCost: 3
   combatPrefab: {fileID: 3386567266915157623, guid: f499e4b10a5f4c57978eb4db0bed7d37, type: 3}
   mapPrefab: {fileID: 0}
-  backPrefab: {fileID: 0}
   frontArtwork: {fileID: 21300000, guid: d409e9a2711ad094d8c8d91f23af29e9, type: 3}
   frontBorder: {fileID: 21300000, guid: 6566706136421c944ae4bf676b61f2f3, type: 3}
   backArtwork: {fileID: 21300000, guid: d6eb5c48936d55c47830c9a7d0c70eca, type: 3}
@@ -28,4 +27,3 @@ MonoBehaviour:
     magnitude: 10
     title: Radiant Ward
     description: "+{magnitude} starting Shield."
-    scopeLabel: NEXT BATTLE - PERMANENT REMOVAL

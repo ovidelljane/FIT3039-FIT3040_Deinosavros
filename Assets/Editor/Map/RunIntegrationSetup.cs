@@ -47,7 +47,6 @@ public static class RunIntegrationSetup
             else if (action == "new-cards-boss") NewCardsBossSetup.Apply();
             else if (action == "new-cards-boss-bindings") NewCardsBossSetup.VerifySavedBindings();
             else if (action == "verify-new-cards-boss") NewCardsBossVerification.Start();
-            else if (action == "reduce-plant-models") MapPlantModelReduction.Apply();
             else if (action == "play") RunIntegrationPlayVerification.Run();
             else if (action == "audio") RunIntegrationPlayVerification.RunAudioPresentation();
             else if (action == "combat-ui") RunIntegrationPlayVerification.RunCombatCardHover();

@@ -19,7 +19,6 @@ MonoBehaviour:
   capacityCost: 4
   combatPrefab: {fileID: 3386567266915157623, guid: cb5f057433df45f49c7f9d19229cf3ae, type: 3}
   mapPrefab: {fileID: 0}
-  backPrefab: {fileID: 0}
   frontArtwork: {fileID: 21300000, guid: c591e91009121d444a4ad9f831d4d653, type: 3}
   frontBorder: {fileID: 21300000, guid: 8301a261a4e11914eb5ca1683b6c439c, type: 3}
   backArtwork: {fileID: 21300000, guid: b73586b0dc72d774894cffb4d459886d, type: 3}
@@ -28,4 +27,3 @@ MonoBehaviour:
     magnitude: 2
     title: Violet Velocity
     description: "Attack interval -{magnitude}s, minimum {minInterval}s."
-    scopeLabel: NEXT BATTLE - PERMANENT REMOVAL

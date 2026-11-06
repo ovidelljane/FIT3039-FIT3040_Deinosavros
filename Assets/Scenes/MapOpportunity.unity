@@ -881,6 +881,7 @@ GameObject:
   - component: {fileID: 246996302}
   - component: {fileID: 246996306}
   - component: {fileID: 246996305}
+  - component: {fileID: 7400000000000000277}
   - component: {fileID: 246996304}
   - component: {fileID: 246996307}
   - component: {fileID: 246996303}
@@ -2904,6 +2905,7 @@ GameObject:
   - component: {fileID: 1008039964}
   - component: {fileID: 1008039963}
   - component: {fileID: 1008039962}
+  - component: {fileID: 7400000000000000278}
   - component: {fileID: 1008039965}
   m_Layer: 5
   m_Name: Continue
@@ -4116,6 +4118,7 @@ GameObject:
   - component: {fileID: 1376998096}
   - component: {fileID: 1376998098}
   - component: {fileID: 1376998095}
+  - component: {fileID: 7400000000000000279}
   - component: {fileID: 1376998094}
   - component: {fileID: 1376998093}
   - component: {fileID: 1376998097}
@@ -4798,6 +4801,7 @@ GameObject:
   - component: {fileID: 1512782213}
   - component: {fileID: 1512782212}
   - component: {fileID: 1512782211}
+  - component: {fileID: 7400000000000000280}
   - component: {fileID: 1512782214}
   m_Layer: 5
   m_Name: Secondary
@@ -7065,6 +7069,7 @@ GameObject:
   - component: {fileID: 1050003599265208697}
   - component: {fileID: 1050003599265208703}
   - component: {fileID: 1050003599265208701}
+  - component: {fileID: 7400000000000000281}
   - component: {fileID: 1050003599265208691}
   - component: {fileID: 1050003599265208689}
   m_Layer: 5
@@ -7245,6 +7250,7 @@ GameObject:
   - component: {fileID: 5442505560971568908}
   - component: {fileID: 5442505560971568906}
   - component: {fileID: 5442505560971568904}
+  - component: {fileID: 7400000000000000282}
   - component: {fileID: 5442505560971568902}
   - component: {fileID: 5442505560971568900}
   - component: {fileID: 5442505560971568911}
@@ -7747,6 +7753,90 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &7400000000000000277
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 246996301}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b930ca8485b418d827dbacc2e72b608, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::ButtonAudio
+  sound: 2
+  volume: 1
+--- !u!114 &7400000000000000278
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1008039960}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b930ca8485b418d827dbacc2e72b608, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::ButtonAudio
+  sound: 2
+  volume: 1
+--- !u!114 &7400000000000000279
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1376998092}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b930ca8485b418d827dbacc2e72b608, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::ButtonAudio
+  sound: 2
+  volume: 1
+--- !u!114 &7400000000000000280
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1512782209}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b930ca8485b418d827dbacc2e72b608, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::ButtonAudio
+  sound: 2
+  volume: 1
+--- !u!114 &7400000000000000281
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1050003599265208699}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b930ca8485b418d827dbacc2e72b608, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::ButtonAudio
+  sound: 2
+  volume: 1
+--- !u!114 &7400000000000000282
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5442505560971568910}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b930ca8485b418d827dbacc2e72b608, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::ButtonAudio
+  sound: 2
+  volume: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

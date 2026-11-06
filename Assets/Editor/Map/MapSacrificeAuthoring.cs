@@ -170,33 +170,20 @@ public static class MapSacrificeAuthoring
     public static bool AuthorBack(MapCardView view)
     {
         using var data = new SerializedObject(view);
-        bool changed = false;
-        var oldBack = (GameObject)data.FindProperty("backInstance").objectReferenceValue;
-        if (oldBack != null)
-        {
-            Object.DestroyImmediate(oldBack);
-            data.FindProperty("backInstance").objectReferenceValue = null;
-            data.ApplyModifiedPropertiesWithoutUndo(); changed = true;
-        }
         var face = ((GameObject)data.FindProperty("backFace").objectReferenceValue).transform;
         var title = (TMP_Text)data.FindProperty("titleText").objectReferenceValue;
-        if (data.FindProperty("offeringIcon").objectReferenceValue != null) return changed;
+        if (data.FindProperty("offeringIcon").objectReferenceValue != null) return false;
         Stretch((RectTransform)face); face.localScale = Vector3.one; face.localRotation = Quaternion.identity;
-        var fill = face.Find("BackFill")?.GetComponent<Image>() ?? Box("BackFill", face, Ink, Vector2.zero, new(152, 258));
-        fill.color = Ink; fill.transform.SetAsFirstSibling(); Set(fill.rectTransform, new(-1, -1), new(152, 258));
+        var fill = face.Find("BackFill")?.GetComponent<Image>() ?? Box("BackFill", face, Color.white, Vector2.zero, new(152, 258));
+        fill.color = Color.white; fill.material = AssetDatabase.LoadAssetAtPath<Material>("Assets/UI/MapCardBack.mat");
+        fill.transform.SetAsFirstSibling(); Set(fill.rectTransform, new(-1, -1), new(152, 258));
         var artwork = (Image)data.FindProperty("backArtwork").objectReferenceValue;
         artwork.transform.SetSiblingIndex(1); Set(artwork.rectTransform, Vector2.zero, new(240, 340)); artwork.preserveAspect = true;
         Style(title, true, 17, 13); Set(title.rectTransform, new(0, 91), new(136, 40));
         var effect = (TMP_Text)data.FindProperty("effectText").objectReferenceValue;
         Style(effect, false, 21, 17); Set(effect.rectTransform, new(0, -8), new(134, 72)); effect.gameObject.SetActive(true);
-        var scope = (TMP_Text)data.FindProperty("scopeText").objectReferenceValue;
-        Style(scope, false, 15, 15); Set(scope.rectTransform, new(0, -58), new(134, 28)); scope.text = "Next battle";
         var icon = Icon("Offering", face, new(0, 43), 46);
-        var cut = Box("Fracture", icon.transform, Ink, Vector2.zero, new(3, 27)); cut.rectTransform.localEulerAngles = new(0, 0, -18); cut.enabled = false;
-        var oldButton = (Button)data.FindProperty("sacrificeButton").objectReferenceValue;
-        if (oldButton != null) { Object.DestroyImmediate(oldButton.gameObject); data.FindProperty("sacrificeButton").objectReferenceValue = null; }
         data.FindProperty("offeringIcon").objectReferenceValue = icon;
-        data.FindProperty("brokenHeartCut").objectReferenceValue = cut;
         data.FindProperty("backFill").objectReferenceValue = fill;
         data.ApplyModifiedPropertiesWithoutUndo(); CompactBack(view); return true;
     }
@@ -306,14 +293,12 @@ public static class MapSacrificeAuthoring
     {
         using var data = new SerializedObject(view);
         var back = ((GameObject)data.FindProperty("backFace").objectReferenceValue).transform;
-        Remove(back, "Capacity", "Inspect", "Rule");
+        Remove(back, "Inspect", "Rule", "ScopeLabel");
         var title = (TMP_Text)data.FindProperty("titleText").objectReferenceValue;
         Style(title, true, 19, 14); Set(title.rectTransform, new(0, 88), new(136, 45));
         var effect = (TMP_Text)data.FindProperty("effectText").objectReferenceValue;
-        Style(effect, false, 24, 20); Set(effect.rectTransform, new(0, -19), new(136, 94));
-        var scope = (TMP_Text)data.FindProperty("scopeText").objectReferenceValue;
-        Style(scope, false, 18, 18); Set(scope.rectTransform, new(0, -91), new(136, 30));
-        Set(((StatusIcon)data.FindProperty("offeringIcon").objectReferenceValue).rectTransform, new(0, 34), new(48, 48));
+        Style(effect, false, 24, 20);
+        effect.fontSharedMaterial = AssetDatabase.LoadAssetAtPath<Material>("Assets/UI/MapCardEffectGlow.mat");
         EditorUtility.SetDirty(view);
     }
 

@@ -3,6 +3,9 @@ using UnityEngine;
 
 public sealed class DeckManager : MonoBehaviour
 {
+    public static event System.Action<BattleScript, CardDefinition> CardPlayed;
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetCardEvents() => CardPlayed = null;
     [SerializeField] private int maxHandSize = 5;
     [SerializeField, Min(0)] private float drawDelaySeconds = 2f;
     [SerializeField] private Transform handContainer;
@@ -100,8 +103,10 @@ public sealed class DeckManager : MonoBehaviour
     {
         if (!hand.Contains(playedView)) return;
         GameAudio.PlayCard(definition, playedView.LegacyPlayClip);
+        GameAudio.Play(GameSound.CardFlick);
         if (definition != null) discardPile.Add(definition);
         hand.Remove(playedView);
+        CardPlayed?.Invoke(Player, definition);
         if (CombatEnabled && cardUseEffect != null)
             cardUseEffect.Play(playedView, discardPileDisplay != null ? (RectTransform)discardPileDisplay.transform : null);
         Destroy(playedView.gameObject);

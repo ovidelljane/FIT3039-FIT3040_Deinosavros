@@ -27,7 +27,7 @@ public static class NewCardsBossSetup
             feedback.targets.Single(t => t.actor == feedback.player).badges.Length == 6,
             "Actor and timer references must be unique after repeated setup.");
         var pool = AssetDatabase.LoadAssetAtPath<CardPool>("Assets/Data/CardPool.asset");
-        Require(pool.Cards.Count == 13 && pool.Cards.Distinct().Count() == 13, "Card pool cannot contain duplicate entries.");
+        Require(pool.Cards.Distinct().Count() == pool.Cards.Count, "Card pool cannot contain duplicate entries.");
         File.AppendAllText("Library/NewCardsBoss/authoring.txt", "PASS: two reapplications preserved exact scene bytes; reopening retained unique card, actor and timer bindings.\n");
     }
     [MenuItem("Tools/Battle/Configure New Cards and Boss")]
@@ -45,7 +45,7 @@ public static class NewCardsBossSetup
             "Deal {amount} damage to one random combatant (lose {selfDamage} HP if it is you).\nEveryone's attack rate -{slowPercent}% for {duration}s.",
             OverworldEffectType.DivinePunishment, 70, 4,
             "Every {triggerEvery} damage instances you deal, strike a random enemy for {magnitude} damage. Next battle only.");
-        var cataclysm = Card("Cataclysm", "Cataclysm", "cataclysm", "Battleborn", "CATACLYSM 1.png",
+        var cataclysm = Card("Cataclysm", "Cataclysm", "cataclysm", "Battleborn", "CATACLYSMFINAL 1.png",
             StatType.Cataclysm, MapCardType.Buff, 3, 5, 0, 10,
             "For {duration}s, gain damage and attack rate based on current HP:\nBelow {highThreshold}%: +{highBonus}%\nBelow {midThreshold}%: +{midBonus}%\nBelow {lowThreshold}%: +{lowBonus}%\nReplaying refreshes the duration.",
             OverworldEffectType.ReduceEnemyAttackFrequency, 25, 0,
@@ -170,7 +170,7 @@ public static class NewCardsBossSetup
         Require(card.frontArtwork != null, "Card artwork must be imported as a Sprite.");
         card.frontBorder = template.frontBorder; card.backArtwork = template.backArtwork;
         card.overworldEffect = new OverworldEffectDefinition { effectType = sacrifice, magnitude = magnitude,
-            triggerEvery = every, title = title, description = sacrificeText, scopeLabel = "Next battle" };
+            triggerEvery = every, title = title, description = sacrificeText };
         string prefabPath = "Assets/Prefabs/Cards/" + (type == MapCardType.Attack ? "Attack/" : "Buffs/") + name + ".prefab";
         Require(!File.Exists(prefabPath), "Inspect the partial card prefab before retrying.");
         AssetDatabase.CopyAsset(AssetDatabase.GetAssetPath(template.combatPrefab), prefabPath);

@@ -27,6 +27,7 @@ public sealed class CardBuffBadge : MonoBehaviour, IPointerEnterHandler, IPointe
     public void Tick(float delta, bool ended)
     {
         int count = 0;
+        int momentumStacks = -1;
         float nearest = float.PositiveInfinity, duration = 1;
         var effects = Effect.ActiveEffects;
         if (!ended && actor != null && actor.health > 0 && actor.isActiveAndEnabled)
@@ -36,6 +37,7 @@ public sealed class CardBuffBadge : MonoBehaviour, IPointerEnterHandler, IPointe
                 if (Matches(effect))
                 {
                     count++;
+                    if (effect.effectType == StatType.CardMomentum) momentumStacks = Mathf.Max(momentumStacks, effect.TriggerStacks);
                     if (effect.RemainingSeconds < nearest)
                     { nearest = effect.RemainingSeconds; duration = effect.TotalSeconds; }
                 }
@@ -51,13 +53,17 @@ public sealed class CardBuffBadge : MonoBehaviour, IPointerEnterHandler, IPointe
         int tenth = Mathf.CeilToInt(RemainingSeconds * 10);
         if (tenth != displayedTenth)
         { displayedTenth = tenth; seconds.text = count > 0 ? (tenth / 10f).ToString("0.0") : ""; }
-        if (count != displayedStacks)
-        { displayedStacks = count; stacks.text = count > 1 ? "x" + count : ""; }
+        int shownStacks = momentumStacks >= 0 && count == 1 ? momentumStacks : count;
+        if (shownStacks != displayedStacks)
+        { displayedStacks = shownStacks; stacks.text = momentumStacks >= 0 && count == 1 ?
+            (shownStacks > 0 ? "x" + shownStacks : "") : (shownStacks > 1 ? "x" + shownStacks : ""); }
         if (count == 0) owner.HideTooltip(this);
     }
 
     public bool Matches(Effect effect) => effect != null && effect.IsApplied && effect.target == actor &&
-        (effect.effectType == stat || (stat == StatType.EnemySlow && effect.effectType == StatType.FrequencySlow));
+        (effect.effectType == stat || (stat == StatType.EnemySlow && effect.effectType == StatType.FrequencySlow) ||
+        (stat == StatType.AttackSpeed && effect.effectType == StatType.CardMomentum) ||
+        (stat == StatType.ElixirRegen && effect.effectType == StatType.DelayedElixir));
     public void OnPointerEnter(PointerEventData data) { if (StackCount > 0) owner.ShowTooltip(this); }
     public void OnPointerExit(PointerEventData data) => owner.HideTooltip(this);
     public void Clear()

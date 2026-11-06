@@ -1,40 +1,61 @@
 using System;
-using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEditor.SceneManagement;
+using UnityEditor.Timeline;
 using UnityEngine;
 using UnityEngine.Playables;
 using UnityEngine.SceneManagement;
 using UnityEngine.Timeline;
+using Object = UnityEngine.Object;
 
-// Repairs only the selected scene binding; never regenerates clips or resets their timing.
+// Native tracks own every animation curve. This helper only binds and prepares card artwork.
+[InitializeOnLoad]
 public static class MapSacrificeTimelineAuthoring
 {
+    private static MapSacrificePanel preview;
+    static MapSacrificeTimelineAuthoring() => EditorApplication.update += Preview;
+
+    private static void Preview()
+    {
+        if (Application.isPlaying) return;
+        var director = TimelineEditor.inspectedDirector;
+        var panel = director != null ? director.GetComponent<MapSacrificePanel>() : null;
+        bool inspecting = panel != null && AnimationMode.InAnimationMode() && director.playableGraph.IsValid();
+        if (preview != null && (!inspecting || preview != panel))
+        { preview.EndTimelinePreview(); preview = null; }
+        if (!inspecting || panel.IsTimelinePreview) return;
+        if (panel.PrepareTimelinePreview())
+        { preview = panel; director.Evaluate(); panel.burnEffect.RefreshPresentation(); }
+    }
+
     [MenuItem("Tools/Map/Bind Sacrifice Timeline")]
     public static void Apply()
     {
         if (EditorApplication.isPlayingOrWillChangePlaymode) throw new InvalidOperationException("Stop Play Mode first.");
         var scene = SceneManager.GetActiveScene();
         var panel = scene.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<MapSacrificePanel>(true)).Single();
-        var director = panel.sequenceDirector != null ? panel.sequenceDirector : panel.GetComponent<PlayableDirector>();
+        var director = panel.sequenceDirector;
         if (director == null || director.playableAsset is not TimelineAsset timeline)
             throw new InvalidOperationException("Assign the sacrifice Timeline on the scene's Playable Director.");
-        var tracks = timeline.GetOutputTracks().OfType<SacrificeTimelineTrack>().ToArray();
-        if (tracks.Length == 0) throw new InvalidOperationException("The assigned Timeline needs a sacrifice track.");
-        bool changed = panel.sequenceDirector != director || director.timeUpdateMode == DirectorUpdateMode.Manual ||
-            tracks.Any(track => director.GetGenericBinding(track) != panel);
-        if (changed)
+        foreach (var track in timeline.GetOutputTracks())
         {
-            Undo.RecordObjects(new UnityEngine.Object[] { panel, director }, "Bind sacrifice Timeline");
-            panel.sequenceDirector = director;
-            if (director.timeUpdateMode == DirectorUpdateMode.Manual) director.timeUpdateMode = DirectorUpdateMode.UnscaledGameTime;
-            foreach (var track in tracks) director.SetGenericBinding(track, panel);
-            EditorUtility.SetDirty(panel); EditorUtility.SetDirty(director); EditorSceneManager.MarkSceneDirty(scene);
+            Object target = track.name switch
+            {
+                "Screen" => panel.feedbackBackdrop.GetComponent<Animator>(),
+                "Card" => panel.burnEffect.cardTemplate.GetComponent<Animator>(),
+                "Burn" => panel.burnEffect.GetComponent<Animator>(),
+                "Transfer" => panel.flightIcon.transform.parent.GetComponent<Animator>(),
+                "Player" => panel.playerSymbol.GetComponent<Animator>(),
+                "Fire" => panel.sequenceDirector.GetComponent<AudioSource>(),
+                _ => director.GetGenericBinding(track)
+            };
+            if (target == null || director.GetGenericBinding(track) == target) continue;
+            Undo.RecordObject(director, "Bind sacrifice animation");
+            director.SetGenericBinding(track, target);
+            EditorUtility.SetDirty(director);
+            EditorSceneManager.MarkSceneDirty(scene);
         }
-        Directory.CreateDirectory(MapSacrificeAuthoring.Results);
-        File.WriteAllText(MapSacrificeAuthoring.Results + "/timeline-authoring.txt",
-            "PASS: native director binding; existing clips, curves, optional phases and scene edits preserved.\n");
     }
 
     public static void ApplyAndVerify()
@@ -44,6 +65,6 @@ public static class MapSacrificeTimelineAuthoring
         string before = EditorJsonUtility.ToJson(panel.sequenceDirector);
         Apply();
         if (EditorJsonUtility.ToJson(panel.sequenceDirector) != before)
-            throw new InvalidOperationException("Repeated binding changed the director.");
+            throw new InvalidOperationException("Repeated binding changed the native director.");
     }
 }

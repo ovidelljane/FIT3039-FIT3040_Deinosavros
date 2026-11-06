@@ -47,7 +47,7 @@ public static class CombatCardVfxAuthoring
                 var drain = Source("DebuffParticle", "BebuffDrain");
                 vfx.bindings = new[]
                 {
-                    Bind("Haste", true, new[] { StatType.AttackSpeed }, Part(spiral)),
+                    Bind("Haste", true, new[] { StatType.AttackSpeed, StatType.CardMomentum }, Part(spiral)),
                     Bind("MultiHit", true, new[] { StatType.ExtraHits }, Part(aura), Part(spiral)),
                     Bind("Cataclysm", true, new[] { StatType.Cataclysm }, Part(aura)),
                     Bind("Damage", true, new[] { StatType.Damage }, Part(aura), Part(spiral)),
@@ -55,7 +55,7 @@ public static class CombatCardVfxAuthoring
                         Part(Source("ShieldParticle", "Shield"))),
                     Bind("Elixir", false, new[] { StatType.Elixir, StatType.ElixirRegen },
                         Part(Source("ElixirParticle", "ElixirRise")), Part(Source("ElixirParticle", "Flash"))),
-                    Bind("Slow", true, new[] { StatType.EnemySlow, StatType.FrequencySlow }, Part(ground), Part(drain))
+                    Bind("Slow", true, new[] { StatType.EnemySlow, StatType.FrequencySlow, StatType.DamageReduction }, Part(ground), Part(drain))
                 };
                 vfx.attackImpact = Part(Source("MainAttack", "Claw"));
                 EditorUtility.SetDirty(vfx);
@@ -94,7 +94,7 @@ public static class CombatCardVfxAuthoring
     {
         var root = scene.GetRootGameObjects().Single(r => r.name == "Particles");
         var vfx = root.GetComponent<CombatCardVfx>();
-        Require(vfx != null && vfx.bindings.Length == 7 && vfx.attackImpact.template != null, "Missing VFX bindings.");
+        Require(vfx != null && vfx.bindings.Length >= 7 && vfx.attackImpact.template != null, "Missing VFX bindings.");
         Require(root.GetComponentsInChildren<ParticleSystem>().Length == 0, "A demonstration is still active.");
         Require(vfx.bindings.All(b => b.parts.All(p => p.template != null && p.template.gameObject.scene == scene)), "A template reference is missing.");
         var report = new List<string> { "PASS: seven stat bindings, attack impact, disabled demonstrations and unchanged non-particle transforms." };

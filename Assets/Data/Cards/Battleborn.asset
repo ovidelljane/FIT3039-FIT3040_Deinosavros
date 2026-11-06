@@ -19,7 +19,6 @@ MonoBehaviour:
   capacityCost: 4
   combatPrefab: {fileID: 3386567266915157623, guid: 7459f84827e340adab6c5ae549ab2481, type: 3}
   mapPrefab: {fileID: 0}
-  backPrefab: {fileID: 0}
   frontArtwork: {fileID: 21300000, guid: 88a221a9a3a0bb645b43f7501f136814, type: 3}
   frontArtworkRegion:
     serializedVersion: 2
@@ -34,4 +33,3 @@ MonoBehaviour:
     magnitude: 1.5
     title: Battleborn
     description: Attack interval -{magnitude}s, minimum {minInterval}s.
-    scopeLabel: NEXT BATTLE - PERMANENT REMOVAL

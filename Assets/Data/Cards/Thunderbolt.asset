@@ -19,7 +19,6 @@ MonoBehaviour:
   capacityCost: 5
   combatPrefab: {fileID: 3386567266915157623, guid: 219f7ce827e74f88bef3148b5a90745b, type: 3}
   mapPrefab: {fileID: 0}
-  backPrefab: {fileID: 0}
   frontArtwork: {fileID: 21300000, guid: 191675d5d3de4b343ae2bacbb80ba481, type: 3}
   frontBorder: {fileID: 21300000, guid: 17beddcd011e00e4e88513b50b0b188e, type: 3}
   backArtwork: {fileID: 21300000, guid: a01861b4cd9e850469d6289ac770f583, type: 3}
@@ -28,4 +27,3 @@ MonoBehaviour:
     magnitude: 70
     title: Thunderbolt
     description: "Enemies start with {magnitude}% HP."
-    scopeLabel: NEXT BATTLE - PERMANENT REMOVAL

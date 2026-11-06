@@ -1,0 +1,36 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 063508554f8790442a8283fa3091dbee, type: 3}
+  m_Name: HuntersInstinct
+  m_EditorClassIdentifier: Assembly-CSharp::CardDefinition
+  cardId: hunters_instinct
+  displayName: Hunter's Instinct
+  combatEffectText: Deal {amount} damage to the enemy with the lowest current HP.
+  cardType: 0
+  capacityCost: 4
+  combatPrefab: {fileID: 3386567266915157623, guid: 1ed9340865be7cf4884edb3a51692757, type: 3}
+  mapPrefab: {fileID: 0}
+  frontArtwork: {fileID: 21300000, guid: 89ede5ec6f1016d4fb4a9666c05abadb, type: 3}
+  frontArtworkRegion:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 1
+    height: 1
+  frontBorder: {fileID: 21300000, guid: 17beddcd011e00e4e88513b50b0b188e, type: 3}
+  backArtwork: {fileID: 21300000, guid: a01861b4cd9e850469d6289ac770f583, type: 3}
+  overworldEffect:
+    effectType: 0
+    magnitude: 80
+    triggerEvery: 1
+    title: Hunter's Instinct
+    description: Enemies start the next battle at {magnitude}% HP.

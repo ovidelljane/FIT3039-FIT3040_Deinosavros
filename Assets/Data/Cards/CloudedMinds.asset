@@ -19,7 +19,6 @@ MonoBehaviour:
   capacityCost: 3
   combatPrefab: {fileID: 3386567266915157623, guid: d29258b48817489ebe87d53bffdd51a3, type: 3}
   mapPrefab: {fileID: 0}
-  backPrefab: {fileID: 0}
   frontArtwork: {fileID: 21300000, guid: 588f927f98234094095b2419d0095595, type: 3}
   frontBorder: {fileID: 21300000, guid: fef316e64f373464fbe73af3797d091c, type: 3}
   backArtwork: {fileID: 21300000, guid: d397af7f44533254b9c033f336ab4a8d, type: 3}
@@ -28,4 +27,3 @@ MonoBehaviour:
     magnitude: 85
     title: Clouded Minds
     description: "Enemies start with {magnitude}% HP."
-    scopeLabel: NEXT BATTLE - PERMANENT REMOVAL

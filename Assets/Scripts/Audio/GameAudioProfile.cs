@@ -1,5 +1,7 @@
 using UnityEngine;
 
+public enum GameSound { CardFlick, CardFlip, MenuClick, Error }
+
 [CreateAssetMenu(menuName = "Deinosavros/Game Audio", fileName = "GameAudio")]
 public sealed class GameAudioProfile : ScriptableObject
 {
@@ -13,6 +15,17 @@ public sealed class GameAudioProfile : ScriptableObject
     [Range(0, 2)] public float buffGain = .85f;
     [Range(0, 2)] public float debuffGain = .7f;
     [Range(0, 2)] public float defenseGain = 1.7f;
+
+    [Header("Interaction Sounds")]
+    public AudioClip cardFlick;
+    public AudioClip cardFlip;
+    public AudioClip menuClick;
+    public AudioClip error;
+    [Range(0, 1)] public float interactionVolume = 1f;
+    [Range(0, 2)] public float cardFlickGain = 1.6f;
+    [Range(0, 2)] public float cardFlipGain = 1.6f;
+    [Range(0, 2)] public float menuClickGain = 1.6f;
+    [Range(0, 2)] public float errorGain = 1f;
 
     [Header("Continuous Music")]
     public AudioClip music;
@@ -34,6 +47,24 @@ public sealed class GameAudioProfile : ScriptableObject
         MapCardType.Buff or MapCardType.Elixir => buffGain,
         MapCardType.Debuff => debuffGain,
         MapCardType.Defense => defenseGain,
+        _ => 1f
+    };
+
+    public AudioClip InteractionClip(GameSound cue) => cue switch
+    {
+        GameSound.CardFlick => cardFlick,
+        GameSound.CardFlip => cardFlip,
+        GameSound.MenuClick => menuClick,
+        GameSound.Error => error,
+        _ => null
+    };
+
+    public float InteractionGain(GameSound cue) => cue switch
+    {
+        GameSound.CardFlick => cardFlickGain,
+        GameSound.CardFlip => cardFlipGain,
+        GameSound.MenuClick => menuClickGain,
+        GameSound.Error => errorGain,
         _ => 1f
     };
 

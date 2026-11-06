@@ -362,7 +362,7 @@ public sealed class CombatCardVfx : MonoBehaviour
     }
 
     private static bool IsBuffBinding(Binding binding) => binding != null &&
-        (binding.Matches(StatType.Damage) || binding.Matches(StatType.AttackSpeed) || binding.Matches(StatType.ExtraHits) || binding.Matches(StatType.Cataclysm));
+        (binding.Matches(StatType.Damage) || binding.Matches(StatType.AttackSpeed) || binding.Matches(StatType.CardMomentum) || binding.Matches(StatType.ExtraHits) || binding.Matches(StatType.Cataclysm));
 
     // Buff cards play the whole authored BuffParticle group, including newly added children.
     private Part[] SceneParts(Binding binding, Part[] parts)

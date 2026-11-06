@@ -36,9 +36,10 @@ public static class MapCardArtworkVerification
                 .Select(g => AssetDatabase.LoadAssetAtPath<CardDefinition>(AssetDatabase.GUIDToAssetPath(g))).ToArray();
             foreach (var definition in definitions)
             {
-                var root = (GameObject)PrefabUtility.InstantiatePrefab(prefab, preview);
+                var root = (GameObject)PrefabUtility.InstantiatePrefab(definition.mapPrefab != null ? definition.mapPrefab : prefab, preview);
                 PrefabUtility.UnpackPrefabInstance(root, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
                 var view = root.GetComponent<MapCardView>();
+                var authoredBack = Field<UnityEngine.UI.Image>(view, "backFill").material;
                 view.Initialize(null, definition, "front-check");
                 var front = Field<GameObject>(view, "combatFrontInstance");
                 Check(front != null, "Missing card front: " + definition.name);
@@ -60,9 +61,24 @@ public static class MapCardArtworkVerification
                         !string.IsNullOrEmpty(Field<TMPro.TMP_Text>(view, "effectText").text) &&
                         Field<TMPro.TMP_Text>(view, "titleText").text == definition.displayName,
                         "Map back content changed: " + definition.name);
+                    var capacity = Field<TMPro.TMP_Text>(view, "capacityText");
+                    var backArt = Field<UnityEngine.UI.Image>(view, "backArtwork");
+                    var backFill = Field<UnityEngine.UI.Image>(view, "backFill");
+                    var detail = AssetDatabase.LoadAssetAtPath<Material>("Assets/UI/MapCardDetail.mat");
+                    Check(backFill.sprite == definition.FrontIllustration && backFill.material.shader == detail.shader &&
+                        backFill.color == Color.white && !backFill.preserveAspect && backFill.material.GetFloat("_Mirror") == 1,
+                        "Back must reuse the frameless detail artwork and shader: " + definition.name);
+                    Check(Mathf.Approximately(backFill.material.GetFloat("_ShadeOpacity"), authoredBack.GetFloat("_ShadeOpacity")) &&
+                        Mathf.Approximately(backFill.material.GetFloat("_ShadeHeight"), authoredBack.GetFloat("_ShadeHeight")) &&
+                        Mathf.Approximately(backFill.material.GetFloat("_ShadeSoftness"), authoredBack.GetFloat("_ShadeSoftness")),
+                        "Map backs must use the authored shading settings: " + definition.name);
+                    Check(capacity != null && !capacity.gameObject.activeInHierarchy &&
+                        capacity.text == Mathf.Max(0, definition.capacityCost).ToString() &&
+                        capacity.rectTransform.anchoredPosition.x > 0 && backArt.rectTransform.localScale.x < 0,
+                        "Capacity or mirrored back frame is incorrect: " + definition.name);
                     typeof(MapCardView).GetMethod("SetFace", BindingFlags.Instance | BindingFlags.NonPublic)
                         .Invoke(view, new object[] { true });
-                    Check(Field<GameObject>(view, "backFace").activeSelf && !Field<GameObject>(view, "frontFace").activeSelf,
+                    Check(capacity.gameObject.activeInHierarchy && !Field<GameObject>(view, "frontFace").activeSelf,
                         "Back visibility failed: " + definition.name);
                     typeof(MapCardView).GetMethod("SetFace", BindingFlags.Instance | BindingFlags.NonPublic)
                         .Invoke(view, new object[] { false });
@@ -83,7 +99,7 @@ public static class MapCardArtworkVerification
     public static void StartBatch()
     {
         var fleet = Card("FleetFootwork");
-        var illustrationRegion = new Rect(.126f, .12f, .748f, .68f);
+        var illustrationRegion = new Rect(0, 0, 1, 1);
         if (fleet.frontArtworkRegion != illustrationRegion)
         {
             fleet.frontArtworkRegion = illustrationRegion;
@@ -144,12 +160,11 @@ public static class MapCardArtworkVerification
             .OrderBy(c => c.displayName).ToArray();
         check(definitions.Length == AssetDatabase.LoadAssetAtPath<CardPool>("Assets/Data/CardPool.asset").Cards.Count &&
             definitions.All(c => c.FrontIllustration != null), "All registered cards have illustrations.");
-        check(Card("TidalWave").frontArtwork.name == "TIDAL_WAVE" && Card("UncertainFates").frontArtwork.name == "GOLDEN_CHARIOT",
+        check(Card("TidalWave").frontArtwork.name == "TIDAL_WAVE" && Card("UncertainFates").frontArtwork.name == "UNCERTAINFATES 1",
             "The two newly imported illustrations are bound to the intended definitions.");
         var fleet = Card("FleetFootwork");
-        check(fleet.FrontIllustration != fleet.frontArtwork && fleet.FrontIllustration == fleet.FrontIllustration &&
-            fleet.FrontIllustration.rect.width < fleet.frontArtwork.rect.width,
-            "The legacy framed illustration is cropped once and cached, without changing its source texture: " + fleet.frontArtworkRegion);
+        check(fleet.FrontIllustration == fleet.frontArtwork && fleet.frontArtwork.name == "FLEETFOOTWORK 2 1" && fleet.frontArtworkRegion == new Rect(0, 0, 1, 1),
+            "The new unframed illustration uses its complete image without the legacy crop.");
 
         var board = new GameObject("Card Artwork Check", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler));
         var canvas = board.GetComponent<Canvas>(); canvas.renderMode = RenderMode.ScreenSpaceOverlay; canvas.sortingOrder = 30000;
@@ -206,7 +221,7 @@ public static class MapCardArtworkVerification
                 check(Field<GameObject>(view, "backFace").activeSelf && !Field<GameObject>(view, "frontFace").activeSelf,
                     view.Definition.name + ": clicking shows only the back.");
                 check(back.rectTransform.rect == reference.rectTransform.rect && back.preserveAspect &&
-                    back.rectTransform.localScale == Vector3.one && back.rectTransform.anchoredPosition == Vector2.zero,
+                    back.rectTransform.localScale == reference.rectTransform.localScale && back.rectTransform.anchoredPosition == Vector2.zero,
                     view.Definition.name + ": identical frame size, centering and undistorted aspect.");
                 var bounds = RectTransformUtility.CalculateRelativeRectTransformBounds(view.transform, back.transform);
                 check(Vector3.Distance(bounds.size, referenceBounds.size) < .01f &&
@@ -220,7 +235,8 @@ public static class MapCardArtworkVerification
                     if (label.isTextOverflowing) overflow.Add(view.Definition.name + ": " + label.name +
                         " (" + label.preferredHeight + "/" + label.rectTransform.rect.height + ")");
                 }
-                check(Field<Button>(view, "sacrificeButton") == null && Field<TMPro.TMP_Text>(view, "effectText").gameObject.activeSelf,
+                check(Field<GameObject>(view, "backFace").GetComponentInChildren<Button>(true) == null &&
+                    Field<TMPro.TMP_Text>(view, "effectText").gameObject.activeSelf,
                     view.Definition.name + ": the back shows the benefit and opens a stable inspector instead of a tiny sacrifice button.");
             }
             MapOpportunityVerification.CaptureCanvas(canvas, Camera.main, "card-backs");

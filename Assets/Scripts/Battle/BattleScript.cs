@@ -25,7 +25,8 @@ public class BattleScript : MonoBehaviour
     private double attackElapsed;
     // Read-only presentation values; the tick loop remains the only attack scheduler.
     [NonSerialized] public float encounterAttackFrequency = 1f;
-    public int AttackDamage => Mathf.Max(0, Mathf.RoundToInt(attackDmg * Effect.DamageMultiplier(this)));
+    [NonSerialized] public float encounterDamageMultiplier = 1f;
+    public int AttackDamage => Mathf.Max(0, Mathf.RoundToInt(attackDmg * encounterDamageMultiplier * Effect.DamageMultiplier(this)));
     public float AttackIntervalSeconds => Mathf.Max(.01f, attackSpd) /
         Mathf.Max(.01f, encounterAttackFrequency * Effect.FrequencyMultiplier(this));
     public float SecondsUntilNextAttack => Mathf.Max(0, AttackIntervalSeconds - (float)attackElapsed);

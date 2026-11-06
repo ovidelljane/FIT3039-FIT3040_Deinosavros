@@ -6,9 +6,10 @@ public sealed class GameAudio : MonoBehaviour
 {
     private static GameAudio instance;
     [SerializeField] private GameAudioProfile profile;
-    private AudioSource musicSource, cardSource;
+    private AudioSource musicSource, cardSource, interfaceSource;
     private AudioListener fallbackListener;
     private bool inGameScene;
+    private float nextErrorTime;
     public int CardSoundCount { get; private set; }
     public AudioClip LastCardClip { get; private set; }
 
@@ -32,6 +33,8 @@ public sealed class GameAudio : MonoBehaviour
         musicSource.volume = 0;
         cardSource = Source("Cards", false);
         cardSource.priority = 32;
+        interfaceSource = Source("Interface", false);
+        interfaceSource.priority = 32;
         var listener = new GameObject("Listener");
         listener.SetActive(false);
         listener.transform.SetParent(transform, false);
@@ -92,6 +95,20 @@ public sealed class GameAudio : MonoBehaviour
         audio.cardSource.PlayOneShot(clip, gain * (settings != null ? settings.cardVolume : 1));
         audio.LastCardClip = clip;
         audio.CardSoundCount++;
+    }
+
+    public static void Play(GameSound cue, float volume = 1)
+    {
+        var audio = Ensure();
+        var settings = audio.profile;
+        var clip = settings != null ? settings.InteractionClip(cue) : null;
+        if (clip == null || volume <= 0) return;
+        if (cue == GameSound.Error)
+        {
+            if (Time.unscaledTime < audio.nextErrorTime) return;
+            audio.nextErrorTime = Time.unscaledTime + .15f;
+        }
+        audio.interfaceSource.PlayOneShot(clip, settings.interactionVolume * settings.InteractionGain(cue) * volume);
     }
 
     private void OnDestroy()

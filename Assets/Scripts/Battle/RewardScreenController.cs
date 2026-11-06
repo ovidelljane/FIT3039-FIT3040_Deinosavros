@@ -149,7 +149,7 @@ public sealed class RewardScreenController : MonoBehaviour
     private void TryClaim(CardDefinition incoming, string outgoingId)
     {
         if (!session.TryResolveBattleReward(encounterId, incoming, outgoingId, out var reason))
-        { SetMessage(reason); return; }
+        { GameAudio.Play(GameSound.Error); SetMessage(reason); return; }
         FinishReward();
     }
 

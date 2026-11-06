@@ -11,13 +11,14 @@ public sealed class StatusIcon : MaskableGraphic
     [Header("Optional Artwork")]
     [SerializeField] private Sprite elixirArtwork;
     [SerializeField] private Sprite shieldArtwork;
-    public Sprite Artwork => symbol == StatusSymbol.Elixir ? elixirArtwork :
+    private Sprite artworkOverride;
+    public Sprite Artwork => artworkOverride != null ? artworkOverride : symbol == StatusSymbol.Elixir ? elixirArtwork :
         symbol == StatusSymbol.Shield ? shieldArtwork : null;
     public override Texture mainTexture => Artwork != null ? Artwork.texture : base.mainTexture;
 
-    public void SetSymbol(StatusSymbol value, Color tint)
+    public void SetSymbol(StatusSymbol value, Color tint, Sprite customArtwork = null)
     {
-        symbol = value; color = tint;
+        symbol = value; color = tint; artworkOverride = customArtwork;
         SetVerticesDirty(); SetMaterialDirty();
     }
     private static readonly Vector2[] Heart = { new(0,.22f), new(.15f,.38f), new(.32f,.35f), new(.43f,.2f),
@@ -35,11 +36,14 @@ public sealed class StatusIcon : MaskableGraphic
         {
             var sprite = Artwork;
             var rect = GetPixelAdjustedRect();
+            var uv = UnityEngine.Sprites.DataUtility.GetOuterUV(sprite);
             var size = sprite.rect.size;
+            // Offering sprites can sample a tight region inside a larger source rectangle.
+            if (artworkOverride != null)
+                size = new Vector2((uv.z - uv.x) * sprite.texture.width, (uv.w - uv.y) * sprite.texture.height);
             if (size.x <= 0 || size.y <= 0 || rect.width <= 0 || rect.height <= 0) return;
             size *= Mathf.Min(rect.width / size.x, rect.height / size.y);
             var min = rect.center - size * .5f; var max = rect.center + size * .5f;
-            var uv = UnityEngine.Sprites.DataUtility.GetOuterUV(sprite);
             // Keep the illustration's original colors while preserving UI fades.
             var tint = new Color(1, 1, 1, color.a);
             vh.AddVert(new Vector3(min.x, min.y, 0), tint, new Vector2(uv.x, uv.y));

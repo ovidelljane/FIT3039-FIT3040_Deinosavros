@@ -39,6 +39,13 @@ public sealed class MapSacrificePreview
                 view.Compact = "Enemy attack rate -" + n + "%";
                 view.Symbol = StatusSymbol.Speed; view.Accent = new Color(.73f, .60f, .88f);
                 break;
+            case OverworldEffectType.ReduceEnemyAttackDamage:
+                view.Title = "Weakened Foes"; view.Value = "Enemy Damage -" + n + "%";
+                view.Details = "Enemies deal " + n + "% less attack damage for the entire next battle.";
+                view.Limit = "Includes the Boss. Next battle only.";
+                view.Compact = "Enemy damage -" + n + "%";
+                view.Symbol = StatusSymbol.Damage; view.Accent = new Color(.73f, .60f, .88f);
+                break;
             case OverworldEffectType.ImprovePlayerAttackSpeed:
                 float minimum = session != null ? session.MinimumOfferingAttackInterval : RunBalance.Default.minimumOfferingAttackInterval;
                 float before = session != null ? session.PlayerAttackSpeed : 5f;
@@ -77,6 +84,7 @@ public sealed class MapSacrificePreview
             OverworldEffectType.IncreaseStartingElixir => "+" + n + " Max Elixir\nRestore " + n,
             OverworldEffectType.DivinePunishment => n + " Damage\nEvery " + Mathf.Max(1, effect.triggerEvery) + " hits",
             OverworldEffectType.ReduceEnemyAttackFrequency => "Enemy Attack Rate\n-" + n + "%",
+            OverworldEffectType.ReduceEnemyAttackDamage => "Enemy Damage\n-" + n + "%",
             _ => view.Value
         };
         view.CapacityBefore = session != null ? session.DeckCapacity : 0;

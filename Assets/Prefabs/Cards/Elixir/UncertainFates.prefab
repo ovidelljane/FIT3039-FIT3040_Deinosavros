@@ -27,7 +27,7 @@ PrefabInstance:
     - target: {fileID: 3120450000000000004, guid: f58c99bc3df17c64c975b6fe9f96a7d7, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 3fac685af21f0e04cb1467a072bcdf71, type: 3}
+      objectReference: {fileID: 21300000, guid: 14f3d0f7bd37a1b42b6e7dcbcfff6df2, type: 3}
     - target: {fileID: 5848104412055995300, guid: f58c99bc3df17c64c975b6fe9f96a7d7, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -114,26 +114,66 @@ PrefabInstance:
       objectReference: {fileID: 21300000, guid: def956a756ade1848bdaf3569b2b0ae9, type: 3}
     - target: {fileID: 7492377783938483649, guid: f58c99bc3df17c64c975b6fe9f96a7d7, type: 3}
       propertyPath: stat
-      value: 4
+      value: 17
       objectReference: {fileID: 0}
     - target: {fileID: 7492377783938483649, guid: f58c99bc3df17c64c975b6fe9f96a7d7, type: 3}
       propertyPath: amount
-      value: 4
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 7492377783938483649, guid: f58c99bc3df17c64c975b6fe9f96a7d7, type: 3}
       propertyPath: elixirCost
-      value: 4
+      value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 7492377783938483649, guid: f58c99bc3df17c64c975b6fe9f96a7d7, type: 3}
+      propertyPath: costResource
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 7492377783938483649, guid: f58c99bc3df17c64c975b6fe9f96a7d7, type: 3}
       propertyPath: effectDuration
-      value: 0
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 7858919246305677802, guid: f58c99bc3df17c64c975b6fe9f96a7d7, type: 3}
       propertyPath: m_Name
       value: UncertainFates
       objectReference: {fileID: 0}
+    - target: {fileID: 8567694263126837287, guid: f58c99bc3df17c64c975b6fe9f96a7d7, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 7858919246305677802, guid: f58c99bc3df17c64c975b6fe9f96a7d7, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 7651664419965674955}
   m_SourcePrefab: {fileID: 100100000, guid: f58c99bc3df17c64c975b6fe9f96a7d7, type: 3}
+--- !u!1 &2767860603540826675 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7858919246305677802, guid: f58c99bc3df17c64c975b6fe9f96a7d7, type: 3}
+  m_PrefabInstance: {fileID: 5438404307397295065}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &7651664419965674955
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2767860603540826675}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1895b0703975f7249a029bd1c8fedb51, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AdvancedCardRules
+  playerHealthLoss: 20
+  frequencyReductionPercent: 50
+  healthThresholds: {x: 50, y: 75, z: 100}
+  healthBonuses: {x: 70, y: 40, z: 15}
+  shieldPerDefeat: 0
+  intoxicationSlowPercent: 0
+  stackIncrement: 0
+  stackLimit: 0
+  damageReductionPercent: 0
+  delayedElixir: 2
+  bonusHealthThreshold: 50
+  lowHealthBonus: 1

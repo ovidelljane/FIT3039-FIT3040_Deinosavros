@@ -10,8 +10,7 @@ public sealed class SacrificeBurnEffect : MonoBehaviour
     [Header("Authored Template")]
     public UnityEngine.UI.RawImage cardTemplate;
     public RectTransform focusAnchor;
-    [Header("Center Presentation")]
-    [Min(.1f)] public float focusScale = 1.25f;
+    public Material burnMaterial;
     [Header("Ash Lifetime")]
     [Min(.1f)] public float ashDuration = .40f;
     [Header("Ash and Sparks (Reference Pixels)")]
@@ -22,9 +21,14 @@ public sealed class SacrificeBurnEffect : MonoBehaviour
     [Range(0, .5f)] public float smokeOpacity = .12f;
     [Range(256, 1024)] public int snapshotHeight = 640;
 
+    [Header("Animated by Timeline")]
+    [Range(0, 1)] public float burnProgress;
+    public float burnAge = -1;
+    [Min(.01f)] public float emissionDuration = 1;
+
     private UnityEngine.UI.RawImage face;
     private SacrificeAshGraphic ash;
-    private Material faceMaterial, ashMaterial;
+    private Material faceMaterial, ashMaterial, sourceMaterial;
     private RenderTexture snapshot;
     private GameObject captureRoot;
     private Camera captureCamera;
@@ -33,35 +37,33 @@ public sealed class SacrificeBurnEffect : MonoBehaviour
     private Rect bounds;
     private float seed;
     private int sequence;
-    private float emissionDuration;
     public bool IsPlaying { get; private set; }
-    public float Progress { get; private set; }
-    public float Elapsed { get; private set; }
-    public Vector3 FacePosition => face != null ? face.transform.position : transform.position;
+    public float Progress => Mathf.Clamp01(burnProgress);
+    public float Elapsed => Mathf.Max(0, burnAge);
+    public Vector3 FacePosition => cardTemplate != null ? cardTemplate.transform.position : transform.position;
     public int VisibleParticles => ash != null ? ash.VisibleCount : 0;
-    public float BurnEmissionDuration => emissionDuration;
+    public float BurnEmissionDuration => Mathf.Max(.01f, emissionDuration);
     public Color EmberColor => cardTemplate.material.GetColor("_EmberColor");
     public Color HotEdgeColor => cardTemplate.material.GetColor("_HotColor");
-    public SacrificeTimelineFrame CurrentFrame { get; private set; }
     public bool IsReady => cardTemplate != null && cardTemplate.material != null &&
         cardTemplate.material.shader != null && cardTemplate.material.shader.isSupported;
 
     public bool Begin(RectTransform card)
     {
         Clear();
-        if (!IsReady || !isActiveAndEnabled || card == null) return false;
+        if (!IsReady || card == null) return false;
         try
         {
             EnsurePresentation();
             source = card; bounds = Bounds(card);
             Capture(card);
             seed = (++sequence % 997) * .731f;
-            face.texture = snapshot; face.rectTransform.sizeDelta = bounds.size;
-            faceMaterial.SetFloat("_Seed", seed);
-            ashMaterial.SetFloat("_Seed", seed);
-            face.gameObject.SetActive(true); ash.gameObject.SetActive(true);
+            face.texture = snapshot;
+            face.rectTransform.sizeDelta = bounds.size;
+            face.gameObject.SetActive(true);
+            ash.gameObject.SetActive(true);
             IsPlaying = true;
-            EvaluateFrame(new SacrificeTimelineFrame { burnAge = -1, burnDuration = 1 });
+            RefreshPresentation();
             return true;
         }
         catch (Exception exception)
@@ -75,54 +77,54 @@ public sealed class SacrificeBurnEffect : MonoBehaviour
     public void RefreshSnapshot()
     {
         if (!IsPlaying || source == null) return;
-        bounds = Bounds(source); Capture(source); face.texture = snapshot; face.rectTransform.sizeDelta = bounds.size;
+        bounds = Bounds(source); Capture(source);
+        face.texture = snapshot; face.rectTransform.sizeDelta = bounds.size;
     }
 
-    public void EvaluateFrame(SacrificeTimelineFrame frame)
+    // Timeline owns transforms and these three shader inputs. This adapter only renders them.
+    private void OnDidApplyAnimationProperties() => RefreshPresentation();
+    private void LateUpdate() { if (IsPlaying) RefreshPresentation(); }
+
+    public void RefreshPresentation()
     {
-        if (!IsPlaying || source == null) return;
-        CurrentFrame = frame;
-        Elapsed = Mathf.Max(0, frame.elapsed);
-        Progress = Mathf.Clamp01(frame.burn);
-        emissionDuration = Mathf.Max(.1f, frame.burnDuration);
-        var root = (RectTransform)transform;
-        Vector3 origin = root.InverseTransformPoint(source.TransformPoint(bounds.center));
-        Vector3 destination = focusAnchor != null ? root.InverseTransformPoint(focusAnchor.position) : Vector3.zero;
-        face.rectTransform.localPosition = Vector3.Lerp(origin, destination, frame.move);
-        Vector3 startScale = new(source.lossyScale.x / root.lossyScale.x, source.lossyScale.y / root.lossyScale.y, 1);
-        Vector3 targetScale = focusAnchor != null
-            ? new(focusAnchor.lossyScale.x / root.lossyScale.x, focusAnchor.lossyScale.y / root.lossyScale.y, 1) : startScale;
-        face.rectTransform.localScale = Vector3.Scale(Vector3.Lerp(startScale, targetScale * focusScale, frame.expand), cardTemplate.rectTransform.localScale);
-        Quaternion destinationRotation = focusAnchor != null ? Quaternion.Inverse(root.rotation) * focusAnchor.rotation : Quaternion.identity;
-        face.rectTransform.localRotation = Quaternion.Slerp(Quaternion.Inverse(root.rotation) * source.rotation, destinationRotation, frame.move);
-        face.color = cardTemplate.color;
-        faceMaterial.CopyPropertiesFromMaterial(cardTemplate.material);
-        ashMaterial.CopyPropertiesFromMaterial(cardTemplate.material);
+        if (!IsPlaying || face == null) return;
+        faceMaterial.CopyPropertiesFromMaterial(sourceMaterial);
+        ashMaterial.CopyPropertiesFromMaterial(sourceMaterial);
         faceMaterial.SetFloat("_Seed", seed); ashMaterial.SetFloat("_Seed", seed);
         ashMaterial.SetFloat("_ParticleMode", 1);
         faceMaterial.SetFloat("_Progress", Progress);
         faceMaterial.SetFloat("_Clock", Elapsed);
         ashMaterial.SetFloat("_Clock", Elapsed);
         face.enabled = Progress < 1;
-        ash.SetFrame(this, Mathf.Max(0, frame.burnAge), seed, face.rectTransform.localPosition,
-            Vector2.Scale(bounds.size, face.rectTransform.localScale));
+        if (burnAge < 0) { ash.ClearFrame(); return; }
+        var root = (RectTransform)transform;
+        var center = root.InverseTransformPoint(face.rectTransform.TransformPoint(face.rectTransform.rect.center));
+        var extent = new Vector2(face.rectTransform.rect.width * face.rectTransform.lossyScale.x / root.lossyScale.x,
+            face.rectTransform.rect.height * face.rectTransform.lossyScale.y / root.lossyScale.y);
+        ash.SetFrame(this, Elapsed, seed, center, extent);
     }
 
     private void EnsurePresentation()
     {
-        if (face != null) return;
-        face = Instantiate(cardTemplate, transform); face.name = "BurningCard"; face.raycastTarget = false;
-        if (!Application.isPlaying) face.gameObject.hideFlags = HideFlags.HideAndDontSave;
-        face.rectTransform.anchorMin = face.rectTransform.anchorMax = face.rectTransform.pivot = new(.5f, .5f);
-        faceMaterial = new Material(cardTemplate.material) { name = "Sacrifice Burn Instance" };
-        ashMaterial = new Material(cardTemplate.material) { name = "Sacrifice Ash Instance" };
-        ashMaterial.SetFloat("_ParticleMode", 1); face.material = faceMaterial;
-        ash = new GameObject("Ash", typeof(RectTransform), typeof(CanvasRenderer)).AddComponent<SacrificeAshGraphic>();
-        ash.transform.SetParent(transform, false);
-        if (!Application.isPlaying) ash.gameObject.hideFlags = HideFlags.HideAndDontSave;
-        ash.rectTransform.anchorMin = Vector2.zero; ash.rectTransform.anchorMax = Vector2.one;
-        ash.rectTransform.offsetMin = ash.rectTransform.offsetMax = Vector2.zero;
-        ash.material = ashMaterial; ash.raycastTarget = false;
+        face = cardTemplate;
+        if (faceMaterial == null)
+        {
+            sourceMaterial = burnMaterial != null ? burnMaterial : cardTemplate.material;
+            faceMaterial = new Material(sourceMaterial) { name = "Sacrifice Burn Instance" };
+            ashMaterial = new Material(sourceMaterial) { name = "Sacrifice Ash Instance" };
+        }
+        face.material = faceMaterial;
+        if (ash == null)
+        {
+            ash = new GameObject("Ash", typeof(RectTransform), typeof(CanvasRenderer)).AddComponent<SacrificeAshGraphic>();
+            ash.transform.SetParent(transform, false);
+            if (!Application.isPlaying) ash.gameObject.hideFlags = HideFlags.HideAndDontSave;
+            ash.rectTransform.anchorMin = Vector2.zero; ash.rectTransform.anchorMax = Vector2.one;
+            ash.rectTransform.offsetMin = ash.rectTransform.offsetMax = Vector2.zero;
+            ash.raycastTarget = false;
+        }
+        ash.material = ashMaterial;
+        face.raycastTarget = false;
         GetComponentInParent<Canvas>().additionalShaderChannels |= AdditionalCanvasShaderChannels.TexCoord1;
     }
 
@@ -190,8 +192,8 @@ public sealed class SacrificeBurnEffect : MonoBehaviour
 
     public void Clear()
     {
-        IsPlaying = false; Progress = Elapsed = 0;
-        if (face != null) face.gameObject.SetActive(false);
+        IsPlaying = false; burnProgress = 0; burnAge = -1;
+        if (face != null) { face.texture = null; face.material = sourceMaterial; face.gameObject.SetActive(false); }
         if (ash != null) { ash.ClearFrame(); ash.gameObject.SetActive(false); }
         source = null;
     }
@@ -200,7 +202,6 @@ public sealed class SacrificeBurnEffect : MonoBehaviour
     public void ReleasePreviewResources()
     {
         if (Application.isPlaying) return;
-        if (face != null) Release(face.gameObject);
         if (ash != null) Release(ash.gameObject);
         ReleaseOwnedResources(); face = null; ash = null;
     }
@@ -210,6 +211,7 @@ public sealed class SacrificeBurnEffect : MonoBehaviour
     {
         if (snapshot != null) { snapshot.Release(); Release(snapshot); }
         if (captureRoot != null) Release(captureRoot);
+        if (face != null && face.material == faceMaterial) face.material = sourceMaterial;
         if (faceMaterial != null) Release(faceMaterial);
         if (ashMaterial != null) Release(ashMaterial);
         snapshot = null; captureRoot = null; captureCamera = null; captureCanvas = null; faceMaterial = null; ashMaterial = null;

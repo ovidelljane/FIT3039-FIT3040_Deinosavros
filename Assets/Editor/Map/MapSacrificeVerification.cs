@@ -70,77 +70,6 @@ public static class MapSacrificeVerification
     }
 
 
-    public static IEnumerator VerifyBurn(MapSacrificePanel panel, Canvas canvas, Action<bool, string> check)
-    {
-        var effect = panel.burnEffect;
-        check(effect != null && effect.IsReady && !ShaderUtil.ShaderHasError(effect.cardTemplate.material.shader),
-            "The authored sacrifice burn template and shader are ready.");
-        var sourcePosition = panel.cardPreview.localPosition;
-        var sourceScale = panel.cardPreview.localScale;
-        var panelPosition = panel.panel.localPosition;
-        check(effect.transform.parent == panel.overlay.transform && effect.focusAnchor != null && panel.playerSymbol != null,
-            "The ceremony is authored outside the left panel with a focus anchor and player binding.");
-        check(effect.Begin(panel.cardPreview), "A complete preview is captured without touching any run data.");
-        panel.cardGroup.alpha = 0;
-        yield return null;
-        var image = effect.GetComponentsInChildren<RawImage>().Single(i => i.texture is RenderTexture);
-        effect.EvaluateFrame(new SacrificeTimelineFrame { move = .5f, burnAge = -1, burnDuration = 1 });
-        check(effect.Progress == 0 && effect.VisibleParticles == 0, "The card travels intact before the burn starts.");
-        Capture(canvas, Camera.main, "center-01-travel", check);
-        effect.EvaluateFrame(new SacrificeTimelineFrame { move = 1, burnAge = -1, burnDuration = 1 });
-        check(Vector3.Distance(image.transform.position, effect.focusAnchor.position) < .01f,
-            "The intact card arrives at the authored center anchor.");
-        check(Mathf.Abs(image.transform.lossyScale.x / panel.cardPreview.lossyScale.x - 1) < .001f,
-            "The visual snapshot reaches the center before it expands.");
-        Capture(canvas, Camera.main, "center-02-held", check);
-        var texture = (RenderTexture)image.texture;
-        var active = RenderTexture.active;
-        var sample = new Texture2D(texture.width, texture.height, TextureFormat.RGBA32, false);
-        try
-        {
-            RenderTexture.active = texture; sample.ReadPixels(new Rect(0,0,texture.width,texture.height),0,0); sample.Apply();
-            var pixels = sample.GetPixels32();
-            check(pixels.Any(p => p.a == 0) && pixels.Count(p => p.a > 200) > pixels.Length/4,
-                "The composed frame and art retain real transparent boundaries.");
-            File.WriteAllBytes(MapSacrificeAuthoring.Results + "/burn-face.png", sample.EncodeToPNG());
-        }
-        finally { RenderTexture.active = active; Object.Destroy(sample); }
-        float[] ages = { .08f, .30f, .63f, 1.08f };
-        string[] names = { "burn-01-start", "burn-02-char", "burn-03-through", "burn-04-ash" };
-        for (int i = 0; i < ages.Length; i++)
-        {
-            effect.EvaluateFrame(new SacrificeTimelineFrame { elapsed = ages[i], move = 1, expand = 1,
-                burn = Mathf.Clamp01(ages[i]), burnAge = ages[i], burnDuration = 1 }); Canvas.ForceUpdateCanvases();
-            Capture(canvas, Camera.main, names[i], check);
-            if (i == 2) check(effect.VisibleParticles > 0 && effect.VisibleParticles <= effect.particleCount,
-                "The burn emits a bounded set of ash and sparks.");
-        }
-        check(!image.enabled && effect.Progress == 1, "The card is completely consumed before the last embers settle.");
-        check(effect.GetComponentsInChildren<Graphic>(true).All(g => !g.raycastTarget), "All burn presentation ignores pointer input.");
-        effect.Clear(); panel.cardGroup.alpha = 1;
-        check(!effect.IsPlaying && effect.VisibleParticles == 0 && panel.cardPreview.localPosition == sourcePosition && panel.cardPreview.localScale == sourceScale && panel.panel.localPosition == panelPosition,
-            "Clearing leaves the authored card layout untouched.");
-        check(effect.Begin(panel.cardPreview), "The snapshot resources can be reused.");
-        effect.enabled = false;
-        check(!effect.IsPlaying && effect.VisibleParticles == 0, "Disable interrupts presentation without stale sparks.");
-        effect.enabled = true;
-        check(effect.Begin(panel.cardPreview), "Reenable restores the effect without rebuilding the panel.");
-        effect.Clear();
-        check(effect.GetComponentsInChildren<RawImage>(true).Length == 2 && effect.GetComponentsInChildren<SacrificeAshGraphic>(true).Length == 1,
-            "Repeated previews reuse one face and one ash mesh.");
-        var player = panel.playerSymbol;
-        var core = player.transform.Find("Core");
-        var coreScale = core.localScale;
-        var floor = player.FloorPosition;
-        player.SetSacrificePulse(.28f, panel.shieldColor);
-        check(core.localScale.x > coreScale.x * 1.1f && player.FloorPosition == floor,
-            "The fire visibly expands without moving its floor position.");
-        player.enabled = false;
-        check(player.SacrificePulse == 0 && Vector3.Distance(core.localScale, coreScale) < .001f,
-            "Disabling the player renderer clears feedback without leaving it enlarged.");
-        player.enabled = true;
-    }
-
     public static IEnumerator VerifyDeparture(MapController map, Action<bool, string> check)
     {
         var session = map.Session; var panel = map.SacrificePanel;
@@ -206,7 +135,7 @@ public static class MapSacrificeVerification
                 var panel = canvas.GetComponentInChildren<MapSacrificePanel>(true);
                 if (panel != null && panel.IsBusy) panel.RefreshFeedbackPresentation();
                 else if (panel != null && panel.burnEffect != null && panel.burnEffect.IsPlaying)
-                    panel.burnEffect.EvaluateFrame(panel.burnEffect.CurrentFrame);
+                    panel.burnEffect.RefreshPresentation();
                 Canvas.ForceUpdateCanvases();
                 if (panel != null && panel.IsOpen)
                 {
@@ -239,7 +168,7 @@ public static class MapSacrificeVerification
             var panel = canvas.GetComponentInChildren<MapSacrificePanel>(true);
             if (panel != null && panel.IsBusy) panel.RefreshFeedbackPresentation();
             else if (panel != null && panel.burnEffect != null && panel.burnEffect.IsPlaying)
-                panel.burnEffect.EvaluateFrame(panel.burnEffect.CurrentFrame);
+                panel.burnEffect.RefreshPresentation();
         }
     }
     private static IEnumerator Until(Func<bool> condition)

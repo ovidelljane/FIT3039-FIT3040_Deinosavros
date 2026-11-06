@@ -7,12 +7,8 @@ using UnityEngine.InputSystem;
 using UnityEngine.Playables;
 
 // Authored scene UI. Only the controller can commit a sacrifice; this is presentation.
-[ExecuteAlways]
 public sealed class MapSacrificePanel : MonoBehaviour
 {
-    [Header("Edit Mode Preview")]
-    public CardDefinition previewCard;
-    public bool previewBack;
     [Header("Detail Artwork")]
     public Vector2 artworkFocus = new(.5f,.5f);
     [Header("Card Text Overrides")]
@@ -48,7 +44,7 @@ public sealed class MapSacrificePanel : MonoBehaviour
     public float hoverMotionTolerance = 6;
     [Header("Sacrifice Timeline")]
     public PlayableDirector sequenceDirector;
-    [Range(0, .9f)] public float dimOpacity = .50f;
+    public RectTransform transferTarget;
     [Header("Departure Confirmation")]
     public GameObject departureWarning;
     public RectTransform departurePanel;
@@ -56,9 +52,6 @@ public sealed class MapSacrificePanel : MonoBehaviour
     public Button departureContinue, departureBack;
     [Header("Presentation")]
     [Min(.05f)] public float deckSettleDuration = .2f;
-    [Header("Offering Transfer")]
-    [Range(0, 120)] public float transferArc = 50;
-    [Min(0)] public float transferEndScale = .45f;
     public Color bodyColor = new(.94f, .88f, .76f);
     public Color accentGold = new(.88f, .70f, .40f);
     public Color warningColor = new(.85f, .64f, .48f);
@@ -108,7 +101,6 @@ public sealed class MapSacrificePanel : MonoBehaviour
         public StatusSymbol symbol;
     }
     public bool IsTimelinePreview => timelinePreview != null;
-    public SacrificeTimelineFrame LastTimelineFrame { get; private set; }
     public bool IsOpen => overlay != null && overlay.activeSelf && !fadingOut;
     public bool IsDepartureWarningOpen => departureWarning != null && departureWarning.activeSelf;
     public bool IsBlocking => IsBusy || IsDepartureWarningOpen;
@@ -238,14 +230,8 @@ public sealed class MapSacrificePanel : MonoBehaviour
 
     private void LateUpdate()
     {
-        if (!Application.isPlaying)
-        {
-            if (timelinePreview != null) return;
-            if (overlay != null && overlay.activeInHierarchy && previewCard != null && illustration != null)
-                ApplyArtworkStyle(illustration.material,illustration.sprite,previewBack,previewCard.frontArtworkRegion);
-            return;
-        }
-        if (IsBusy || PauseMenu.IsPaused) return;
+        if (IsBusy) { UpdateTransferTarget(); return; }
+        if (PauseMenu.IsPaused) return;
         TickDetailFade(Time.unscaledDeltaTime);
         if (!IsOpen) return;
         if (selectedView == null || !selectedView.gameObject.activeInHierarchy || selectedView.InstanceId != selectedId) { Close(); return; }
@@ -354,13 +340,23 @@ public sealed class MapSacrificePanel : MonoBehaviour
         // Only crop and face orientation are runtime data. The material owns all appearance settings.
         artworkMaterial.CopyPropertiesFromMaterial(artworkSourceMaterial);
         ApplyArtworkStyle(artworkMaterial,illustration.sprite,displayedBack,new Rect(0,0,1,1));
-        confirm.interactable = canConfirm && !selectedView.IsFlipping && switchingView == null;
+        RefreshConfirm();
+    }
+
+    private void RefreshConfirm()
+    {
+        bool back = selectedView != null && selectedView.IsBack;
+        confirm.gameObject.SetActive(back && !IsBusy);
+        confirm.interactable = back && canConfirm && !selectedView.IsFlipping && switchingView == null && !IsBusy;
     }
 
     public void ApplyArtworkStyle(Material material, Sprite sprite, bool back, Rect region)
+        => ApplyArtworkStyle(material, illustration, sprite, back, region, artworkFocus);
+
+    public static void ApplyArtworkStyle(Material material, Image artwork, Sprite sprite, bool back, Rect region, Vector2 focus)
     {
-        if (material == null || illustration == null) return;
-        var rect = illustration.rectTransform.rect;
+        if (material == null || artwork == null) return;
+        var rect = artwork.rectTransform.rect;
         if (sprite != null && rect.width > 0 && rect.height > 0)
         {
             var uv = UnityEngine.Sprites.DataUtility.GetOuterUV(sprite);
@@ -369,7 +365,7 @@ public sealed class MapSacrificePanel : MonoBehaviour
             float regionWidth = Mathf.Clamp(region.width,.001f,1-left), regionHeight = Mathf.Clamp(region.height,.001f,1-bottom);
             float sourceAspect = sprite.rect.width*regionWidth / (sprite.rect.height*regionHeight), aspect = rect.width / rect.height;
             float width = Mathf.Min(1, aspect / sourceAspect), height = Mathf.Min(1, sourceAspect / aspect);
-            float focusX = Mathf.Clamp01(artworkFocus.x), focusY = Mathf.Clamp01(artworkFocus.y);
+            float focusX = Mathf.Clamp01(focus.x), focusY = Mathf.Clamp01(focus.y);
             material.SetVector("_ArtworkUV", new Vector4(Mathf.Lerp(uv.x,uv.z,left+(1-width)*regionWidth*focusX),
                 Mathf.Lerp(uv.y,uv.w,bottom+(1-height)*regionHeight*focusY), (uv.z-uv.x)*regionWidth*width, (uv.w-uv.y)*regionHeight*height));
             material.SetVector("_PanelRect", new Vector4(rect.xMin,rect.yMin,rect.width,rect.height));
@@ -395,19 +391,6 @@ public sealed class MapSacrificePanel : MonoBehaviour
         if (string.IsNullOrEmpty(text)) text = null;
         return back ? card.GetSacrificeDescription(owner != null ? owner.Session : null,text) : card.GetCombatDescription(template:text);
     }
-    public void PreviewEditorCard(bool back)
-    {
-        if (Application.isPlaying || previewCard == null || !IsReady) return;
-        previewBack = back; overlay.SetActive(true); cardGroup.alpha = 1;
-        SetDetailVisibility(1, true);
-        detailVisual.localRotation = Quaternion.identity;
-        illustration.sprite = previewCard.frontArtwork;
-        cardName.text = DetailName(previewCard); combatText.text = DetailEffect(previewCard,back);
-        confirm.gameObject.SetActive(true); confirm.interactable = true;
-        reason.gameObject.SetActive(false);
-        ApplyArtworkStyle(illustration.material,illustration.sprite,back,previewCard.frontArtworkRegion);
-    }
-
     private void OnValidate() => contentRevision++;
 
     private void Update()
@@ -436,7 +419,7 @@ public sealed class MapSacrificePanel : MonoBehaviour
         canConfirm = preview.CanConfirm;
         selectedSymbol = preview.Symbol; selectedColor = EffectColor(preview.Symbol);
         ShowReason(preview.CanConfirm ? "" : preview.Reason);
-        confirm.interactable = preview.CanConfirm && switchingView == null;
+        RefreshConfirm();
     }
 
     private void ShowReason(string message)
@@ -448,12 +431,13 @@ public sealed class MapSacrificePanel : MonoBehaviour
 
     public void Confirm()
     {
-        if (!IsOpen || IsBusy || switchingView != null || selectedView == null || selectedView.IsFlipping || !confirm.interactable) return;
+        if (!IsOpen || IsBusy || switchingView != null || selectedView == null || !selectedView.IsBack || selectedView.IsFlipping || !confirm.interactable) return;
         if (sequenceDirector == null || sequenceDirector.playableAsset == null || burnEffect == null || !burnEffect.IsReady)
         { ShowReason("Sacrifice animation is not configured."); return; }
         IsBusy = true; confirm.interactable = false;
         if (!owner.TryCommitSacrifice(selected, selectedId, out string failure))
         {
+            GameAudio.Play(GameSound.Error);
             IsBusy = false;
             RefreshSelection(); ShowReason(failure); return;
         }
@@ -476,13 +460,16 @@ public sealed class MapSacrificePanel : MonoBehaviour
         if (burning) cardGroup.alpha = 0;
         flightBaseScale = flightIcon.rectTransform.localScale;
         flightIcon.SetSymbol(selectedSymbol, selectedColor);
+        playerSymbol?.SetSacrificePulse(0, selectedColor);
         flightHeartCut.enabled = selectedSymbol == StatusSymbol.Health;
         flightIcon.gameObject.SetActive(false);
         // Migrate old scene bindings; the native director owns playback and seeking.
         if (sequenceDirector.timeUpdateMode == DirectorUpdateMode.Manual)
             sequenceDirector.timeUpdateMode = DirectorUpdateMode.UnscaledGameTime;
         sequenceDirector.time = 0;
+        UpdateTransferTarget();
         sequenceDirector.Play();
+        sequenceDirector.Evaluate();
         ShowReason("");
         while (sequenceDirector.playableGraph.IsValid() && sequenceDirector.time < sequenceDirector.duration)
             yield return null;
@@ -496,28 +483,16 @@ public sealed class MapSacrificePanel : MonoBehaviour
     // Reprojects onto the current Canvas, including when its resolution changes.
     public void RefreshFeedbackPresentation()
     {
+        UpdateTransferTarget();
         if ((IsBusy || timelinePreview != null) && sequenceDirector != null) sequenceDirector.Evaluate();
-    }
-
-    public void ApplyTimelineFrame(SacrificeTimelineFrame frame)
-    {
-        if (!IsBusy && timelinePreview == null) return;
-        LastTimelineFrame = frame;
-        if (burning) burnEffect.EvaluateFrame(frame);
-        else cardGroup.alpha = 1 - frame.burn;
-        PresentTransfer(frame.transfer, frame.enhance);
-        if (feedbackBackdrop != null)
-        {
-            var tint = feedbackBackdrop.color;
-            tint.a = dimOpacity * frame.dim * (1 - frame.brighten);
-            feedbackBackdrop.color = tint;
-        }
+        burnEffect?.RefreshPresentation();
     }
 
     // Timeline preview changes presentation only, never cards, attributes or offering state.
     public bool PrepareTimelinePreview()
     {
         if (Application.isPlaying || !IsReady || burnEffect == null || !burnEffect.IsReady) return false;
+        if (timelinePreview != null) return true;
         if (timelinePreview == null)
         {
             var rect = flightIcon.rectTransform;
@@ -542,19 +517,11 @@ public sealed class MapSacrificePanel : MonoBehaviour
         if (detailGroup != null) detailGroup.alpha = 1;
         illustration.material = state.copy;
         state.copy.CopyPropertiesFromMaterial(state.material);
-        if (previewCard != null)
-        {
-            illustration.sprite = previewCard.FrontIllustration;
-            cardName.text = DetailName(previewCard); combatText.text = DetailEffect(previewCard, previewBack);
-            var preview = MapSacrificePreview.For(null, previewCard, null);
-            selectedSymbol = preview.Symbol; selectedColor = EffectColor(selectedSymbol);
-            flightIcon.SetSymbol(selectedSymbol, selectedColor);
-            flightHeartCut.enabled = selectedSymbol == StatusSymbol.Health;
-        }
-        ApplyArtworkStyle(state.copy, illustration.sprite, previewBack, new Rect(0,0,1,1));
+        ApplyArtworkStyle(state.copy, illustration.sprite, state.material.GetFloat("_Mirror") > .5f, new Rect(0,0,1,1));
         if (burnEffect.IsPlaying) burnEffect.RefreshSnapshot();
         else burning = burnEffect.Begin(cardPreview);
         cardGroup.alpha = burning ? 0 : 1;
+        UpdateTransferTarget();
         return true;
     }
 
@@ -595,22 +562,22 @@ public sealed class MapSacrificePanel : MonoBehaviour
         { EndTimelinePreview(); return; }
         if (UnityEditor.EditorApplication.timeSinceStartup < nextPreviewRefresh) return;
         nextPreviewRefresh = UnityEditor.EditorApplication.timeSinceStartup + 1d / 30;
-        sequenceDirector.Evaluate(); UnityEditor.SceneView.RepaintAll();
+        UpdateTransferTarget();
+        sequenceDirector.Evaluate();
+        burnEffect?.RefreshPresentation();
+        UnityEditor.SceneView.RepaintAll();
     }
 #endif
 
-    private void PresentTransfer(float travel, float pulse)
+    private void UpdateTransferTarget()
     {
+        if (transferTarget == null) return;
         var root = (RectTransform)overlay.transform;
-        Vector3 origin = root.InverseTransformPoint(burning ? burnEffect.FacePosition : cardPreview.position);
-        Vector3 destination = root.InverseTransformPoint(statusButton.transform.position);
+        Vector3 destination = statusButton.transform.position;
         if (playerSymbol != null && playerSymbol.TryGetCoreViewport(out var point))
-            destination = new Vector3(root.rect.xMin + point.x * root.rect.width, root.rect.yMin + point.y * root.rect.height, 0);
-        var rect = flightIcon.rectTransform;
-        rect.gameObject.SetActive(travel > 0 && travel < 1);
-        rect.position = root.TransformPoint(Vector3.Lerp(origin, destination, travel) + Vector3.up * (Mathf.Sin(travel * Mathf.PI) * transferArc));
-        rect.localScale = flightBaseScale * Mathf.Lerp(1, transferEndScale, travel);
-        playerSymbol?.SetSacrificePulse(pulse, selectedColor);
+            destination = root.TransformPoint(new Vector3(root.rect.xMin + point.x * root.rect.width,
+                root.rect.yMin + point.y * root.rect.height, 0));
+        transferTarget.position = destination;
     }
 
     public void Close()
@@ -642,7 +609,7 @@ public sealed class MapSacrificePanel : MonoBehaviour
         burning = false;
         cardGroup.alpha = 1; cardPreview.localScale = cardBaseScale;
         overlay.SetActive(false); flightIcon.gameObject.SetActive(false); statusPopup.SetActive(false);
-        confirm.gameObject.SetActive(true);
+        confirm.gameObject.SetActive(false);
         if (feedbackBackdrop != null)
         {
             var tint = feedbackBackdrop.color; tint.a = 0; feedbackBackdrop.color = tint;

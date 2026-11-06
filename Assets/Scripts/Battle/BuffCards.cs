@@ -5,13 +5,15 @@ using UnityEngine.UI;
 using TMPro;
 
 // Append new values at the end: prefabs store these as ints.
-public enum StatType { Damage, AttackSpeed, Heal, Shield, Elixir, DamageAllEnemies, ExtraHits, EnemySlow, ElixirRegen, JudgementDay, Cataclysm, FrequencySlow }
+public enum StatType { Damage, AttackSpeed, Heal, Shield, Elixir, DamageAllEnemies, ExtraHits, EnemySlow, ElixirRegen, JudgementDay, Cataclysm, FrequencySlow, AegisOfLight, Carnage, DivineIntoxication, CardMomentum, DamageReduction, DelayedElixir, DamageAndWeaken, HuntWeakestEnemy }
+public enum CardCostResource { Automatic, Elixir, Health }
 
 public class BuffCards : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler, IPointerMoveHandler
 {
     [SerializeField] StatType stat;
     [SerializeField] float amount = 1;
     [SerializeField] int elixirCost = 1;
+    [SerializeField] private CardCostResource costResource;
     [SerializeField] float effectDuration = 3f;
     [SerializeField] TextMeshProUGUI label;
 
@@ -47,10 +49,11 @@ public class BuffCards : MonoBehaviour, IPointerClickHandler, IPointerEnterHandl
     private PlayerStatusView statusView;
     private bool played;
     public int Cost => Mathf.Max(0, elixirCost);
-    public CardEffectValues Values => new CardEffectValues(stat, amount, Cost, effectDuration);
+    public CardEffectValues Values => new CardEffectValues(stat, amount, Cost, effectDuration, UsesHealthCost);
     public string Description => definition != null ? definition.GetCombatDescription(Values) : $"+{amount} {stat}";
     public AudioClip LegacyPlayClip => audioSource != null ? audioSource.clip : null;
-    public bool UsesHealthCost => stat == StatType.Elixir;
+    public bool UsesHealthCost => costResource == CardCostResource.Health ||
+        (costResource == CardCostResource.Automatic && stat == StatType.Elixir);
     public bool IsHovered => pointerHovered;
     public bool MeetsResourceRequirement => owner != null && owner.Player != null &&
         (UsesHealthCost ? owner.Player.health >= Cost : owner.Player.elixir >= Cost);
@@ -260,11 +263,20 @@ public class BuffCards : MonoBehaviour, IPointerClickHandler, IPointerEnterHandl
         {
             bool timed = stat == StatType.Damage || stat == StatType.AttackSpeed || stat == StatType.ExtraHits ||
                 stat == StatType.ElixirRegen || stat == StatType.EnemySlow;
-            if ((stat == StatType.JudgementDay || stat == StatType.Cataclysm) && GetComponent<AdvancedCardRules>() == null) return;
+            var advanced = GetComponent<AdvancedCardRules>();
+            if ((stat is StatType.JudgementDay or StatType.Cataclysm or StatType.AegisOfLight or StatType.Carnage or StatType.DivineIntoxication or
+                StatType.CardMomentum or StatType.DamageAndWeaken or StatType.DelayedElixir) &&
+                advanced == null) return;
             if (timed && (effectPrefab == null || effectPrefab.GetComponent<Effect>() == null))
             {
                 Debug.LogError("Assign a valid timed effect prefab before playing this card.", this);
                 return;
+            }
+            BattleScript huntTarget = null;
+            if (stat == StatType.HuntWeakestEnemy)
+            {
+                huntTarget = FindWeakestEnemy();
+                if (huntTarget == null) return;
             }
             played = true;
             StatType resource = UsesHealthCost ? StatType.Heal : StatType.Elixir;
@@ -298,8 +310,15 @@ public class BuffCards : MonoBehaviour, IPointerClickHandler, IPointerEnterHandl
                 case StatType.Heal: player.health = Mathf.Min(player.health + (int)amount, player.maxHealth); break;
                 case StatType.Shield: player.shield += (int)amount; break;
                 case StatType.Elixir: player.elixir = Mathf.Min(player.elixir + amount, player.maxElixir); break;
-                case StatType.JudgementDay: GetComponent<AdvancedCardRules>().PlayJudgement(player, amount, effectDuration); break;
-                case StatType.Cataclysm: GetComponent<AdvancedCardRules>().PlayCataclysm(player, effectDuration); break;
+                case StatType.JudgementDay: advanced.PlayJudgement(player, amount, effectDuration); break;
+                case StatType.Cataclysm: advanced.PlayCataclysm(player, effectDuration); break;
+                case StatType.AegisOfLight: advanced.PlayAegisOfLight(player, (int)amount); break;
+                case StatType.Carnage: advanced.PlayCarnage(player, (int)amount); break;
+                case StatType.DivineIntoxication: advanced.PlayDivineIntoxication(player, amount, effectDuration); break;
+                case StatType.CardMomentum: advanced.PlayMomentum(player, definition, amount, effectDuration); break;
+                case StatType.DamageAndWeaken: advanced.PlayDamageAndWeaken(player, definition, (int)amount, effectDuration); break;
+                case StatType.DelayedElixir: advanced.PlayDelayedElixir(player, amount, effectDuration); break;
+                case StatType.HuntWeakestEnemy: huntTarget.TakeDamage(Mathf.Max(0, (int)amount), player); break;
                 
             }
             if (stat == StatType.Heal || stat == StatType.Shield || stat == StatType.Elixir)
@@ -309,6 +328,22 @@ public class BuffCards : MonoBehaviour, IPointerClickHandler, IPointerEnterHandl
             else Destroy(gameObject);
             ResetHover();
         }
+        else
+        {
+            GameAudio.Play(GameSound.Error);
+            if (!UsesHealthCost)
+                BattleHud.Find(gameObject.scene)?.StatusRoot?.GetComponentInChildren<CombatCardFeedback>()?.ShowInsufficientElixir();
+        }
+    }
+
+    private BattleScript FindWeakestEnemy()
+    {
+        BattleScript weakest = null;
+        foreach (var enemy in BattleScript.FindFighters("Enemy"))
+            if (enemy.gameObject.scene == player.gameObject.scene && enemy.health > 0 &&
+                (weakest == null || enemy.health < weakest.health))
+                weakest = enemy;
+        return weakest;
     }
 
     private void SpawnEffect(BattleScript target)

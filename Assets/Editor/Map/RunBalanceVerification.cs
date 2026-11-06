@@ -34,8 +34,9 @@ public static class RunBalanceVerification
                 ("Battleborn", 6, 2, 6, 1.5f), ("VioletVelocity", 3, 2, 6, 2),
                 ("TridentStrike", 4, 10, 6, 65), ("CloudedMinds", 3, 2, 6, 85),
                 ("SolarShield", 2, 6, 0, 5), ("RadiantWard", 4, 14, 0, 10),
-                ("FleetFootwork", 2, 1, 6, 1), ("TidalWave", 2, 4, 6, 90),
-                ("Thunderbolt", 5, 8, 0, 70), ("UncertainFates", 4, 4, 0, 2),
+                ("FleetFootwork", 3, 25, 8, 1), ("TidalWave", 2, 4, 6, 90),
+                ("Thunderbolt", 5, 8, 0, 70), ("UncertainFates", 8, 2, 2, 2),
+                ("ArrowHailstorm", 4, 8, 8, 10),
                 ("CrossroadsOfDestiny", 3, 1, 6, 4), ("JudgementDay", 8, 50, 8, 70),
                 ("Cataclysm", 3, 0, 10, 25)
             };
@@ -89,7 +90,7 @@ public static class RunBalanceVerification
             Check(RunSession.Instance == existingSession, "Verification does not replace the live session.");
             System.IO.Directory.CreateDirectory(RunIntegrationSetup.ResultDirectory);
             System.IO.File.WriteAllText(RunIntegrationSetup.ResultDirectory + "/card-tuning.txt",
-                "PASS: " + checks + " checks; 13 cards, unchanged durations, fractional offering preview, serialization, instance selection, consumption and combat application. No scene or prefab saved.\n");
+                "PASS: " + checks + " checks; card balance, unchanged durations, fractional offering preview, serialization, instance selection, consumption and combat application. No scene or prefab saved.\n");
         }
         finally
         {

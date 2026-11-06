@@ -29,8 +29,7 @@ MonoBehaviour:
   capacityCost: 5
   combatPrefab: {fileID: 3386567266915157623, guid: 5ec2dc8da02d23249822ae563c191d68, type: 3}
   mapPrefab: {fileID: 0}
-  backPrefab: {fileID: 0}
-  frontArtwork: {fileID: 21300000, guid: 7c39037d970b52745a1254885309637d, type: 3}
+  frontArtwork: {fileID: 21300000, guid: e82745ef64411e9408e29a66d638e8cd, type: 3}
   frontArtworkRegion:
     serializedVersion: 2
     x: 0
@@ -45,4 +44,3 @@ MonoBehaviour:
     triggerEvery: 0
     title: Cataclysm
     description: Enemy attack rate -{magnitude}% for the entire next battle.
-    scopeLabel: Next battle

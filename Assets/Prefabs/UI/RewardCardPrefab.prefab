@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 100002}
   - component: {fileID: 100004}
   - component: {fileID: 100006}
+  - component: {fileID: 7400000000000000026}
   - component: {fileID: 100008}
   - component: {fileID: 100010}
   m_Layer: 5
@@ -617,3 +618,17 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &7400000000000000026
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 100000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b930ca8485b418d827dbacc2e72b608, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::ButtonAudio
+  sound: 2
+  volume: 1

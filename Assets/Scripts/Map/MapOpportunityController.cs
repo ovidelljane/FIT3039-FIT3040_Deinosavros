@@ -280,7 +280,7 @@ public sealed class MapOpportunityController : MapNonCombatController
     {
         if (!CanAct() || selectedOffer == null || Receipt.Resolved) return;
         if (!session.TryResolveOpportunityReward(EncounterId, selectedOffer, outgoing, out var reason))
-        { detail.text = reason; return; }
+        { GameAudio.Play(GameSound.Error); detail.text = reason; return; }
         replacementRoot.SetActive(false); DisplayReceipt(Receipt, 1);
         ReturnToMap();
     }

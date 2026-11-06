@@ -25,6 +25,7 @@ public sealed class MapTravelView : MonoBehaviour
     [Range(0, 1)] public float offeringGlow = .35f;
     [Range(0, 1.5f)] public float offeringSigilExpansion = .65f;
     [Range(0, 1)] public float offeringRingOpacity = .75f;
+    [Range(0, 1)] public float sacrificeStrength;
     private float offeringPulse, offeringPhase;
     private Color offeringTint = Color.white;
     private MeshRenderer[] previewGlow;
@@ -73,14 +74,20 @@ public sealed class MapTravelView : MonoBehaviour
         return isActiveAndEnabled && core != null && point.z > 0;
     }
 
-    // Presentation never writes player attributes or the pending encounter modifier.
-    public void SetSacrificePulse(float phase, Color tint)
+    // The animation curve supplies intensity directly; there is no ceremony clock here.
+    private void OnDidApplyAnimationProperties() => ApplySacrificeStrength(sacrificeStrength);
+
+    private void ApplySacrificeStrength(float strength)
     {
-        offeringPhase = Mathf.Clamp01(phase);
-        offeringPulse = phase <= 0 || phase >= 1 ? 0 : Mathf.Sin(Mathf.Pow(phase, .55f) * Mathf.PI);
-        offeringTint = tint;
+        offeringPhase = sacrificeStrength = offeringPulse = Mathf.Clamp01(strength);
         if (!Application.isPlaying) { PreviewSacrificeGlow(); return; }
         if (core != null && halo != null && sigil != null && view != null) PositionCore();
+    }
+
+    public void SetSacrificePulse(float strength, Color tint)
+    {
+        offeringTint = tint;
+        ApplySacrificeStrength(strength);
     }
     private void PreviewSacrificeGlow()
     {

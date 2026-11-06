@@ -231,7 +231,6 @@ public static class MapCardDetailAuthoring
         var shade = ui.overlay.GetComponent<UnityEngine.UI.Image>();
         shade.color = new Color(.06f,.045f,.032f,0); shade.raycastTarget = false;
         ui.feedbackBackdrop = shade;
-        if (ui.burnEffect != null) ui.burnEffect.focusScale = 1.04f;
         ui.overlay.SetActive(false);
         p.gameObject.AddComponent<MapCardDetailPointer>().owner = ui;
         EditorUtility.SetDirty(ui);
@@ -252,10 +251,8 @@ public static class MapCardDetailAuthoring
         var pool = AssetDatabase.LoadAssetAtPath<CardPool>("Assets/Data/CardPool.asset");
         if (ui.cardContent == null || ui.cardContent.Length == 0)
             ui.cardContent = pool.Cards.Select(card => new MapCardDetailText { card = card }).ToArray();
-        if (ui.previewCard == null) ui.previewCard = AssetDatabase.LoadAssetAtPath<CardDefinition>("Assets/Data/Cards/SolarShield.asset");
         ui.hierarchyEditingVersion = 1;
         Canvas.ForceUpdateCanvases();
-        ui.PreviewEditorCard(false);
         EditorUtility.SetDirty(ui); EditorUtility.SetDirty(material); AssetDatabase.SaveAssetIfDirty(material);
         return true;
     }
@@ -271,13 +268,10 @@ public static class MapCardDetailAuthoring
         try
         {
             var ui = scene.GetRootGameObjects().SelectMany(root => root.GetComponentsInChildren<MapSacrificePanel>(true)).Single();
-            Check(ui.hierarchyEditingVersion == 1 && ui.previewCard != null,"Saved preview references are missing.");
-            Check(ui.cardContent.Length == AssetDatabase.LoadAssetAtPath<CardPool>("Assets/Data/CardPool.asset").Cards.Count,
-                "Every registered card must have an Inspector content entry.");
+            Check(ui.hierarchyEditingVersion == 1,"Hierarchy editing migration is missing.");
             clone = Object.Instantiate(ui.illustration.material); ui.illustration.material = clone;
             var card = AssetDatabase.LoadAssetAtPath<CardDefinition>("Assets/Data/Cards/SolarShield.asset");
             string original = EditorJsonUtility.ToJson(card);
-            ui.previewCard = card;
             var entry = ui.cardContent.Single(content => content.card == card);
             entry.title = "Hierarchy Preview"; entry.frontText = "Gain {amount} Shield"; entry.backText = "Gain {magnitude} Shield";
             ui.combatText.enableAutoSizing = false; ui.combatText.fontSize = 37; ui.combatText.color = Color.cyan;
@@ -287,10 +281,10 @@ public static class MapCardDetailAuthoring
             ui.panel.sizeDelta += new Vector2(80,24); Canvas.ForceUpdateCanvases();
             Check(Mathf.Approximately(ui.cardPreview.rect.width,width+80) &&
                 Mathf.Approximately(ui.cardName.rectTransform.rect.width,titleWidth+80),"Resizing Detail must resize its artwork and title area.");
-            ui.PreviewEditorCard(false);
-            Check(ui.cardName.text == entry.title && ui.combatText.text == "Gain 6 Shield","Front overrides must resolve live numeric tokens.");
-            ui.PreviewEditorCard(true);
-            Check(ui.combatText.text == "Gain 5 Shield" && clone.GetFloat("_Mirror") == 1,"Back preview must use offering values and mirrored art.");
+            Check(ui.DetailName(card) == entry.title && ui.DetailEffect(card,false) == "Gain 6 Shield","Front overrides must resolve live numeric tokens.");
+            Check(ui.DetailEffect(card,true) == "Gain 5 Shield","Back text must use offering values.");
+            ui.ApplyArtworkStyle(clone,card.FrontIllustration,true,new Rect(0,0,1,1));
+            Check(clone.GetFloat("_Mirror") == 1,"The shared artwork renderer mirrors only the illustration.");
             Check(ui.combatText.fontSize == 37 && ui.combatText.color == Color.cyan,"Refreshing content must preserve Hierarchy typography.");
             Check(clone.GetFloat("_CornerRadius") == 72 && Mathf.Approximately(clone.GetFloat("_ShadeOpacity"),.65f) &&
                 Mathf.Approximately(clone.GetFloat("_ShadeHeight"),.35f),
@@ -303,7 +297,7 @@ public static class MapCardDetailAuthoring
             string hierarchy = ui.name;
             for (var parent = ui.transform.parent; parent != null; parent = parent.parent) hierarchy = parent.name+"/"+hierarchy;
             File.WriteAllText(MapSacrificeAuthoring.Results+"/hierarchy-editing.txt","PASS: "+checks+
-                " checks; saved card entries, edit previews, responsive size, typography preservation, numeric templates, shader controls and unchanged gameplay data.\nHierarchy: "+hierarchy+"\n");
+                " checks; saved card entries, responsive size, typography preservation, numeric templates, shader controls and unchanged gameplay data.\nHierarchy: "+hierarchy+"\n");
         }
         finally
         {

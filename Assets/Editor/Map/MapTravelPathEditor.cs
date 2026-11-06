@@ -26,6 +26,7 @@ public sealed class MapTravelPathEditor:Editor
         height = float.NegativeInfinity;
         var surfaces = path.space.GetComponentsInChildren<MeshFilter>(true).Where(f =>
             f.name == "Island" || f.name.StartsWith("Platform_") || f == path.road ||
+            (path.roadSections != null && path.roadSections.Contains(f)) ||
             f.name == "Stairs" || f.name == "Base_01" || f.name == "Landing");
         foreach (var filter in surfaces)
         {

@@ -22,7 +22,6 @@ MonoBehaviour:
   capacityCost: 8
   combatPrefab: {fileID: 3386567266915157623, guid: f6d47d732da0e6f4fa489a4e46dcf230, type: 3}
   mapPrefab: {fileID: 0}
-  backPrefab: {fileID: 0}
   frontArtwork: {fileID: 21300000, guid: 0c483518c174b254ba4bc049a813cbb3, type: 3}
   frontArtworkRegion:
     serializedVersion: 2
@@ -39,4 +38,3 @@ MonoBehaviour:
     title: Judgement Day
     description: Every {triggerEvery} damage instances you deal, strike a random
       enemy for {magnitude} damage. Next battle only.
-    scopeLabel: Next battle

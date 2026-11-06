@@ -40,7 +40,9 @@ public sealed class BattleRunBridge : MonoBehaviour
     {
         foreach (var enemy in BattleScript.FindFighters("Enemy"))
         {
-            if (enemy.gameObject.scene != player.gameObject.scene || enemy.health <= 0 || enemy.GetComponent<BossCombat>() != null) continue;
+            if (enemy.gameObject.scene != player.gameObject.scene || enemy.health <= 0) continue;
+            enemy.encounterDamageMultiplier = 1f;
+            if (enemy.GetComponent<BossCombat>() != null) continue;
             int baseMaxHealth = Mathf.Max(1, enemy.maxHealth);
             float healthFraction = Mathf.Clamp01((float)enemy.health / baseMaxHealth);
             enemy.maxHealth = rules.EnemyMaxHealthAtLayer(baseMaxHealth, layer);
@@ -62,6 +64,11 @@ public sealed class BattleRunBridge : MonoBehaviour
                 foreach (var enemy in BattleScript.FindFighters("Enemy"))
                     if (enemy.gameObject.scene == player.gameObject.scene)
                         enemy.encounterAttackFrequency *= Mathf.Clamp(1 - modifier.magnitude / 100f, .01f, 1);
+                break;
+            case OverworldEffectType.ReduceEnemyAttackDamage:
+                foreach (var enemy in BattleScript.FindFighters("Enemy"))
+                    if (enemy.gameObject.scene == player.gameObject.scene)
+                        enemy.encounterDamageMultiplier = Mathf.Clamp01(1 - modifier.magnitude / 100f);
                 break;
             case OverworldEffectType.ReduceEnemyStartingHealth:
                 foreach (var enemy in BattleScript.FindFighters("Enemy"))

@@ -5,7 +5,7 @@ public sealed class MapTravelPath : MonoBehaviour
     public string fromNodeId, toNodeId;
     public Transform space;
     public MeshFilter road;
-    public Mesh sourceRoadMesh, overrideRoadMesh;
+    public MeshFilter[] roadSections = System.Array.Empty<MeshFilter>();
     public bool manualControlPoints;
     public Vector3[] points = System.Array.Empty<Vector3>();
     public MapTravelCurveData presentationCurve;
