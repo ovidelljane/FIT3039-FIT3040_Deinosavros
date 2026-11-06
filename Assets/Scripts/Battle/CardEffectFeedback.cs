@@ -11,11 +11,13 @@ public readonly struct CardEffectFeedback
     public readonly float Before, After;
     public readonly CardFeedbackPhase Phase;
     public readonly Effect Instance;
+    public readonly float ParticleDelay;
 
     public CardEffectFeedback(BattleScript target, StatType stat, float before, float after,
-        CardFeedbackPhase phase, Effect instance = null)
+        CardFeedbackPhase phase, Effect instance = null, float particleDelay = 0)
     {
         Target = target; Stat = stat; Before = before; After = after; Phase = phase; Instance = instance;
+        ParticleDelay = particleDelay;
     }
 
     public static event Action<CardEffectFeedback> Changed;

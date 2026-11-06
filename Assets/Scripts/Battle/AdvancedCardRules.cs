@@ -64,9 +64,8 @@ public sealed class AdvancedCardRules : MonoBehaviour
         int before = player.health;
         int restored = Mathf.Clamp(player.maxHealth - before, 0, Mathf.Max(0, amount));
         player.health += restored;
-        if (restored > 0)
-            CardEffectFeedback.Publish(new CardEffectFeedback(player, StatType.Heal, before, player.health, CardFeedbackPhase.Applied));
-        GrantShield(player, amount - restored);
+        CardEffectFeedback.Publish(new CardEffectFeedback(player, StatType.Heal, before, player.health, CardFeedbackPhase.Applied));
+        GrantShield(player, amount - restored, particleDelay: 1f);
     }
 
     public void PlayCarnage(BattleScript player, int damage)
@@ -147,12 +146,12 @@ public sealed class AdvancedCardRules : MonoBehaviour
     private static List<BattleScript> LivingEnemies(BattleScript player) =>
         BattleScript.FindFighters("Enemy").FindAll(enemy => enemy.health > 0 && enemy.gameObject.scene == player.gameObject.scene);
 
-    private static void GrantShield(BattleScript player, int amount)
+    private static void GrantShield(BattleScript player, int amount, float particleDelay = 0)
     {
         if (amount <= 0) return;
         int before = player.shield;
         player.shield += amount;
-        CardEffectFeedback.Publish(new CardEffectFeedback(player, StatType.Shield, before, player.shield, CardFeedbackPhase.Applied));
+        CardEffectFeedback.Publish(new CardEffectFeedback(player, StatType.Shield, before, player.shield, CardFeedbackPhase.Applied, particleDelay: particleDelay));
     }
 
     private static Effect NewEffect(BattleScript actor)

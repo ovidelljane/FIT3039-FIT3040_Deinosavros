@@ -318,7 +318,10 @@ public class BuffCards : MonoBehaviour, IPointerClickHandler, IPointerEnterHandl
                 case StatType.CardMomentum: advanced.PlayMomentum(player, definition, amount, effectDuration); break;
                 case StatType.DamageAndWeaken: advanced.PlayDamageAndWeaken(player, definition, (int)amount, effectDuration); break;
                 case StatType.DelayedElixir: advanced.PlayDelayedElixir(player, amount, effectDuration); break;
-                case StatType.HuntWeakestEnemy: huntTarget.TakeDamage(Mathf.Max(0, (int)amount), player); break;
+                case StatType.HuntWeakestEnemy:
+                    CardEffectFeedback.Publish(new CardEffectFeedback(huntTarget, stat, 0, amount, CardFeedbackPhase.Applied));
+                    huntTarget.TakeDamage(Mathf.Max(0, (int)amount), player);
+                    break;
                 
             }
             if (stat == StatType.Heal || stat == StatType.Shield || stat == StatType.Elixir)

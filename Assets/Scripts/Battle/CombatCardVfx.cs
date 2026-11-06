@@ -36,6 +36,9 @@ public sealed class CombatCardVfx : MonoBehaviour
     private readonly HashSet<string> missingSceneParts = new();
     private bool sceneReady;
     private Binding areaDamageBinding;
+    private Binding healingBinding;
+    private readonly Binding hunterBinding = new() { name = "Hunter", stats = new[] { StatType.HuntWeakestEnemy } };
+    private readonly Dictionary<BattleScript, float> delayedShields = new();
     private Coroutine judgementVignette;
     private int vignetteVersion;
     private readonly Dictionary<Vignette, VignetteState> vignetteOriginals = new();
@@ -76,7 +79,7 @@ public sealed class CombatCardVfx : MonoBehaviour
     {
         if (bindings != null) foreach (var binding in bindings)
             if (binding != null && binding.Matches(stat)) return binding;
-        return null;
+        return stat == StatType.Heal ? healingBinding : null;
     }
 
     private bool Accepts(BattleScript target) => !finished && target != null && target.isActiveAndEnabled &&
@@ -86,6 +89,18 @@ public sealed class CombatCardVfx : MonoBehaviour
     {
         if (feedback.Phase != CardFeedbackPhase.Applied || !Accepts(feedback.Target)) return;
         if (feedback.Stat == StatType.FrequencySlow) return; // Judgement uses its own selected-target visuals.
+        if (feedback.Stat == StatType.HuntWeakestEnemy)
+        {
+            string groupName = feedback.Target.name switch
+            {
+                "Enemy" => "HunterParticle3",
+                "Enemy (1)" => "HunterParticle2",
+                _ => "HunterParticle"
+            };
+            var group = transform.Find(groupName);
+            if (group != null) ShowScene(feedback.Target, hunterBinding, GroupParts(group), group);
+            return;
+        }
         if (feedback.Stat == StatType.JudgementDay)
         {
             if (judgementVignette != null) StopCoroutine(judgementVignette);
@@ -95,6 +110,14 @@ public sealed class CombatCardVfx : MonoBehaviour
         }
         if ((feedback.Stat == StatType.Elixir || feedback.Stat == StatType.Shield) && feedback.After <= feedback.Before) return;
         var binding = Find(feedback.Stat);
+        if (feedback.Stat == StatType.Shield && binding != null)
+        {
+            if (feedback.ParticleDelay > 0)
+                delayedShields[feedback.Target] = Time.time + feedback.ParticleDelay;
+            else
+                PlayShield(feedback.Target, binding);
+            return;
+        }
         // Instant area damage reuses the authored water without becoming a lasting stat buff.
         if (binding == null && feedback.Stat == StatType.DamageAllEnemies)
         {
@@ -256,13 +279,36 @@ public sealed class CombatCardVfx : MonoBehaviour
         return false;
     }
 
+    private void PlayShield(BattleScript target, Binding binding)
+    {
+        var existing = sceneVisuals.Find(v => v.target == target && v.binding == binding);
+        if (existing == null) Show(target, binding);
+        else foreach (var part in existing.parts) ReplaySceneParticle(part, binding.sustained);
+    }
+
     private void LateUpdate()
     {
         if (finished) return;
         // Initial encounter shields (including sacrifice) may arrive without a card receipt.
         var shield = Find(StatType.Shield);
         if (shield != null) foreach (var actor in actors)
-            if (Accepts(actor) && actor.shield > 0) Show(actor, shield);
+        {
+            if (actor == null) continue;
+            if (delayedShields.TryGetValue(actor, out float playAt))
+            {
+                if (Time.time < playAt) continue;
+                delayedShields.Remove(actor);
+                if (!Accepts(actor)) continue;
+                if (actor.shield > 0) PlayShield(actor, shield);
+                else
+                {
+                    // A spent shield still gets its delayed visual as a one-shot burst.
+                    var burst = new Binding { name = shield.name, stats = shield.stats, parts = shield.parts };
+                    Show(actor, burst);
+                }
+            }
+            else if (Accepts(actor) && actor.shield > 0) Show(actor, shield);
+        }
         TickSceneParticles();
     }
 
@@ -275,6 +321,7 @@ public sealed class CombatCardVfx : MonoBehaviour
 
     private void Clear()
     {
+        delayedShields.Clear();
         ++vignetteVersion;
         if (judgementVignette != null) StopCoroutine(judgementVignette);
         judgementVignette = null;
@@ -295,8 +342,14 @@ public sealed class CombatCardVfx : MonoBehaviour
         if (bindings != null) foreach (var binding in bindings)
             if (binding?.parts != null) parts.AddRange(SceneParts(binding, binding.parts));
         if (attackImpact != null) parts.Add(attackImpact);
+        var healing = transform.Find("HealingParticle");
+        if (healing != null)
+        {
+            healingBinding = new Binding { name = "Healing", stats = new[] { StatType.Heal }, parts = GroupParts(healing) };
+            parts.AddRange(healingBinding.parts);
+        }
         foreach (Transform group in transform)
-            if (group.name == "AttackEnemyParticle" || group.name == "JudgementDay(Global)" || Family(group.name) == "JudgementDay(Character)")
+            if (group.name == "AttackEnemyParticle" || group.name == "JudgementDay(Global)" || Family(group.name) == "JudgementDay(Character)" || IsHunterGroup(group.name))
                 parts.AddRange(GroupParts(group));
         var candidates = GetComponentsInChildren<ParticleSystem>(true);
         foreach (var part in parts)
@@ -314,6 +367,7 @@ public sealed class CombatCardVfx : MonoBehaviour
                 float closest = float.PositiveInfinity;
                 foreach (var actor in actors)
                 {
+                    if (effectRoot.name == "HunterParticle" && actor.name != "Enemy (2)") continue;
                     var distance = Vector3.ProjectOnPlane(system.transform.position - actor.transform.position, Vector3.up).sqrMagnitude;
                     if (distance < closest) { closest = distance; home = actor; }
                 }
@@ -452,8 +506,11 @@ public sealed class CombatCardVfx : MonoBehaviour
         if (!sustained) BurstCount++;
     }
 
+    private static bool IsHunterGroup(string name) => name is "HunterParticle" or "HunterParticle2" or "HunterParticle3";
+
     private void PositionScene(SceneParticle particle)
     {
+        if (IsHunterGroup(particle.family) && (particle.target == null || particle.target.name != "Boss")) return;
         // Poseidon's water and ripple are staged in the scene, not centred on the buff recipient.
         if (particle.family == "AttackEnemyParticle" || particle.family == "BuffParticle" ||
             particle.family == "JudgementDay(Global)" || particle.family == "JudgementDay(Character)") return;
@@ -481,8 +538,8 @@ public sealed class CombatCardVfx : MonoBehaviour
         {
             var visual = sceneVisuals[i];
             bool sustained = visual.binding != null && visual.binding.sustained;
-            bool judgement = visual.binding == judgementGlobal || visual.binding == judgementCharacter;
-            if ((!judgement && !Accepts(visual.target)) || (sustained && !StillApplied(visual.target, visual.binding)))
+            bool finishesAfterHit = visual.binding == judgementGlobal || visual.binding == judgementCharacter || visual.binding == hunterBinding;
+            if ((!finishesAfterHit && !Accepts(visual.target)) || (sustained && !StillApplied(visual.target, visual.binding)))
             { RemoveScene(i); continue; }
             bool alive = false;
             foreach (var part in visual.parts)
