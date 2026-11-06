@@ -40,6 +40,9 @@ public sealed class CombatBottomHud : MonoBehaviour
 
     // The circle centre shared by the arc sprites, the dome and the hand fan.
     public RectTransform ArcCentre => arcCentre;
+    public Transform HealthReadout => healthText.transform;
+    public Transform ElixirBar => elixirFill.parent;
+    public Transform ElixirIcon => elixirFill.parent.parent.Find("ElixirIcon");
     public bool IsReady => status != null && arcCentre != null && healthFill != null && healthPreview != null &&
         shieldFill != null && shieldBadge != null && healthText != null && shieldText != null &&
         elixirText != null && elixirFill != null && elixirPreview != null && playerPanel != null;

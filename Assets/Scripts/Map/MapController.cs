@@ -48,7 +48,10 @@ public sealed class MapController : MonoBehaviour
     public bool UsesTravelInteraction => travelView != null && routeGraph != null;
     public MapNodeInteraction NodeInteraction => nodeInteraction;
     public MapEncounterRouting EncounterRouting => encounterRouting;
-    public bool CanInteract => !PauseMenu.IsPaused && !loading && Time.frameCount > inputReleaseFrame && (sacrificePanel == null || !sacrificePanel.IsBlocking) &&
+    public Transform DeckArea => deckContainer;
+    public Transform CapacityArea => capacityText.transform;
+    public Transform PlayerStatusArea => playerStatusPanel != null ? playerStatusPanel.transform : null;
+    public bool CanInteract => !PauseMenu.IsPaused && !TutorialOverlay.IsOpen && !loading && Time.frameCount > inputReleaseFrame && (sacrificePanel == null || !sacrificePanel.IsBlocking) &&
         (runSession?.Progress == null || runSession.Progress.Phase == MapProgressPhase.OnMap) && (travel == null || !travel.IsBusy);
 
     private void Start()
@@ -79,6 +82,7 @@ public sealed class MapController : MonoBehaviour
             nodeInteraction = gameObject.AddComponent<MapNodeInteraction>();
             nodeInteraction.Initialize(this, travelView);
         }
+        StartCoroutine(GameTutorial.PlayFirstMap(this));
     }
     private void QueueRefresh() => refreshPending = true;
     private void QueueDeckRefresh() => deckRefreshPending = true;
